@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: May 22, 2018
 # BinaryLensAnalysis.py
-# Last Updated: May 24, 2018; 6:59PM
+# Last Updated: May 25, 2018; 7:10PM
 
 import numpy as np
 import cmath
