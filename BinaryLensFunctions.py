@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: May 22, 2018
 # BinaryLensFunctions.py
-# Last Updated: May 24, 2018; 6:41PM
+# Last Updated: May 25, 2018; 3:36PM
 
 import numpy as np
 import cmath
@@ -18,15 +18,15 @@ def source_position(x, y):
 
 def assign(x, y, s, q):
 	""""Assign all variables to be used in polynomial"""
-	dm, m = mass_ratio(q)   	 # Difference & sum of masses
+	(dm, m) = mass_ratio(q)   	 # Difference & sum of masses
 	zeta = source_position(x,y)  # Source's position
 	z1 = 0.5*s		    		 # Position of lensing body 1
 	return dm, m, zeta, z1
 
-def solution(*test):
+def solution(x, y, s, q):
 	"""Return solutions of polynomial"""
 	p = list(range(6)) # Polynomial to solve
-	dm, m, zeta, z1 = assign (*test)
+	(dm, m, zeta, z1) = assign (x, y, s, q)
 	p[5] = (z1**2)*(4*(dm**2)*zeta + 4*m*dm*z1 + 4*dm*zeta*zeta.conjugate()*z1 + 2*m*zeta.conjugate()*(z1**2) + zeta*(zeta.conjugate()**2)*(z1**2) - 2*dm*(z1**3) - zeta*(z1**4))
 	p[4] = -8*m*dm*zeta*z1 - 4*(dm**2)*(z1**2) - 4*(m**2)*(z1**2) - 4*m*zeta*zeta.conjugate()*(z1**2) - 4*dm*zeta.conjugate()*(z1**3) - (zeta.conjugate()**2)*(z1**4) + (z1**6)
 	p[3] = 4*(m**2)*zeta + 4*m*dm*z1 - 4*dm*zeta*zeta.conjugate()*z1 - 2*zeta*(zeta.conjugate()**2)*(z1**2) + 4*dm*(z1**3) + 2*zeta*(z1**4)
@@ -44,15 +44,13 @@ def check_solution(dm, m, zeta, z1, z):
 
 def magnification(x, y, s, q):
 	"""Returns the magnification for each configuration"""
-	dm, m, zeta, z1 = assign (x, y, s, q)
+	(dm, m, zeta, z1) = assign (x, y, s, q)
 	solutions = solution(x, y, s, q)
 	magn = list(range(5))
-	i=0
-	for z in solutions:
+	for (i, z) in enumerate(solutions):
 		detJ = 1. - ((m-dm)/((z-z1)**2) + (m+dm)/((z+z1)**2)) * ((m-dm)/((z.conjugate()-z1)**2) + (m+dm)/((z.conjugate()+z1)**2))
 		if check_solution(dm, m, zeta, z1, z) == True:
 			magn[i] = np.abs(1./detJ)
 		else:
 			magn[i] = 0
-		i+=1
 	return sum(magn)
