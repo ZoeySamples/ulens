@@ -18,18 +18,18 @@ def size_caustic(s, q):
 	return w, h, x
 
 tests2 = [
-	[1.35, 1e-2]
+	[1.35, 1e-7]
 		]	# Input parameters for trials where s > 1
 
 plot_on = True
 for test in tests2:
 	"""Plot showing number of images for each test, on a grid (x,y) around planetary caustic"""
-	if plot_on == False:
+	if not plot_on:
 		break	
 	pts = 150	# Number of data points on each side of the grid
 	w_caustic, h_caustic, x_center = size_caustic(test[0], test[1])
-	x_factor = 1.
-	y_factor = 1.
+	x_factor = 15.
+	y_factor = 15.
 	x_grid = np.linspace(x_center - x_factor*w_caustic, x_center + x_factor*w_caustic, pts)
 	y_grid = np.linspace(-y_factor*h_caustic, y_factor*h_caustic, pts)
 	x_1d = np.zeros(pts**2)
@@ -55,15 +55,19 @@ for test in tests2:
 				color[idx] = 120
 				print('Concern: number of images=', im_num[idx])
 				print('x_source={:}\ny_source={:}'.format(xx, yy))
-	plt.scatter(x_1d, y_1d, c=im_num, cmap='jet')
-	plt.colorbar()
+	plt.scatter(x_1d, y_1d, c=im_num, s=8, cmap='jet')
+	im_plot = plt.colorbar()
+	im_plot.set_label('Num Images')
+	plt.xlabel('X-position of source')
+	plt.ylabel('Y-position of source')
+	plt.title('Number of Images vs. Position')
 	plt.show()
 
 # Scatter plot using 1D arrays only
 plot_on = True
 for test in tests2:
 	"""Make square grid of points that shows the magnification at each point; assume s>1"""
-	if plot_on == False:
+	if not plot_on:
 		break
 	pts = 150	# Number of data points on each side of the grid
 	w_caustic, h_caustic, x_center = size_caustic(test[0], test[1])
@@ -80,9 +84,12 @@ for test in tests2:
 			mag_1d[idx] = blf.magnification(xx, yy, test[0], test[1])
 			x_1d[idx] = xx
 			y_1d[idx] = yy
-	norm = plt.Normalize()
-	mag_color = plt.cm.jet(norm(mag_1d))
-	plt.scatter(x_1d, y_1d, s=10, c=mag_color, cmap='seismic')
+	plt.scatter(x_1d, y_1d, c=mag_1d, s=8, cmap='jet')
+	mag_plot = plt.colorbar()
+	mag_plot.set_label('Magnification')
+	plt.xlabel('X-position of source')
+	plt.ylabel('Y-position of source')
+	plt.title('Magnification of Image vs. Position')
 	plt.show()
 
 # Interpolated scatter plot; Not working & ugly
@@ -91,7 +98,7 @@ for test in tests2:
 	"""Make square grid of points that shows the magnification at each point; assume s>1"""
 	if plot_on == False:
 		break
-	pts = 1000	# Number of data points on each side of the grid
+	pts = 100	# Number of data points on each side of the grid
 	w_caustic, h_caustic, x_center = size_caustic(test[0], test[1])
 	x_factor = 1.
 	y_factor = 1.
