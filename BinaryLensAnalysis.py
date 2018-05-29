@@ -23,7 +23,7 @@ Coordinate frame to carry out calculations. Options are:
 (origin, print_str) = blf.print_frame(origin)
 
 tests = [
-	[0, 0, 1, 1], 
+	[0., 0., 1., 1.], 
 	[1.3219, -0.0771, 1.35, .00578],
 	[1.0799, 0.0985, 1.1, 0.99],
 	[1.2489, 0.0209, 0.9357, 0.99]		
@@ -38,9 +38,9 @@ for test in tests:
 	print("Input", tests.index(test) + 1, ":\nx = {:}\ny = {:}\ns = {:}\nq = {:}\n".format(*test))
 	solutions = blf.solution(*test, origin)
 	print("Image locations:")
-	dm, m, zeta, z1 = blf.assign(*test, origin)
+	(dm, m, zeta, z1, z2) = blf.assign(*test, origin)
 	for z in solutions:
-		if blf.check_solution(dm, m, zeta, z1, z, origin) == True:
+		if blf.check_solution(dm, m, zeta, z1, z2, z, origin) == True:
 			print("{:.5f}".format(z))
 	magn = blf.magnification(*test, origin)
 	print("\nThe magnification is: {:.5f}".format(magn))
