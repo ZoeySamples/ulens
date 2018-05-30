@@ -3,8 +3,30 @@
 # BinaryLensFunctions.py
 # Last Updated: May 25, 2018; 7:10PM
 
+import sys
+import os
+import ctypes
 import numpy as np
 import cmath
+
+
+MODULE_PATH = os.path.abspath(__file__)
+MODULE_PATH = os.path.dirname(MODULE_PATH)
+MODULE_PATH = os.path.dirname(MODULE_PATH)
+PATH = os.path.join(MODULE_PATH, 'MulensModel-master', 'source', 'VBBL',
+		"VBBinaryLensingLibrary_wrapper.so")
+
+try:
+	vbbl = ctypes.cdll.LoadLibrary(PATH)
+except OSError as error:
+	msg = "Something went wrong with VBBL wrapping ({:})\n\n" + repr(error)
+	print(msg.format(PATH))
+else:
+	vbbl.VBBL_SG12_5.argtypes = 12 * [ctypes.c_double]
+	vbbl.VBBL_SG12_5.restype = np.ctypeslib.ndpointer(dtype=ctypes.c_double, 
+		shape=(10,))
+	_vbbl_SG12_5 = vbbl.VBBL_SG12_5
+
 
 def print_frame(origin):
 	if origin == 'geo_cent':
@@ -68,15 +90,14 @@ def assign(x, y, s, q, origin):
 	elif origin == 'com':
 		z1 = s*(m + dm) / (2.*m)
 		z2 = -s*(m - dm) / (2.*m)
-#	print(z1 - 1./s)
 	return dm, m, zeta, z1, z2
 
-def solution(x, y, s, q, origin):
+def solution(x, y, s, q, origin, solver='numpy'):
 	"""
 	Return solutions of polynomial.
 	"""
 
-	p = list(range(6)) # Polynomial to solve
+	p = np.zeros(6, dtype=complex) # Polynomial to solve
 	(dm, m, zeta, z1, z2) = assign(x, y, s, q, origin)
 
 	"""
@@ -115,7 +136,6 @@ def solution(x, y, s, q, origin):
 	m*z1*(z2**3)*zeta + (z1**3)*(z2**3)*zeta - dm*(z1 - z2)*(2.*m + z1*z2)*
 	(z1*(z2 - zeta) - z2*zeta) - zeta.conjugate()*z1*z2*((2.*dm*(z1 - z2) + 
 	z1*z2*(z1 + z2))*zeta + m*(-2.*z1*z2 + 2.*z1*zeta + 2.*z2*zeta)))
-
 	"""
 	The following is the simplified solution to the binary lens equation in the
 	geometric center frame.
@@ -128,7 +148,15 @@ def solution(x, y, s, q, origin):
 	p[1] = -2*m*zeta.conjugate() + zeta*(zeta.conjugate()**2) - 2*dm*z1 - zeta*(z1**2)
 	p[0] = z1**2 - zeta.conjugate()**2
 	"""
-	return np.roots(p)
+
+	if solver == 'Skowron_and_Gould_12':
+		pp = p[::-1]
+		out = _vbbl_SG12_5(*(pp.real.tolist() + pp.imag.tolist()))
+		roots = [out[i] + out[i+5] * 1.j for i in range(5)]
+		return roots
+	elif solver == 'numpy':
+		r = np.roots(p)
+		return r.tolist()
 
 def check_solution(dm, m, zeta, z1, z2, z, origin):
 	zeta_actual = z + (m-dm)/(z1.conjugate()-z.conjugate()) + (m+dm)/(z2.conjugate()-z.conjugate())
@@ -137,15 +165,17 @@ def check_solution(dm, m, zeta, z1, z2, z, origin):
 	else:
 		return True
 
-def magnification(x, y, s, q, origin):
+def magnification(x, y, s, q, origin, solutions=None, solver='numpy'):
 	"""Returns the magnification for each configuration"""
+	if solutions is None:
+		solutions = solution(x, y, s, q, origin, solver)
 	(dm, m, zeta, z1, z2) = assign (x, y, s, q, origin)
-	solutions = solution(x, y, s, q, origin)
 	magn = list(range(5))
 	for (i, z) in enumerate(solutions):
-		detJ = 1. - ((m-dm)/((z-z1)**2) + (m+dm)/((z-z2)**2)) * ((m-dm)/((z.conjugate()-z1)**2) + (m+dm)/((z.conjugate()-z2)**2))
+		detJ = (1. - ((m-dm)/((z-z1)**2) + (m+dm)/((z-z2)**2)) *
+		((m-dm)/((z.conjugate()-z1)**2) + (m+dm)/((z.conjugate()-z2)**2)))
 		if check_solution(dm, m, zeta, z1, z2, z, origin):
 			magn[i] = np.abs(1./detJ)
 		else:
-			magn[i] = 0
+			magn[i] = 0.
 	return sum(magn)

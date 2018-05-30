@@ -29,7 +29,7 @@ def size_caustic(s, q, origin = 'geo_cent'):
 		x = 0.5*s - 1.0/s
 	"""
 
-def plot_n_solns(s, q, origin = 'geo_cent', pts=150):
+def plot_n_solns(s, q, origin = 'geo_cent', solver='numpy', pts=150):
 	"""
 	Plot showing number of images on a grid (x,y) around planetary caustic
 
@@ -53,7 +53,7 @@ def plot_n_solns(s, q, origin = 'geo_cent', pts=150):
 			x_1d[idx] = xx
 			y_1d[idx] = yy
 			(dm, m, zeta, z1, z2) = blf.assign(xx, yy, s, q, origin)
-			solutions = blf.solution(xx, yy, s, q, origin)
+			solutions = blf.solution(xx, yy, s, q, origin, solver)
 			for z in solutions:
 				if blf.check_solution(dm, m, zeta, z1, z2, z, origin):
 					im_num[idx] += 1
@@ -82,7 +82,7 @@ def plot_n_solns(s, q, origin = 'geo_cent', pts=150):
 	plt.ylim(-y_factor*h_caustic, y_factor*h_caustic)
 	plt.title('Num Images using "{}" frame'.format(origin))
 
-def plot_magnification(s, q, origin = 'geo_cent', pts=150):
+def plot_magnification(s, q, origin = 'geo_cent', solver='numpy', pts=150):
 	"""Make square grid of points that shows the magnification at each point"""
 	(w_caustic, h_caustic, x_cent) = size_caustic(s, q, origin)
 	x_factor = 15.
@@ -95,7 +95,7 @@ def plot_magnification(s, q, origin = 'geo_cent', pts=150):
 	for i, xx in enumerate(x_grid):
 		for j, yy in enumerate(y_grid):
 			idx = pts*i + j
-			mag_1d[idx] = blf.magnification(xx, yy, s, q, origin)
+			mag_1d[idx] = blf.magnification(x=xx, y=yy, s=s, q=q, origin=origin, solver=solver)
 			x_1d[idx] = xx
 			y_1d[idx] = yy
 	plt.scatter(x_1d, y_1d, c=mag_1d, s=8, cmap='jet')

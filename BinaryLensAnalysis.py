@@ -9,7 +9,21 @@ import matplotlib.pyplot as plt
 import MulensModel as mm
 import BinaryLensFunctions as blf
 
-origin = 'geo_cent'
+solver = 'Skowron_and_Gould_12'
+#solver = 'numpy'
+"""
+Determines whether to solve polynomial with np.roots or Skowron & Gould 2012.
+Options:
+
+	'numpy'					- Uses np.roots method
+	'Skowron_and_Gould_12'	- Uses Skowron & Gould 2012 method
+
+"""
+
+
+
+
+origin = 'plan'
 
 """
 Coordinate frame to carry out calculations. Options are:
@@ -28,7 +42,7 @@ tests = [
 	[1.3219, -0.0771, 1.35, .00578],
 	[1.0799, 0.0985, 1.1, 0.99],
 	[1.2489, 0.0209, 0.9357, 0.99]		
-		] 
+		]
 """
 Input parameters for 4 trials; defaults to geometric center frame,
 while calculations are carried out in frame determined by 'origin'
@@ -37,17 +51,17 @@ while calculations are carried out in frame determined by 'origin'
 for test in tests:
 	"""Prints input paramters, image locations, and magnification"""
 	print("Input", tests.index(test) + 1, ":\nx = {:}\ny = {:}\ns = {:}\nq = {:}\n".format(*test))
-	solutions = blf.solution(*test, origin)
+	solutions = blf.solution(*test, origin, solver)
 	print("Image locations:")
 	(dm, m, zeta, z1, z2) = blf.assign(*test, origin)
 	for z in solutions:
 		if blf.check_solution(dm, m, zeta, z1, z2, z, origin) == True:
 			print("{:.5f}".format(z))
-	magn = blf.magnification(*test, origin)
+	magn = blf.magnification(*test, origin, solutions)
 	print("\nThe magnification is: {:.5f}".format(magn))
 	print("_"*20 + "\n")
 
-plot_on = True
+plot_on = False
 for test in tests:
 	"""Prints each caustic"""
 	if plot_on == False:
@@ -56,7 +70,7 @@ for test in tests:
 	caustic.plot()
 	plt.show()
 
-plot_on = True
+plot_on = False
 # Trajectory Plots: Not very useful
 for test in tests:
 	"""Makes a plot of magnification vs position for each scenario"""

@@ -18,9 +18,9 @@ def size_caustic(s, q):
 
 # Input parameters
 s = 1.9		# Separation between bodies. Assume s>1. Type = string
-q = 1e-7	# mass ratio between bodies in units of larger body's mass. Type = float
+q = 5e-8	# mass ratio between bodies in units of larger body's mass. Type = float
 pts = 150	# Number of data points on each side of the grid. Type = int
-origin = 'geo_cent'		#Coordinate frame to carry out calculations. Type = string
+origin = 'plan'		#Coordinate frame to carry out calculations. Type = string
 
 """Options are:
 
@@ -31,15 +31,26 @@ origin = 'geo_cent'		#Coordinate frame to carry out calculations. Type = string
 
 """
 
+#solver = 'Skowron_and_Gould_12'
+solver = 'numpy'
+"""
+Determines whether to solve polynomial with np.roots or Skowron & Gould 2012.
+Options:
+
+	'numpy'					- Uses np.roots method
+	'Skowron_and_Gould_12'	- Uses Skowron & Gould 2012 method
+
+"""
+
 # Plots the number of solutions in a grid of points centered on the caustic
 plot_on = True
 if plot_on:	
-	blp.plot_n_solns(s, q, origin, pts)
+	blp.plot_n_solns(s, q, origin, solver, pts)
 	plt.show()
 
 # Plots magnification in a grid of points centered on the caustic
-plot_on = True
+plot_on = False
 if plot_on:
-	blp.plot_magnification(s, q, origin, pts)
+	blp.plot_magnification(s=s, q=q, origin=origin, solver=solver, pts=pts)
 	plt.show()
 		
