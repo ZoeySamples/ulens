@@ -10,6 +10,7 @@ import MulensModel as mm
 import BinaryLensFunctions as blf
 
 origin = 'geo_cent'
+
 """
 Coordinate frame to carry out calculations. Options are:
 
@@ -46,7 +47,7 @@ for test in tests:
 	print("\nThe magnification is: {:.5f}".format(magn))
 	print("_"*20 + "\n")
 
-plot_on = False
+plot_on = True
 for test in tests:
 	"""Prints each caustic"""
 	if plot_on == False:
@@ -55,7 +56,7 @@ for test in tests:
 	caustic.plot()
 	plt.show()
 
-plot_on = False
+plot_on = True
 # Trajectory Plots: Not very useful
 for test in tests:
 	"""Makes a plot of magnification vs position for each scenario"""

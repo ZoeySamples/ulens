@@ -68,6 +68,7 @@ def assign(x, y, s, q, origin):
 	elif origin == 'com':
 		z1 = s*(m + dm) / (2.*m)
 		z2 = -s*(m - dm) / (2.*m)
+#	print(z1 - 1./s)
 	return dm, m, zeta, z1, z2
 
 def solution(x, y, s, q, origin):
@@ -81,7 +82,7 @@ def solution(x, y, s, q, origin):
 	"""
 	The following is the general solution to the binary lens equation.
 	"""
-	"""
+
 	p[0] = (-zeta.conjugate() + z1)*(zeta.conjugate()- z2)
 
 	p[1] = (m*z1 + m*z2 + 2.*(z1**2)*z2 + 2.*z1*(z2**2) + dm*(-z1 + z2) + 
@@ -114,19 +115,19 @@ def solution(x, y, s, q, origin):
 	m*z1*(z2**3)*zeta + (z1**3)*(z2**3)*zeta - dm*(z1 - z2)*(2.*m + z1*z2)*
 	(z1*(z2 - zeta) - z2*zeta) - zeta.conjugate()*z1*z2*((2.*dm*(z1 - z2) + 
 	z1*z2*(z1 + z2))*zeta + m*(-2.*z1*z2 + 2.*z1*zeta + 2.*z2*zeta)))
-	"""
+
 	"""
 	The following is the simplified solution to the binary lens equation in the
 	geometric center frame.
 	"""
-
+	"""
 	p[5] = (z1**2)*(4*(dm**2)*zeta + 4*m*dm*z1 + 4*dm*zeta*zeta.conjugate()*z1 + 2*m*zeta.conjugate()*(z1**2) + zeta*(zeta.conjugate()**2)*(z1**2) - 2*dm*(z1**3) - zeta*(z1**4))
 	p[4] = -8*m*dm*zeta*z1 - 4*(dm**2)*(z1**2) - 4*(m**2)*(z1**2) - 4*m*zeta*zeta.conjugate()*(z1**2) - 4*dm*zeta.conjugate()*(z1**3) - (zeta.conjugate()**2)*(z1**4) + (z1**6)
 	p[3] = 4*(m**2)*zeta + 4*m*dm*z1 - 4*dm*zeta*zeta.conjugate()*z1 - 2*zeta*(zeta.conjugate()**2)*(z1**2) + 4*dm*(z1**3) + 2*zeta*(z1**4)
 	p[2] = 4*m*zeta*zeta.conjugate() + 4*dm*zeta.conjugate()*z1 + 2*(zeta.conjugate()**2)*(z1**2) - 2*(z1**4)
 	p[1] = -2*m*zeta.conjugate() + zeta*(zeta.conjugate()**2) - 2*dm*z1 - zeta*(z1**2)
 	p[0] = z1**2 - zeta.conjugate()**2
-
+	"""
 	return np.roots(p)
 
 def check_solution(dm, m, zeta, z1, z2, z, origin):

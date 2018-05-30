@@ -1,6 +1,6 @@
 # Zoey Samples
 # Created: May 22, 2018
-# BinaryLensAnalysis.py
+# BinaryLensPlots.py
 # Last Updated: May 25, 2018; 7:10PM
 
 import numpy as np
@@ -8,6 +8,7 @@ import cmath
 import matplotlib.pyplot as plt
 import MulensModel as mm
 import BinaryLensFunctions as blf
+import BinaryLensMakePlots as blp
 
 def size_caustic(s, q):
 	w = 4.*np.sqrt(q)*(1. + 1./(2.*(s**2))) / (s**2)
@@ -15,91 +16,30 @@ def size_caustic(s, q):
 	x = 0.5*s - 1.0/s
 	return w, h, x
 
-tests = [
-	[1.35, 1e-7]
-		]	# Input parameters for trials where s > 1
+# Input parameters
+s = 1.9		# Separation between bodies. Assume s>1. Type = string
+q = 1e-7	# mass ratio between bodies in units of larger body's mass. Type = float
+pts = 150	# Number of data points on each side of the grid. Type = int
+origin = 'geo_cent'		#Coordinate frame to carry out calculations. Type = string
 
-coordinates = ['geo_cent', 'star', 'plan', 'com']
-for origin in coordinates:
-	if origin != 'geo_cent':
-		break
-	plot_on = True
-	for test in tests:
-		"""Plot showing number of images for each test, on a grid (x,y) around planetary caustic"""
-		if not plot_on:
-			break	
-		pts = 150	# Number of data points on each side of the grid
-		w_caustic, h_caustic, x_center = size_caustic(test[0], test[1])
-		x_factor = 15.
-		y_factor = 15.
-		x_grid = np.linspace(x_center - x_factor*w_caustic, x_center + x_factor*w_caustic, pts)
-		y_grid = np.linspace(-y_factor*h_caustic, y_factor*h_caustic, pts)
-		x_1d = np.zeros(pts**2)
-		y_1d = np.zeros(pts**2)
-		im_num = np.zeros(pts**2, dtype=int)
-		color = np.zeros(pts**2)
-		num_two = 0
-		num_four = 0
-		num_other = 0
-		print('parameters:\ns={:}\nq={:}'.format(*test))
-		for i, xx in enumerate(x_grid):
-			for j, yy in enumerate(y_grid):
-				idx = pts*i + j
-				x_1d[idx] = xx
-				y_1d[idx] = yy
-				(dm, m, zeta, z1, z2) = blf.assign(xx, yy, test[0], test[1], origin)
-				solutions = blf.solution(xx, yy, test[0], test[1], origin)
-				for z in solutions:
-					if blf.check_solution(dm, m, zeta, z1, z2, z, origin):
-						im_num[idx] += 1
-				if im_num[idx] == 5:
-					color[idx] = 255
-				elif im_num[idx] == 3:
-					color[idx] = 1
-				elif im_num[idx] == 4:
-					color[idx] = 120
-					num_four += 1
-				elif im_num[idx] == 2:
-					color[idx] = 120
-					num_two += 1
-				else:
-					num_other += 1
-					print('Concern: number of images=', im_num[idx])
-					print('x_source={:}\ny_source={:}'.format(xx, yy))
-		print('Number of points where the number of images is not 3 or 5 is', num_four + num_two + num_other,'out of', pts**2)
-		plt.scatter(x_1d, y_1d, c=im_num, s=8, cmap='jet')
-		im_plot = plt.colorbar()
-		im_plot.set_label('Num Images')
-		plt.xlabel('X-position of source')
-		plt.ylabel('Y-position of source')
-		plt.title(('Num Images vs Poisition in ',origin,' frame'))
-		plt.show()
+"""Options are:
 
-	# Scatter plot using 1D arrays only
-	plot_on = False
-	for test in tests:
-		"""Make square grid of points that shows the magnification at each point; assume s>1"""
-		if not plot_on:
-			break
-		pts = 150	# Number of data points on each side of the grid
-		w_caustic, h_caustic, x_center = size_caustic(test[0], test[1])
-		x_factor = 1.
-		y_factor = 1.
-		x_grid = np.linspace(x_center - x_factor*w_caustic, x_center + x_factor*w_caustic, pts)
-		y_grid = np.linspace(-y_factor*h_caustic, y_factor*h_caustic, pts)
-		x_1d = np.zeros(pts**2)
-		y_1d = np.zeros(pts**2)
-		mag_1d = np.zeros(pts**2)
-		for i, xx in enumerate(x_grid):
-			for j, yy in enumerate(y_grid):
-				idx = pts*i + j
-				mag_1d[idx] = blf.magnification(xx, yy, test[0], test[1], origin)
-				x_1d[idx] = xx
-				y_1d[idx] = yy
-		plt.scatter(x_1d, y_1d, c=mag_1d, s=8, cmap='jet')
-		mag_plot = plt.colorbar()
-		mag_plot.set_label('Magnification')
-		plt.xlabel('X-position of source')
-		plt.ylabel('Y-position of source')
-		plt.title(('Magnification of Image vs. Position in', origin, ' frame'))
-		plt.show()
+	'geo_cent' - the geometric center frame [default if not specified]
+	'star' - the star's (or larger body's) frame
+	'plan' - the planet's (or smaller body's) frame
+	'com' - the center-of-mass frame
+
+"""
+
+# Plots the number of solutions in a grid of points centered on the caustic
+plot_on = True
+if plot_on:	
+	blp.plot_n_solns(s, q, origin, pts)
+	plt.show()
+
+# Plots magnification in a grid of points centered on the caustic
+plot_on = True
+if plot_on:
+	blp.plot_magnification(s, q, origin, pts)
+	plt.show()
+		
