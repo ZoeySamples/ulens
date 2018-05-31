@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: May 22, 2018
 # BinaryLensPlots.py
-# Last Updated: May 25, 2018; 7:10PM
+# Last Updated: May 31, 2018
 
 import numpy as np
 import cmath
@@ -32,13 +32,16 @@ origin = 'plan'		#Coordinate frame to carry out calculations. Type = string
 """
 
 #solver = 'Skowron_and_Gould_12'
-solver = 'numpy'
+#solver = 'numpy'
+solver = 'zroots'
+
 """
 Determines whether to solve polynomial with np.roots or Skowron & Gould 2012.
 Options:
 
 	'numpy'					- Uses np.roots method
 	'Skowron_and_Gould_12'	- Uses Skowron & Gould 2012 method
+	'zroots'				- Uses zroots laguerre method
 
 """
 

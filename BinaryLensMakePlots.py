@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: May 30, 2018
 # BinaryLensMakePlots.py
-# Last Updated: May 30, 2018; 11:35AM
+# Last Updated: May 31, 2018
 
 import numpy as np
 import cmath

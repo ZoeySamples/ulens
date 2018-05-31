@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: May 22, 2018
 # BinaryLensAnalysis.py
-# Last Updated: May 25, 2018; 7:10PM
+# Last Updated: May 31, 2018
 
 import numpy as np
 import cmath
@@ -9,21 +9,21 @@ import matplotlib.pyplot as plt
 import MulensModel as mm
 import BinaryLensFunctions as blf
 
-solver = 'Skowron_and_Gould_12'
+#solver = 'Skowron_and_Gould_12'
 #solver = 'numpy'
+solver = 'zroots'
+
 """
 Determines whether to solve polynomial with np.roots or Skowron & Gould 2012.
 Options:
 
 	'numpy'					- Uses np.roots method
 	'Skowron_and_Gould_12'	- Uses Skowron & Gould 2012 method
+	'zroots'				- Uses zroots laguerre method
 
 """
 
-
-
-
-origin = 'plan'
+origin = 'geo_cent'
 
 """
 Coordinate frame to carry out calculations. Options are:

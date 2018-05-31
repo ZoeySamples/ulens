@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: May 22, 2018
 # BinaryLensFunctions.py
-# Last Updated: May 25, 2018; 7:10PM
+# Last Updated: May 31, 2018
 
 import sys
 import os
@@ -9,13 +9,13 @@ import ctypes
 import numpy as np
 import cmath
 
-
 MODULE_PATH = os.path.abspath(__file__)
 MODULE_PATH = os.path.dirname(MODULE_PATH)
 MODULE_PATH = os.path.dirname(MODULE_PATH)
 PATH = os.path.join(MODULE_PATH, 'MulensModel-master', 'source', 'VBBL',
 		"VBBinaryLensingLibrary_wrapper.so")
 
+# Access SG12 code
 try:
 	vbbl = ctypes.cdll.LoadLibrary(PATH)
 except OSError as error:
@@ -27,6 +27,20 @@ else:
 		shape=(10,))
 	_vbbl_SG12_5 = vbbl.VBBL_SG12_5
 
+PATH = os.path.join(MODULE_PATH, 'zroots_codes', "zrootsBinaryLens_wrapper.so")
+print(PATH)
+
+# Access zroots code
+try:
+	zroots = ctypes.cdll.LoadLibrary(PATH)
+except OSError as error:
+	msg = "Something went wrong with zroots wrapping ({:})\n\n" + repr(error)
+	print(msg.format(PATH))
+else:
+	zroots.zroots_5.argtypes = 12 * [ctypes.c_double]
+	zroots.zroots_5.restype = np.ctypeslib.ndpointer(dtype=ctypes.c_double, 
+		shape=(10,))
+	_zroots_5 = zroots.zroots_5
 
 def print_frame(origin):
 	if origin == 'geo_cent':
@@ -103,7 +117,7 @@ def solution(x, y, s, q, origin, solver='numpy'):
 	"""
 	The following is the general solution to the binary lens equation.
 	"""
-
+	
 	p[0] = (-zeta.conjugate() + z1)*(zeta.conjugate()- z2)
 
 	p[1] = (m*z1 + m*z2 + 2.*(z1**2)*z2 + 2.*z1*(z2**2) + dm*(-z1 + z2) + 
@@ -136,6 +150,7 @@ def solution(x, y, s, q, origin, solver='numpy'):
 	m*z1*(z2**3)*zeta + (z1**3)*(z2**3)*zeta - dm*(z1 - z2)*(2.*m + z1*z2)*
 	(z1*(z2 - zeta) - z2*zeta) - zeta.conjugate()*z1*z2*((2.*dm*(z1 - z2) + 
 	z1*z2*(z1 + z2))*zeta + m*(-2.*z1*z2 + 2.*z1*zeta + 2.*z2*zeta)))
+	
 	"""
 	The following is the simplified solution to the binary lens equation in the
 	geometric center frame.
@@ -152,6 +167,11 @@ def solution(x, y, s, q, origin, solver='numpy'):
 	if solver == 'Skowron_and_Gould_12':
 		pp = p[::-1]
 		out = _vbbl_SG12_5(*(pp.real.tolist() + pp.imag.tolist()))
+		roots = [out[i] + out[i+5] * 1.j for i in range(5)]
+		return roots
+	elif solver == 'zroots':
+		pp = p[::-1]
+		out = _zroots_5(*(pp.real.tolist() + pp.imag.tolist()))
 		roots = [out[i] + out[i+5] * 1.j for i in range(5)]
 		return roots
 	elif solver == 'numpy':
