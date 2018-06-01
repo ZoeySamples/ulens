@@ -8,6 +8,7 @@ import cmath
 import matplotlib.pyplot as plt
 import MulensModel as mm
 import BinaryLensFunctions as blf
+from astropy.io import fits
 
 def size_caustic(s, q, origin = 'geo_cent'):
 	w = 4.*np.sqrt(q)*(1. + 1./(2.*(s**2))) / (s**2)
@@ -35,19 +36,18 @@ def plot_n_solns(s, q, origin = 'geo_cent', solver='numpy', pts=150):
 
 	"""
 	(w_caustic, h_caustic, x_cent) = size_caustic(s, q, origin)
-	x_factor = 15.
-	y_factor = 15.
-	x_grid = np.linspace(x_cent - x_factor*w_caustic, x_cent + x_factor*w_caustic, pts)
-	y_grid = np.linspace(-y_factor*h_caustic, y_factor*h_caustic, pts)
+	x_grid = np.linspace(x_cent - w_caustic, x_cent + w_caustic, pts)
+	y_grid = np.linspace(-h_caustic, h_caustic, pts)
 	x_1d = np.zeros(pts**2)
 	y_1d = np.zeros(pts**2)
 	im_num = np.zeros(pts**2, dtype=int)
 	color = np.zeros(pts**2)
+	num_one = 0
 	num_two = 0
 	num_four = 0
-	num_other = 0
-	print('parameters:\ns={:}\nq={:}'.format(s, q))
-	for i, xx in enumerate(x_grid):
+	num_tot = 0
+	print('parameters:\ns={:}\nq={:}\n'.format(s, q))
+	for (i, xx) in enumerate(x_grid):
 		for j, yy in enumerate(y_grid):
 			idx = pts*i + j
 			x_1d[idx] = xx
@@ -67,28 +67,28 @@ def plot_n_solns(s, q, origin = 'geo_cent', solver='numpy', pts=150):
 			elif im_num[idx] == 2:
 				color[idx] = 120
 				num_two += 1
+			elif im_num[idx] == 1:
+				num_one += 1
 			else:
-				num_other += 1
-				print('Concern: number of images=', im_num[idx])
-				print('x_source={:}\ny_source={:}'.format(xx, yy))
-	print('Number of points where the number of images is not 3 or 5 is',
-		num_four + num_two + num_other,'out of', pts**2)
-	plt.scatter(x_1d, y_1d, c=im_num, s=8, cmap='jet')
+				print('Concern: found {:} solutions'.format(im_num[idx]))
+	num_tot = num_one + num_two + num_four
+	print('Concern: number of points where the number of images is',
+		'\n1: {:}\n2: {:}\n4: {:}\ntotal: {:} out of {:} points'
+		.format(num_one, num_two, num_four, num_tot, pts**2))
+	plt.scatter(x_1d, y_1d, c=im_num, s=((500./pts)**2), marker = 'o', cmap='jet', lw=None)
 	im_plot = plt.colorbar()
 	im_plot.set_label('Num Images')
 	plt.xlabel('X-position of source')
 	plt.ylabel('Y-position of source')
-	plt.xlim(x_cent - x_factor*w_caustic, x_cent + x_factor*w_caustic)
-	plt.ylim(-y_factor*h_caustic, y_factor*h_caustic)
+	plt.xlim(x_cent - w_caustic, x_cent + w_caustic)
+	plt.ylim(-h_caustic, h_caustic)
 	plt.title('Num Images using "{}" frame'.format(origin))
 
 def plot_magnification(s, q, origin = 'geo_cent', solver='numpy', pts=150):
 	"""Make square grid of points that shows the magnification at each point"""
 	(w_caustic, h_caustic, x_cent) = size_caustic(s, q, origin)
-	x_factor = 15.
-	y_factor = 15.
-	x_grid = np.linspace(x_cent - x_factor*w_caustic, x_cent + x_factor*w_caustic, pts)
-	y_grid = np.linspace(-y_factor*h_caustic, y_factor*h_caustic, pts)
+	x_grid = np.linspace(x_cent - w_caustic, x_cent + w_caustic, pts)
+	y_grid = np.linspace(-h_caustic, h_caustic, pts)
 	x_1d = np.zeros(pts**2)
 	y_1d = np.zeros(pts**2)
 	mag_1d = np.zeros(pts**2)
@@ -98,11 +98,12 @@ def plot_magnification(s, q, origin = 'geo_cent', solver='numpy', pts=150):
 			mag_1d[idx] = blf.magnification(x=xx, y=yy, s=s, q=q, origin=origin, solver=solver)
 			x_1d[idx] = xx
 			y_1d[idx] = yy
-	plt.scatter(x_1d, y_1d, c=mag_1d, s=8, cmap='jet')
+	plt.scatter(x_1d, y_1d, c=mag_1d, s=((500./pts)**2), marker = 'o', cmap='jet', lw=None)
 	mag_plot = plt.colorbar()
 	mag_plot.set_label('Magnification')
 	plt.xlabel('X-position of source')
 	plt.ylabel('Y-position of source')
-	plt.xlim(x_cent - x_factor*w_caustic, x_cent + x_factor*w_caustic)
-	plt.ylim(-y_factor*h_caustic, y_factor*h_caustic)
+	plt.xlim(x_cent - w_caustic, x_cent + w_caustic)
+	plt.ylim(-h_caustic, h_caustic)
 	plt.title('Magnification using "{}" frame'.format(origin))
+
