@@ -10,19 +10,14 @@ import MulensModel as mm
 import BinaryLensFunctions as blf
 import BinaryLensMakePlots as blp
 
-def size_caustic(s, q):
-	w = 4.*np.sqrt(q)*(1. + 1./(2.*(s**2))) / (s**2)
-	h = 4.*np.sqrt(q)*(1. - 1./(2.*(s**2))) / (s**2)
-	x = 0.5*s - 1.0/s
-	return w, h, x
-
 # Input parameters
 s = 1.9		# Separation between bodies. Assume s>1. Type = string
-q = 5e-8	# mass ratio between bodies in units of larger body's mass. Type = float
-pts = 150	# Number of data points on each side of the grid. Type = int
+q = 1.e-7	# mass ratio between bodies in units of larger body's mass. Type = float
+pts = 20	# Number of data points on each side of the grid. Type = int
 origin = 'plan'		#Coordinate frame to carry out calculations. Type = string
 
-"""Options are:
+"""
+Options:
 
 	'geo_cent' - the geometric center frame [default if not specified]
 	'star' - the star's (or larger body's) frame
@@ -30,13 +25,13 @@ origin = 'plan'		#Coordinate frame to carry out calculations. Type = string
 	'com' - the center-of-mass frame
 
 """
-
-#solver = 'Skowron_and_Gould_12'
+#method = ['numpy', 'Skowron_and_Gould_12']
+solver = 'Skowron_and_Gould_12'
 #solver = 'numpy'
-solver = 'zroots'
+#solver = 'zroots'		# Not precise enough to be useful on this computer
 
 """
-Determines whether to solve polynomial with np.roots or Skowron & Gould 2012.
+Determines which method to solve polynomial with.
 Options:
 
 	'numpy'					- Uses np.roots method
@@ -46,14 +41,16 @@ Options:
 """
 
 # Plots the number of solutions in a grid of points centered on the caustic
-plot_on = True
-if plot_on:	
-	blp.plot_n_solns(s, q, origin, solver, pts)
-	plt.show()
+plot_on = False
+if plot_on:
+	for solver in method:
+		blp.plot_n_solns(s, q, origin, solver, pts)
+		plt.show()
 
 # Plots magnification in a grid of points centered on the caustic
 plot_on = False
 if plot_on:
 	blp.plot_magnification(s=s, q=q, origin=origin, solver=solver, pts=pts)
 	plt.show()
-		
+
+blp.write_to_fits(s, q, origin = 'geo_cent', solver='numpy', pts=500)

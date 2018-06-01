@@ -107,3 +107,43 @@ def plot_magnification(s, q, origin = 'geo_cent', solver='numpy', pts=150):
 	plt.ylim(-h_caustic, h_caustic)
 	plt.title('Magnification using "{}" frame'.format(origin))
 
+def write_to_fits(s, q, origin = 'geo_cent', solver='numpy', pts=500):
+	"""
+	Writes information about grid to a .fits table for comparison of magnification
+	and number of images between different coordinate systems and solving methods.
+	"""
+	(w_caustic, h_caustic, x_cent) = size_caustic(s, q, origin)
+	x_grid = np.linspace(x_cent - w_caustic, x_cent + w_caustic, pts)
+	y_grid = np.linspace(-h_caustic, h_caustic, pts)
+	x_1d = np.zeros(pts**2)
+	y_1d = np.zeros(pts**2)
+	mag_1d = np.zeros(pts**2)
+	im_num = np.zeros(pts**2, dtype=int)
+	print('parameters:\ns={:}\nq={:}\n'.format(s, q))
+	for (i, xx) in enumerate(x_grid):
+		for j, yy in enumerate(y_grid):
+			idx = pts*i + j
+			mag_1d[idx] = blf.magnification(x=xx, y=yy, s=s, q=q, origin=origin,
+											solver=solver)
+			x_1d[idx] = xx
+			y_1d[idx] = yy
+			(dm, m, zeta, z1, z2) = blf.assign(xx, yy, s, q, origin)
+			solutions = blf.solution(xx, yy, s, q, origin, solver)
+			for z in solutions:
+				if blf.check_solution(dm, m, zeta, z1, z2, z, origin):
+					im_num[idx] += 1
+	col = []
+	col.append(fits.Column(name='x', array=x_1d, format='D'))
+	col.append(fits.Column(name='y', array=y_1d, format='D'))
+	col.append(fits.Column(name='Magnification', array=mag_1d, format='D'))
+	col.append(fits.Column(name='Number Images', array=im_num, format='I'))
+	hdu1 = fits.BinTableHDU.from_columns(col)
+	hdr = fits.Header()
+	hdr['SEPARAT'] = '{:f}'.format(s)
+	hdr['M_RATIO'] = '{:f}'.format(q)
+	hdr['ORIGIN'] = origin
+	hdr['SOLVER'] = solver
+	hdu0 = fits.PrimaryHDU(header = hdr)
+	hdus = fits.HDUList([hdu0, hdu1])
+	hdus.writeto('BinaryLens2.fits')
+
