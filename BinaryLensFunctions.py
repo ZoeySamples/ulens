@@ -28,7 +28,6 @@ else:
 	_vbbl_SG12_5 = vbbl.VBBL_SG12_5
 
 PATH = os.path.join(MODULE_PATH, 'zroots_codes', "zrootsBinaryLens_wrapper.so")
-print(PATH)
 
 # Access zroots code
 try:
@@ -137,8 +136,8 @@ def solution(x, y, s, q, origin, solver='numpy'):
 	 z2)*((z2**2)*zeta + (z1**2)*(2.*z2 + zeta) + 2.*z1*z2*(z2 + 2.*zeta)))
 
 	p[4] = ((-dm**2)*((z1 - z2)**2) + (m**2)*((z1**2) + 6.*z1*z2 + (z2**2) - 
-	4.*z1*zeta - 4.*z2*zeta) - m*(2.*zeta.conjugate() - z1 - z2)*(z1*z2*(z2 - 4.*zeta) +
-	(z1**2)*(z2 - zeta) - (z2**2)*zeta) - (zeta.conjugate() - z1)*z1*
+	4.*z1*zeta - 4.*z2*zeta) - m*(2.*zeta.conjugate() - z1 - z2)*(z1*z2*(z2 - 
+	4.*zeta) + (z1**2)*(z2 - zeta) - (z2**2)*zeta) - (zeta.conjugate() - z1)*z1*
 	(zeta.conjugate() - z2)*z2*(2.*z2*zeta + z1*(z2 + 2.*zeta)) + dm*(z1 - z2)*
 	(z1*z2*(z2 - 2.*zeta) + (z1**2)*(z2 - zeta) - (4.*m + (z2**2))*zeta + 
 	2.*zeta.conjugate()*(z2*zeta + z1*(z2 + zeta))))
@@ -179,8 +178,9 @@ def solution(x, y, s, q, origin, solver='numpy'):
 		return r.tolist()
 
 def check_solution(dm, m, zeta, z1, z2, z, origin):
-	zeta_actual = z + (m-dm)/(z1.conjugate()-z.conjugate()) + (m+dm)/(z2.conjugate()-z.conjugate())
-	if np.abs(zeta - zeta_actual) > 0.01:	#Tolerance for solution check
+	zeta_actual = (z + (m-dm)/(z1.conjugate()-z.conjugate()) +
+		(m+dm)/(z2.conjugate()-z.conjugate()))
+	if np.abs(zeta - zeta_actual) > 0.0001:	# Tolerance for solution check
 		return False
 	else:
 		return True
@@ -193,7 +193,7 @@ def magnification(x, y, s, q, origin, solutions=None, solver='numpy'):
 	magn = list(range(5))
 	for (i, z) in enumerate(solutions):
 		detJ = (1. - ((m-dm)/((z-z1)**2) + (m+dm)/((z-z2)**2)) *
-		((m-dm)/((z.conjugate()-z1)**2) + (m+dm)/((z.conjugate()-z2)**2)))
+			((m-dm)/((z.conjugate()-z1)**2) + (m+dm)/((z.conjugate()-z2)**2)))
 		if check_solution(dm, m, zeta, z1, z2, z, origin):
 			magn[i] = np.abs(1./detJ)
 		else:
