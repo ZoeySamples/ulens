@@ -50,7 +50,8 @@ while calculations are carried out in frame determined by 'origin'
 
 for test in tests:
 	"""Prints input paramters, image locations, and magnification"""
-	print("Input", tests.index(test) + 1, ":\nx = {:}\ny = {:}\ns = {:}\nq = {:}\n".format(*test))
+	print("Input", tests.index(test) + 1, ":\nx = {:}\ny = {:}\ns = {:}\nq = {:}\n"
+		.format(*test))
 	solutions = blf.solution(*test, origin, solver)
 	print("Image locations:")
 	(dm, m, zeta, z1, z2) = blf.assign(*test, origin)
