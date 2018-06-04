@@ -10,8 +10,8 @@ import numpy as np
 import cmath
 
 MODULE_PATH = os.path.abspath(__file__)
-MODULE_PATH = os.path.dirname(MODULE_PATH)
-MODULE_PATH = os.path.dirname(MODULE_PATH)
+for i in range(3):
+	MODULE_PATH = os.path.dirname(MODULE_PATH)
 PATH = os.path.join(MODULE_PATH, 'MulensModel-master', 'source', 'VBBL',
 		"VBBinaryLensingLibrary_wrapper.so")
 

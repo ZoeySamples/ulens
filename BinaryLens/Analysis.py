@@ -7,7 +7,7 @@ import numpy as np
 import cmath
 import matplotlib.pyplot as plt
 import MulensModel as mm
-import BinaryLensFunctions as blf
+import Functions as blf
 
 #solver = 'Skowron_and_Gould_12'
 #solver = 'numpy'
