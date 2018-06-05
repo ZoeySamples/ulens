@@ -8,12 +8,13 @@ import cmath
 import matplotlib.pyplot as plt
 import Functions as blf
 from MakePlots import Plots
+import MulensModel as mm
 
 # Input parameters
 s = 1.9		# Separation between bodies. Assume s>1. Type = string
 q = 1.e-7	# mass ratio between bodies in units of larger body's mass. Type = float
-pts = 300	# Number of data points on each side of the grid. Type = int
-origin = 'plan'		#Coordinate frame to carry out calculations. Type = string
+pts = int(2000)	# Number of data points on each side of the grid. Type = int
+origin = 'geo_cent'		#Coordinate frame to carry out calculations. Type = string
 solver = 'Skowron_and_Gould_12'	# Determines which method to solve polynomial with.
 
 """
@@ -59,12 +60,14 @@ if plot_on:
 		plt.show()
 
 # Plots magnification in a grid of points centered on the caustic
-plot_on = False
+plot_on = True
 if plot_on:
 	for (i, p) in enumerate(plot):
 		print((params[i]))
 		p.plot_magnification()
-		plt.show()
+		caustics = mm.Caustics(s=s, q=q)
+		caustics.plot(s=1)
+		#plt.show()
 
 # Writes data to fits table
 plot_on = True

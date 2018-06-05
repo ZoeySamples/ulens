@@ -100,7 +100,9 @@ class Plots(object):
 
 		self.get_variables()
 		self.construct_plots()
-		plt.scatter(self.x_1d, self.y_1d, c=self.mag_1d, s=((500./self.pts)**2),
+		#plt.scatter(self.x_1d, self.y_1d, c=self.mag_1d, s=((500./self.pts)**2),
+		#						marker = 'o', cmap='jet', lw=None)
+		plt.scatter(self.x_1d, self.y_1d, c=self.mag_1d, s=(1),
 								marker = 'o', cmap='jet', lw=None)
 		mag_plot = plt.colorbar()
 		mag_plot.set_label('Magnification')
@@ -110,6 +112,19 @@ class Plots(object):
 		plt.xlim(x_cent - w_caustic, x_cent + w_caustic)
 		plt.ylim(-h_caustic, h_caustic)
 		plt.title('Magnification using "{}" frame'.format(self.origin))
+
+		# Abbreviate file name
+		if self.origin == 'geo_cent':
+			origin_str = 'gcent'
+		else:
+			origin_str = self.origin
+		if self.solver == 'numpy':
+			solver_str = 'np'
+		elif self.solver == 'Skowron_and_Gould_12':
+			solver_str = 'SG'
+		else:
+			 solver_str = solver
+		plt.savefig('../Tables/Magn_{}_{}.png'.format(origin_str, solver_str))
 
 	def write_to_fits(self):
 		"""
@@ -127,12 +142,14 @@ class Plots(object):
 		hdu1 = fits.BinTableHDU.from_columns(col)
 		hdr = fits.Header()
 		hdr['SEPARAT'] = '{:f}'.format(self.s)
-		hdr['M_RATIO'] = '{:f}'.format(self.q)
+		hdr['M_RATIO'] = '{:f}e-8'.format(1.e8*self.q)
 		hdr['ORIGIN'] = self.origin
 		hdr['SOLVER'] = self.solver
-		hdr['RES'] = '{:f}'.format(self.pts)
+		hdr['RES'] = '{:d}'.format(self.pts)
 		hdu0 = fits.PrimaryHDU(header = hdr)
 		hdus = fits.HDUList([hdu0, hdu1])
+
+		print(self.origin, self.solver)
 
 		# Abbreviate file name
 		if self.origin == 'geo_cent':
