@@ -1,0 +1,11 @@
+gcc zroots.c -lm -lstdc++ -fPIC -O2 -c
+gcc laguer.c -lm -lstdc++ -fPIC -O2 -c
+gcc complex.c -lm -lstdc++ -fPIC -O2 -c
+gcc nrutil.c -lm -lstdc++ -fPIC -O2 -c
+gcc -Wl,-soname,rapper -shared -o zrootsBinaryLens_wrapper.so zrootsBinaryLens_wrapper.cpp -lm -lstdc++ -fPIC -O2 complex.o laguer.o zroots.o nrutil.o
+
+gcc zroots.c -lm -o -fPIC  -c
+gcc laguer.c -lm -o -fPIC  -c
+gcc complex.c -lm -o -fPIC  -c
+gcc nrutil.c -lm -o -fPIC  -c
+gcc -Wl,-soname,rapper -shared -o zrootsBinaryLens_wrapper.so zrootsBinaryLens_wrapper.c -lm  -fPIC complex.o laguer.o zroots.o nrutil.o
