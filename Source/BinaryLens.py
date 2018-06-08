@@ -99,7 +99,8 @@ class BinaryLens(object):
 				1. Write a dictionary to call BinaryLens with, including 
 					parameters:	{x, y, s, q, origin, solver, tolerance (opt)}.
 				2. Call any of the following functions:
-					print_solutions(print_input)
+					image_positions()
+					print_image_position(print_input)
 					print_magnification(print_input)
 
 			To make a plot with a grid of points or to write a table to a .fits
@@ -185,14 +186,10 @@ class BinaryLens(object):
 		self.z1_conj = self.z1.conjugate()
 		self.z2_conj = self.z2.conjugate()
 
-	def solutions(self):
-		"""Return solutions of polynomial -- written in general form."""
-
-		# Assign the values of the coefficients of the polynomial.
-		# Be aware that these expressions are very long and messy. They trail off
-		# the screen without text wrapping and look non-indented with text wrapping.
-
-		self.get_variables()
+	def get_coefficients(self):
+		"""
+		Returns the coefficients for the polynomial equation.
+		"""
 
 		coeff5 = (-self.zeta_conj + self.z1)*(self.zeta_conj- self.z2)
 
@@ -207,6 +204,18 @@ class BinaryLens(object):
 		coeff0 = (-2.*(self.m**2)*(self.z1**2)*self.z2 - 2.*(self.m**2)*self.z1*(self.z2**2) - self.m*(self.z1**3)*(self.z2**2) - self.m*(self.z1**2)*(self.z2**3) + (self.m**2)*(self.z1**2)*self.zeta + (self.dm**2)*((self.z1 - self.z2)**2)*self.zeta + 2.*(self.m**2)*self.z1*self.z2*self.zeta + self.m*(self.z1**3)*self.z2*self.zeta + (self.m**2)*(self.z2**2)*self.zeta + (self.zeta_conj**2)*(self.z1**2)*(self.z2**2)*self.zeta + 2.*self.m*(self.z1**2)*(self.z2**2)*self.zeta + self.m*self.z1*(self.z2**3)*self.zeta + (self.z1**3)*(self.z2**3)*self.zeta - self.dm*(self.z1 - self.z2)*(2.*self.m + self.z1*self.z2)*(self.z1*(self.z2 - self.zeta) - self.z2*self.zeta) - self.zeta_conj*self.z1*self.z2*((2.*self.dm*(self.z1 - self.z2) + self.z1*self.z2*(self.z1 + self.z2))*self.zeta + self.m*(-2.*self.z1*self.z2 + 2.*self.z1*self.zeta + 2.*self.z2*self.zeta)))
 
 		coeff_list = np.array([coeff5, coeff4, coeff3, coeff2, coeff1, coeff0])
+		return coeff_list
+
+
+	def solutions(self):
+		"""Return solutions of polynomial -- written in general form."""
+
+		# Assign the values of the coefficients of the polynomial.
+		# Be aware that these expressions are very long and messy. They trail off
+		# the screen without text wrapping and look non-indented with text wrapping.
+
+		self.get_variables()
+		coeff_list = self.get_coefficients()
 
 		# Return the roots of the polynomial via the given root finder
 		if self.solver == 'SG12':
@@ -243,6 +252,19 @@ class BinaryLens(object):
 		else:
 			return True
 
+	def image_positions(self):
+		"""
+		Calculates the image positions (i.e. checks which solutions pass the
+		check). Returns a list of the positions.
+		"""
+
+		self.solutions()
+		image_pos = []
+		for solution in self.roots:
+			if self.check_solution(solution=solution):
+				image_pos.append(solution)
+		return image_pos
+
 	def magnification(self):
 		"""Returns the magnification for each configuration"""
 
@@ -264,44 +286,59 @@ class BinaryLens(object):
 		# non-physical results.
 		self.tot_magn = sum(magn)
 
-	def print_solutions(self, print_input=True):
+	def print_input(self):
+		print('Input:\nx = {:}\ny = {:}\ns = {:}\nq = {:}\n'
+			.format(self.x, self.y, self.s, self.q))
+		print('Calculated in the {} using {}\n'.format(self.origin_phrase,
+					self.solver_phrase))
+
+	def print_image_position(self, print_input=True):
+		"""
+		Prints the image positions with the option to display the input parameters. 
+		"""
+
 		if print_input:
-			print('Input:\nx = {:}\ny = {:}\ns = {:}\nq = {:}\n'
-				.format(self.x, self.y, self.s, self.q))
-			print('Calculated in the {} using {}:\n'.format(self.origin_phrase,
-						self.solver_phrase))
+			self.print_input()
 		self.solutions()
+		image_pos = self.image_positions()
 		print('Image locations:')
-		for solution in self.roots:
-			if self.check_solution(solution=solution):
-				print('{:.5f}'.format(solution))
+		for (i, pos) in enumerate(image_pos):
+			print('{:.5f}'.format(pos))
 
 	def print_magnification(self, print_input=True):
+		"""
+		Prints the total magnification with the option to display the input 
+		parameters.
+		"""
+
 		if print_input:
-			print('Input:\nx = {:}\ny = {:}\ns = {:}\nq = {:}\n'
-				.format(self.x, self.y, self.s, self.q))
-			print('Calculated in the {} using {}:\n'.format(self.origin_phrase,
-						self.solver_phrase))
+			self.print_input()
 		self.solutions()
 		self.magnification()
 		print('Magnification: {:.5f}'.format(self.tot_magn))
 
 	def size_caustic(self):
+		"""
+		Determines the width, height, and position of the center of the caustic.
+		"""
+
 		w = 4.*np.sqrt(self.q)*(1. + 1./(2.*(self.s**2))) / (self.s**2)
 		h = 4.*np.sqrt(self.q)*(1. - 1./(2.*(self.s**2))) / (self.s**2)
 		x = 0.5*self.s - 1.0/self.s
 		return w, h, x
 
 	def get_grid_arrays(self):
+		"""Fills arrays for the x- and y-position to prepare grid plots."""
+
 		(w_caustic, h_caustic, x_cent) = self.size_caustic()
-		self.x_grid = np.linspace(x_cent - w_caustic, 
+		x_grid = np.linspace(x_cent - w_caustic, 
 								x_cent + w_caustic, self.res)
-		self.y_grid = np.linspace(-h_caustic, h_caustic, self.res)
+		y_grid = np.linspace(-h_caustic, h_caustic, self.res)
 		self.x_array = np.zeros(self.res**2)
 		self.y_array = np.zeros(self.res**2)
 
-		for (i, xx) in enumerate(self.x_grid):
-			for (j, yy) in enumerate(self.y_grid):
+		for (i, xx) in enumerate(x_grid):
+			for (j, yy) in enumerate(y_grid):
 				idx = self.res*i + j
 				self.x_array[idx] = xx
 				self.y_array[idx] = yy
@@ -309,6 +346,11 @@ class BinaryLens(object):
 				self.y = yy
 
 	def grid_plots(self):
+		"""
+		Fills arrays for the total magnification and number of images at each
+		point in the grid arrays.
+		"""
+
 		self.get_grid_arrays()
 		self.num_images = np.zeros(self.res**2, dtype=int)
 		self.mag_1d = np.zeros(self.res**2, dtype=float)
@@ -323,6 +365,11 @@ class BinaryLens(object):
 					self.num_images[idx] += 1
 
 	def print_errors(self):
+		"""
+		Prints the number of points that have n images, where n is an integer
+		ranging from 0 to 5.
+		"""
+
 		num = np.zeros(6, dtype = int)
 		for num_im in self.num_images:
 			for i in range(len(num)):
@@ -335,7 +382,6 @@ class BinaryLens(object):
 	def plot_n_solns(self, save=False, print_errors = True):
 		"""
 		Plot showing number of images on a grid (x,y) around planetary caustic
-
 		"""
 
 		self.grid_plots()
@@ -362,9 +408,9 @@ class BinaryLens(object):
 	def plot_magnification(self, save=False):
 		"""
 		Make square grid of points that shows the magnification at each point
-
 		"""
 
+		self.grid_plots()
 		plt.scatter(self.x_array, self.y_array, c=self.mag_1d, s=((500./self.res)**2),
 								marker = 'o', cmap='jet', lw=None)
 		mag_plot = plt.colorbar()
