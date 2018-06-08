@@ -29,7 +29,10 @@ else:
 		shape=(10,))
 	_vbbl_SG12_5 = vbbl.VBBL_SG12_5
 
-PATH = os.path.join(MODULE_PATH, 'zroots_codes', "zrootsBinaryLens_wrapper.so")
+MODULE_PATH = os.path.abspath(__file__)
+for i in range(2):
+	MODULE_PATH = os.path.dirname(MODULE_PATH)
+PATH = os.path.join(MODULE_PATH, 'NumericalRecipes', "zrootsBinaryLens_wrapper.so")
 
 # Here we attempt to access the zroots root finder
 try:
@@ -47,7 +50,7 @@ else:
 class BinaryLens(object):
 
 	"""
-	Using the binary lens equation:	Calculates solutions, magnification, makes
+	Using the binary lens equation: Calculates solutions, magnification, makes
 	plots, and writes to files. Works for point test runs or filling a grid of 
 	points centered on the planetary caustic.
 
@@ -127,7 +130,7 @@ class BinaryLens(object):
 
 	def get_variables(self):
 		"""
-		Assign all variables to be used in polynomial. Returns:
+		Assign all variables to be used in polynomial. Assigns:
 	
 			dm	 - defined as half the difference of the masses (positive)
 			m	 - defined as half the sum of the masses
