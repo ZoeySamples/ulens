@@ -3,23 +3,21 @@
 # BinaryLensPlots.py
 # Last Updated: Jun 04, 2018
 
-import numpy as np
-import cmath
 import matplotlib.pyplot as plt
 from BinaryLens import BinaryLens as BL
 import MulensModel as mm
 
 # Input parameters
 s = 1.9
-q = 1.e-7
-res = int(50)
-origin = 'geo_cent'
+q = 1.e-2
+res = int(100)
+origin = 'plan'
 solver = 'SG12'
 
 param = []
 plot = []
 
-loop_on = True
+loop_on = False
 if loop_on:
 	method =  ['numpy', 'SG12']
 	coordinates = ['geo_cent', 'plan']
