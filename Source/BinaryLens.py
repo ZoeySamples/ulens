@@ -1,7 +1,7 @@
 # Zoey Samples
-# Created: June 6, 2018
+# Created: June 06, 2018
 # BinaryLens.py
-# Last Updated: June 6, 2018
+# Last Updated: June 06, 2018
 
 import sys
 import os
@@ -70,7 +70,7 @@ class BinaryLens(object):
 					'star'		- the star's (or larger body's) frame
 					'plan'		- the planet's (or smaller body's) frame
 					'com'		- the center-of-mass frame
-					'caustic'	- the planetary caustic frame *SOON*
+					'caustic'	- the planetary caustic frame
 
 			solver (string):
 				Determines which root finder to use to solve the polynomial.
@@ -161,6 +161,8 @@ class BinaryLens(object):
 			self.zeta = (self.x - self.s/2.) + self.y*1.j
 		elif self.origin == 'com':
 			self.zeta = (self.x + self.s*self.dm/(2.*self.m)) + self.y*1.j
+		elif self.origin == 'caustic':
+			self.zeta = (self.x + 1./(self.s) - self.s/2.) + self.y*1.j
 		else:
 			raise ValueError('Unknown coordinate system: {:}'.format(origin))
 		self.zeta_conj = self.zeta.conjugate()
@@ -183,6 +185,9 @@ class BinaryLens(object):
 		elif self.origin == 'com':
 			self.z1 = self.s*(self.m + self.dm) / (2.*self.m)
 			self.z2 = -self.s*(self.m - self.dm) / (2.*self.m)
+		elif self.origin == 'caustic':
+			self.z1 = 1./self.s
+			self.z2 = -self.s + 1./self.s
 		else:
 			raise ValueError('Unknown coordinate system: {:}'.format(origin))
 
@@ -290,7 +295,7 @@ class BinaryLens(object):
 		self.tot_magn = sum(magn)
 
 	def print_input(self):
-		print('Input:\nx = {:}\ny = {:}\ns = {:}\nq = {:}\n'
+		print('\nInput:\nx = {:}\ny = {:}\ns = {:}\nq = {:}\n'
 			.format(self.x, self.y, self.s, self.q))
 		print('Calculated in the {} using {}\n'.format(self.origin_phrase,
 					self.solver_phrase))
@@ -453,7 +458,7 @@ class BinaryLens(object):
 		hdu0 = fits.PrimaryHDU(header = hdr)
 		hdus = fits.HDUList([hdu0, hdu1])
 
-		file_name = '../Tables/BL_{}_{:2}.fits'.format(self.origin_file, 
+		file_name = '../Tables/BL_{}_{}.fits'.format(self.origin_file, 
 													self.solver_file)
 		hdus.writeto(file_name)
 		print(file_name, 'has been saved')
@@ -479,6 +484,10 @@ class BinaryLens(object):
 			self.origin_file = self.origin
 			self.origin_title = 'Star'
 			self.origin_phrase = 'star frame'
+		elif self.origin == 'caustic':
+			self.origin_file = 'caus'
+			self.origin_title = 'Caustic'
+			self.origin_phrase = 'caustic frame'
 		else:
 			raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
 
