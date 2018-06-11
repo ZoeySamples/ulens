@@ -5,8 +5,8 @@
 
 from BinaryLens import BinaryLens as BL
 
-solver = 'zroots'
-origin = 'plan'
+solver = 'SG12'
+origin = 'caustic'
 
 x = [0.0, 1.3219, 1.0799, 1.2489]
 y = [0.0, -0.0771, 0.0985, 0.0209]
