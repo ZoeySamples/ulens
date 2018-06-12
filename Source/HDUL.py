@@ -145,11 +145,19 @@ class HDUL(object):
 		caustics.plot(s=5, c='red')
 
 		plt.gcf().set_size_inches(8, 6)
-		plt.title('High Magnification with Caustic\nFrame: {}; Solver = {}; M > {}'.
-						format(self.origin_title, self.solver_title, self.cutoff))
+		plt.title('High Magnification with Caustic:\n{} Frame; {} Solver; M > {}, q={}'.
+						format(self.origin_title, self.solver_title, self.cutoff, self.q))
+
 		if save:
-			plt.savefig('../Tables/high_mag_{}_{}'.format(self.solver_file,
-									self.origin_file))
+			for i in range(10):
+				try:
+					file_name = ('../Tables/high_mag_{}_{}{}'.format(self.solver_file,
+									self.origin_file, i))
+					plt.savefig(file_name)
+					print(file_name, 'has been saved')
+				except:
+					continue
+				break
 
 	def get_magn_outliers(self):
 		"""
@@ -217,11 +225,18 @@ class HDUL(object):
 		caustics.plot(s=5, c='red')
 
 		plt.gcf().set_size_inches(8, 6)
-		plt.title('Erroneous Num Images with Caustic\nFrame: {}; Solver = {}; M > {}'.
-					format(self.origin_title, self.solver_title, self.cutoff))
+		plt.title('Erroneous Num Images with Caustic:\n{} Frame; {} Solver; q={}'.
+					format(self.origin_title, self.solver_title, self.q))
 		if save:
-			plt.savefig('../Tables/high_mag_{}_{}'.format(self.solver_file,
-									self.origin_file))
+			for i in range(10):
+				try:
+					file_name = ('../Tables/num_errors_{}_{}{}'.format(self.solver_file,
+									self.origin_file, i))
+					plt.savefig(file_name)
+					print(file_name, 'has been saved')
+				except:
+					continue
+				break
 
 	def get_num_images_errors(self):
 		"""
@@ -295,6 +310,10 @@ class HDUL(object):
 			self.origin_file = self.origin
 			self.origin_title = 'Star'
 			self.origin_phrase = 'star frame'
+		elif self.origin == 'caustic':
+			self.origin_file = 'caus'
+			self.origin_title = 'Caustic'
+			self.origin_phrase = 'caustic frame'
 		else:
 			raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
 
