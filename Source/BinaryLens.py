@@ -10,6 +10,7 @@ import numpy as np
 import cmath
 import matplotlib.pyplot as plt
 import MulensModel as mm
+from astropy.io import fits
 
 MODULE_PATH = os.path.abspath(__file__)
 for i in range(3):
@@ -199,6 +200,20 @@ class BinaryLens(object):
 		Returns the coefficients for the polynomial equation.
 		"""
 
+		"""
+		coeff5 = (self.z1**2 - self.zeta_conj**2)
+
+		coeff4 = (-(self.z1*(2*self.dm + self.z1*self.zeta)) - 2*self.m*self.zeta_conj + self.zeta*self.zeta_conj**2)
+
+		coeff3 = (-2*self.z1**4 + 4*(self.dm*self.z1 + self.m*self.zeta)*self.zeta_conj + 2*self.z1**2*self.zeta_conj**2)
+
+		coeff2 = (4*self.dm*self.z1*(self.m + self.z1**2) + 2*(2*self.m**2 + self.z1**4)*self.zeta - 4*self.dm*self.z1*self.zeta*self.zeta_conj - 2*self.z1**2*self.zeta*self.zeta_conj**2)
+
+		coeff1 = self.z1*(-4*self.dm**2*self.z1 - 4*self.m**2*self.z1 + self.z1**5 - 8*self.dm*self.m*self.zeta - 4*self.z1*(self.dm*self.z1 + self.m*self.zeta)*self.zeta_conj - self.z1**3*self.zeta_conj**2)
+
+		coeff0 = self.z1**2*(4*self.dm*self.m*self.z1 - 2*self.dm*self.z1**3 + 4*self.dm**2*self.zeta - self.z1**4*self.zeta + 2*self.z1*(self.m*self.z1 + 2*self.dm*self.zeta)*self.zeta_conj + self.z1**2*self.zeta*self.zeta_conj**2)
+
+		"""
 		coeff5 = (-self.zeta_conj + self.z1)*(self.zeta_conj- self.z2)
 
 		coeff4 = (self.m*self.z1 + self.m*self.z2 + 2.*(self.z1**2)*self.z2 + 2.*self.z1*(self.z2**2) + self.dm*(-self.z1 + self.z2) + self.z1*self.z2*self.zeta + (self.zeta_conj**2)*(2.*self.z1 + 2.*self.z2 + self.zeta) - self.zeta_conj*(2.*self.m + (self.z1 + self.z2)*(2.*self.z1 + 2.*self.z2 + self.zeta)))
@@ -211,9 +226,9 @@ class BinaryLens(object):
 
 		coeff0 = (-2.*(self.m**2)*(self.z1**2)*self.z2 - 2.*(self.m**2)*self.z1*(self.z2**2) - self.m*(self.z1**3)*(self.z2**2) - self.m*(self.z1**2)*(self.z2**3) + (self.m**2)*(self.z1**2)*self.zeta + (self.dm**2)*((self.z1 - self.z2)**2)*self.zeta + 2.*(self.m**2)*self.z1*self.z2*self.zeta + self.m*(self.z1**3)*self.z2*self.zeta + (self.m**2)*(self.z2**2)*self.zeta + (self.zeta_conj**2)*(self.z1**2)*(self.z2**2)*self.zeta + 2.*self.m*(self.z1**2)*(self.z2**2)*self.zeta + self.m*self.z1*(self.z2**3)*self.zeta + (self.z1**3)*(self.z2**3)*self.zeta - self.dm*(self.z1 - self.z2)*(2.*self.m + self.z1*self.z2)*(self.z1*(self.z2 - self.zeta) - self.z2*self.zeta) - self.zeta_conj*self.z1*self.z2*((2.*self.dm*(self.z1 - self.z2) + self.z1*self.z2*(self.z1 + self.z2))*self.zeta + self.m*(-2.*self.z1*self.z2 + 2.*self.z1*self.zeta + 2.*self.z2*self.zeta)))
 
+
 		coeff_list = np.array([coeff5, coeff4, coeff3, coeff2, coeff1, coeff0])
 		return coeff_list
-
 
 	def solutions(self):
 		"""Return solutions of polynomial -- written in general form."""
@@ -458,10 +473,15 @@ class BinaryLens(object):
 		hdu0 = fits.PrimaryHDU(header = hdr)
 		hdus = fits.HDUList([hdu0, hdu1])
 
-		file_name = '../Tables/BL_{}_{}.fits'.format(self.origin_file, 
-													self.solver_file)
-		hdus.writeto(file_name)
-		print(file_name, 'has been saved')
+		for i in range(10):
+			try:
+				file_name = '../Tables/BL_{}_{}_{}.fits'.format(
+									self.origin_file, self.solver_file, i)
+				hdus.writeto(file_name)
+				print(file_name, 'has been saved')
+			except:
+				continue
+			break
 
 	def strings(self):
 		"""
