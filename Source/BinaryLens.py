@@ -9,6 +9,7 @@ import ctypes
 import numpy as np
 import cmath
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import MulensModel as mm
 from astropy.io import fits
 
@@ -200,6 +201,7 @@ class BinaryLens(object):
 		Returns the coefficients for the polynomial equation.
 		"""
 
+		self.get_variables()
 
 		coeff5 = (self.z1**2 - self.zeta_conj**2)
 
@@ -237,7 +239,6 @@ class BinaryLens(object):
 		# Be aware that these expressions are very long and messy. They trail off
 		# the screen without text wrapping and look non-indented with text wrapping.
 
-		self.get_variables()
 		coeff_list = self.get_coefficients()
 
 		# Return the roots of the polynomial via the given root finder
@@ -348,14 +349,15 @@ class BinaryLens(object):
 		w = 4.*np.sqrt(self.q)*(1. + 1./(2.*(self.s**2))) / (self.s**2)
 		h = 4.*np.sqrt(self.q)*(1. - 1./(2.*(self.s**2))) / (self.s**2)
 		x = 0.5*self.s - 1.0/self.s
+		self.delta = 2.*w / 200.
+		self.epsilon = 2.*h / 200.
 		return w, h, x
 
-	def get_grid_arrays(self):
+	def fill_grid_arrays(self):
 		"""Fills arrays for the x- and y-position to prepare grid plots."""
 
 		(w_caustic, h_caustic, x_cent) = self.size_caustic()
-		x_grid = np.linspace(x_cent - w_caustic, 
-								x_cent + w_caustic, self.res)
+		x_grid = np.linspace(x_cent - w_caustic, x_cent + w_caustic, self.res)
 		y_grid = np.linspace(-h_caustic, h_caustic, self.res)
 		self.x_array = np.zeros(self.res**2)
 		self.y_array = np.zeros(self.res**2)
@@ -374,7 +376,7 @@ class BinaryLens(object):
 		point in the grid arrays.
 		"""
 
-		self.get_grid_arrays()
+		self.fill_grid_arrays()
 		self.num_images = np.zeros(self.res**2, dtype=int)
 		self.mag_1d = np.zeros(self.res**2, dtype=float)
 		for idx in range(self.res**2):
@@ -386,6 +388,122 @@ class BinaryLens(object):
 			for solution in self.roots:
 				if self.check_solution(solution=solution):
 					self.num_images[idx] += 1
+
+	#Step 1
+	def plot_coeff_tstat(self, region = 'cusp', region_res = 20,
+										sample_res = 5, save = False):
+
+		self.tstat_grid_plot(region = region, region_res = region_res,
+								sample_res = sample_res)
+		for (i, coeff) in enumerate(self.tstat_coeff):
+			plt.scatter(coeff, self.region_tstat, s=5, color='black', lw=None)
+			plt.xlabel(self.coeff_string[i])
+			plt.ylabel('t-Test Result')
+			plt.xlim(0, max(coeff))
+			plt.ylim(0, max(self.region_tstat))
+			plt.title('t-Test Result vs. {}'.format(self.coeff_string[i]))
+			plt.show()
+			if save:
+				continue	#FIXME: Include save condition
+
+	#Step 2
+	def tstat_grid_plot(self, region, region_res, sample_res):
+		self.fill_region_grid_arrays(region = region, region_res = region_res)
+		self.get_region_arrays(region_res = region_res, sample_res = sample_res)
+		for (idx, magn) in enumerate(self.region_magn):
+			self.sample_magn[idx] = self.return_sample_magn(x = self.region_xarray[idx],
+							y = self.region_yarray[idx], sample_res = sample_res)
+			self.region_tstat[idx] = self.get_tstat(magn = magn, sample_magn =
+														self.sample_magn[idx])
+			self.x = self.region_xarray[idx]
+			self.y = self.region_yarray[idx]
+		self.get_coeff_strings()
+
+	#Step 2.5
+	def get_coeff_strings(self):
+		self.coeff_string = [None]*12
+		for i in range(6):
+			self.coeff_string[i] = ('Re(coeff{})'.format(i))
+			self.coeff_string[i+6] = ('Im(coeff{})'.format(i))
+
+	#Step 2.4
+	def get_tstat(self, magn, sample_magn):
+		mean_magn = sum(sample_magn) / len(sample_magn)
+		stderr_magn = np.std(sample_magn) / np.sqrt(len(sample_magn))
+		tstat = abs(magn - mean_magn) / stderr_magn
+		return tstat
+
+	#Step 2.3
+	def return_sample_magn(self, x, y, sample_res):
+		sample_xgrid = np.linspace(x - self.delta, x + self.delta, sample_res)
+		sample_ygrid = np.linspace(y - self.epsilon, y + self.epsilon, sample_res)
+		sample_magn = np.zeros(sample_res**2)
+		for (i, xx) in enumerate(sample_xgrid):
+			for (j, yy) in enumerate(sample_ygrid):
+				sample_idx = sample_res*i + j
+				self.x = xx
+				self.y = yy
+				roots = self.solutions()
+				self.magnification()
+				sample_magn[sample_idx] = self.tot_magn
+		return sample_magn
+
+	#Step 2.2
+	def get_region_arrays(self, region_res, sample_res):
+		self.region_xarray = np.zeros(region_res**2)
+		self.region_yarray = np.zeros(region_res**2)
+		self.region_magn = np.zeros(region_res**2)
+		self.region_tstat = np.zeros(region_res**2)
+		self.tstat_coeff = [[None]*region_res**2]*12
+		self.sample_magn = [[None]*sample_res**2]*(region_res**2)
+		for (i, xx) in enumerate(self.region_xgrid):
+			for (j, yy) in enumerate(self.region_ygrid):
+				idx = region_res*i + j
+				self.region_xarray[idx] = xx
+				self.region_yarray[idx] = yy
+				self.x = xx
+				self.y = yy
+				roots = self.solutions()
+				self.magnification()
+				self.region_magn[idx] = self.tot_magn
+				coeffs = self.get_region_coeff()
+				for k in range(12):
+					self.tstat_coeff[k][idx] = coeffs[k]
+		print(self.tstat_coeff[0] ==self.tstat_coeff[6])
+		sys.exit()
+
+	#Step 2.2.1
+	def get_region_coeff(self):
+		coeffs = self.get_coefficients()
+		c_real = []
+		c_imag = []
+		# This fills the c_real and c_imag lists in descending order. Specifically,
+		# c_real[n] is the real component of the nth-degree term, etc.
+		for i in range(len(coeffs)):
+			c_r = float(np.real(coeffs[i]))
+			c_i = float(np.imag(coeffs[i]))
+			c_real.append(c_r)
+			c_imag.append(c_i)
+
+		"""
+		This reverses the order of the coefficients and places the real
+		coefficients in front of the imaginary. For example, c[4] is the real
+		component of the 4th degree term, and c[9] is the imaginary component of
+		the (9-6)=3rd degree term.
+		"""
+		c = c_real[::-1] + c_imag[::-1]
+		return c
+
+	#Step 2.1
+	def fill_region_grid_arrays(self, region, region_res):
+		(w_caustic, h_caustic, x_center) = self.size_caustic()
+		if region == 'cusp':
+			region_xmin = x_center + 0.9*w_caustic
+			region_xmax = x_center + 1.2*w_caustic
+			region_ymin = -0.1*h_caustic
+			region_ymax = 0.1*h_caustic
+			self.region_xgrid = np.linspace(region_xmin, region_xmax, region_res)
+			self.region_ygrid = np.linspace(region_ymin, region_ymax, region_res)
 
 	def print_errors(self):
 		"""
@@ -428,14 +546,26 @@ class BinaryLens(object):
 			plt.savefig(file_name)
 			print(file_name, 'has been saved')
 
-	def plot_magnification(self, save=False):
+	def plot_magnification(self, log_colorbar = False, save=False):
 		"""
-		Make square grid of points that shows the magnification at each point
+		Make square grid of points that shows the magnification at each point.
+		Attributes:
+			log_colorbar (bool):
+				If True, the magnification colorbar will go on log
+				scale. Otherwise, the scale will be linear.
+
+			save (bool):
+				If True, file will be saved by convention determined below. If
+				False, it will do nothing.
 		"""
 
 		self.grid_plots()
-		plt.scatter(self.x_array, self.y_array, c=self.mag_1d, s=((500./self.res)**2),
-								marker = 'o', cmap='jet', lw=None)
+		if log_colorbar:
+			norm = colors.LogNorm()
+		else:
+			norm = None
+		plt.scatter(self.x_array, self.y_array, c=self.mag_1d, norm=norm,
+				s=((500./self.res)**2), marker = 'o', cmap='jet', lw=None)
 		mag_plot = plt.colorbar()
 		mag_plot.set_label('Magnification')
 		plt.xlabel('X-position of source')
