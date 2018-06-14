@@ -9,11 +9,12 @@ import MulensModel as mm
 
 # Input parameters
 s = 1.9
-mass_ratios = [1e-7]
-res = int(200)
-method =  ['numpy']
+mass_ratios = [5e-8]
+res = int(100)
+method =  ['SG12']
 coordinates = ['geo_cent']
-tolerance = 0.0001
+tolerance = 0.00007
+region = 'caustic'
 param = []
 plot = []
 
@@ -28,14 +29,17 @@ for solver in method:
 plot_on = False
 if plot_on:
 	for p in plot:
-		p.plot_n_solns(save=False, print_errors=True)
+		p.plot_n_solns(region = region, save=False, print_errors=True)
+		caustics = mm.Caustics(s=s, q=p.q)
+		caustics.plot(s=2)
 		plt.show()
 
 # Plots magnification in a grid of points centered on the caustic
 plot_on = True
 if plot_on:
 	for p in plot:
-		p.plot_magnification(log_colorbar = True)
+		p.plot_magnification(outliers = True, region = region, log_colorbar = False,
+									cutoff = None)
 		caustics = mm.Caustics(s=s, q=p.q)
 		caustics.plot(s=1)
 		plt.show()
