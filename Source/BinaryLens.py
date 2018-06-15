@@ -203,7 +203,7 @@ class BinaryLens(object):
 
 		self.get_variables()
 
-
+		"""
 		coeff5 = (self.z1**2 - self.zeta_conj**2)
 
 		coeff4 = (-(self.z1*(2*self.dm + self.z1*self.zeta)) - 2*self.m*self.zeta_conj + self.zeta*self.zeta_conj**2)
@@ -228,7 +228,7 @@ class BinaryLens(object):
 		coeff1 = ((-self.dm**2)*((self.z1 - self.z2)**2) + (self.m**2)*((self.z1**2) + 6.*self.z1*self.z2 + (self.z2**2) - 4.*self.z1*self.zeta - 4.*self.z2*self.zeta) - self.m*(2.*self.zeta_conj - self.z1 - self.z2)*(self.z1*self.z2*(self.z2 - 4.*self.zeta) + (self.z1**2)*(self.z2 - self.zeta) - (self.z2**2)*self.zeta) - (self.zeta_conj - self.z1)*self.z1*(self.zeta_conj - self.z2)*self.z2*(2.*self.z2*self.zeta + self.z1*(self.z2 + 2.*self.zeta)) + self.dm*(self.z1 - self.z2)*(self.z1*self.z2*(self.z2 - 2.*self.zeta) + (self.z1**2)*(self.z2 - self.zeta) - (4.*self.m + (self.z2**2))*self.zeta + 2.*self.zeta_conj*(self.z2*self.zeta + self.z1*(self.z2 + self.zeta))))
 
 		coeff0 = (-2.*(self.m**2)*(self.z1**2)*self.z2 - 2.*(self.m**2)*self.z1*(self.z2**2) - self.m*(self.z1**3)*(self.z2**2) - self.m*(self.z1**2)*(self.z2**3) + (self.m**2)*(self.z1**2)*self.zeta + (self.dm**2)*((self.z1 - self.z2)**2)*self.zeta + 2.*(self.m**2)*self.z1*self.z2*self.zeta + self.m*(self.z1**3)*self.z2*self.zeta + (self.m**2)*(self.z2**2)*self.zeta + (self.zeta_conj**2)*(self.z1**2)*(self.z2**2)*self.zeta + 2.*self.m*(self.z1**2)*(self.z2**2)*self.zeta + self.m*self.z1*(self.z2**3)*self.zeta + (self.z1**3)*(self.z2**3)*self.zeta - self.dm*(self.z1 - self.z2)*(2.*self.m + self.z1*self.z2)*(self.z1*(self.z2 - self.zeta) - self.z2*self.zeta) - self.zeta_conj*self.z1*self.z2*((2.*self.dm*(self.z1 - self.z2) + self.z1*self.z2*(self.z1 + self.z2))*self.zeta + self.m*(-2.*self.z1*self.z2 + 2.*self.z1*self.zeta + 2.*self.z2*self.zeta)))
-		"""
+
 
 		coeff_list = np.array([coeff5, coeff4, coeff3, coeff2, coeff1, coeff0])
 		return coeff_list
@@ -360,11 +360,16 @@ class BinaryLens(object):
 			region_xmax = x_center + w_caustic
 			region_ymin = -h_caustic
 			region_ymax = h_caustic
-		if region == 'cusp':
+		if region == 'onax_cusp':
 			region_xmin = x_center + 0.3*w_caustic
-			region_xmax = x_center + 0.6*w_caustic
-			region_ymin = -0.1*h_caustic
-			region_ymax = 0.1*h_caustic
+			region_xmax = x_center + 0.9*w_caustic
+			region_ymin = -0.15*h_caustic
+			region_ymax = 0.15*h_caustic
+		if region == 'offax_cusp':
+			region_xmin = x_center - 0.15*w_caustic
+			region_xmax = x_center + 0.15*w_caustic
+			region_ymin = 0.3*h_caustic
+			region_ymax = 0.9*h_caustic
 		x_grid = np.linspace(region_xmin, region_xmax, self.res)
 		y_grid = np.linspace(region_ymin, region_ymax, self.res)
 
@@ -394,10 +399,11 @@ class BinaryLens(object):
 		self.num_images = np.zeros(self.res**2, dtype=int)
 		self.magn_array = np.zeros(self.res**2, dtype=float)
 		self.tstat_array = np.zeros(self.res**2)
+		self.coeff_array = [[]*self.res**2 for i in range(12)]
 		if data == 'tstat':
 			self.coeff_array = [[]*self.res**2 for i in range(12)]
 			self.sample_magn = [[]*sample_res**2 for i in range(self.res**2)]
-			self.get_coeff_strings()
+		self.get_coeff_strings()
 
 		print('Getting data...')
 		for idx in range(self.res**2):
@@ -412,6 +418,9 @@ class BinaryLens(object):
 			self.x = self.x_array[idx]
 			self.y = self.y_array[idx]
 			roots = self.solutions()
+			coeffs = self.get_coeff_list()
+			for k in range(12):
+				self.coeff_array[k].append(coeffs[k])
 			if data == 'n_solns':
 				for solution in self.roots:
 					if self.check_solution(solution=solution):
@@ -577,7 +586,7 @@ class BinaryLens(object):
 				break
 
 	def plot_rel_magnification(self, other_BL, region = 'caustic', outliers = False,
-							cutoff = None, log_colorbar = False, save=False):
+				cutoff = None, log_colorbar = False, save = False, hl_out = False):
 		"""
 		Plots the fractional difference in magnification between two sets of data.
 
@@ -608,23 +617,18 @@ class BinaryLens(object):
 													other_BL.magn_array)
 		rel_magn = (magn1 / magn2)
 
-		size = (500/self.res)**2
+		size = (400/self.res)**2
+		#(x, y, magn) = (self.x_array, self.y_array, self.magn_array)
 
-		if outliers:
-			self.cutoff = cutoff
-			self.get_magn_outliers()
-			(x, y, magn) = (self.x_outliers, self.y_outliers, self.magn_outliers)
-		else:
-			(x, y, magn) = (self.x_array, self.y_array, self.magn_array)
 
 		if outliers:
 			rel_magn_outliers = []
 			x_outliers = []
 			y_outliers = []
 			if cutoff == None:
-				cutoff = 0.01
+				cutoff = 1.1
 			for (i, magn) in enumerate(rel_magn):
-				if abs(magn - 1.) > cutoff:
+				if (magn > cutoff) or (1./magn > cutoff):
 					x_outliers.append(x[i])
 					y_outliers.append(y[i])
 					rel_magn_outliers.append(magn)
@@ -634,14 +638,15 @@ class BinaryLens(object):
 			if len(x) == 0:
 				print('No outliers found. Continuing with next plot...')
 				return
+
+		if (hl_out and outliers):
+			plt.scatter(self.x_array, self.y_array, c='cyan', lw=None, s=size)
+			plt.scatter(x, y, c='red', lw=None, s=size)
 		else:
-			size = (500/self.res)**2
-
-
-		plt.scatter(x, y, c = rel_magn, s=size, marker = 'o',
-										cmap='bwr', lw=None, norm=norm)
-		rel_plot = plt.colorbar()
-		rel_plot.set_label('Fractional Difference')
+			plt.scatter(x, y, c = rel_magn, s=size, marker = 'o',
+											cmap='plasma', lw=None, norm=norm)
+			rel_plot = plt.colorbar()
+			rel_plot.set_label('Fractional Difference')
 		plt.xlabel('X-position of Source', fontsize = 12)
 		plt.ylabel('Y-position of Source', fontsize = 12)
 		plt.gcf().set_size_inches(8, 6)
@@ -650,6 +655,58 @@ class BinaryLens(object):
 		plt.title('Relative Magnification\n({}, {} Frame) / ({}, {} Frame)'.
 							format(self.solver_title, self.origin_title,
 								other_BL.solver_title, other_BL.origin_title))
+
+	def plot_outlier_coeff(self, other_BL, region = 'caustic', cutoff = None):
+
+		self.grid_plots(region = region, data = 'magn')
+		other_BL.grid_plots(region = region, data = 'magn')
+
+		print('Plotting the relative magnification...')
+
+
+		# Assign the appropriate data, based on whether we want to include all
+		# the data, or just the outliers.
+
+		(x, y, magn1, magn2, coeff) = (self.x_array, self.y_array, self.magn_array,
+											other_BL.magn_array, self.coeff_array)
+		rel_magn = (magn1 / magn2)
+		size = (300/self.res)**2
+
+		rel_magn_outliers = []
+		x_outliers = []
+		y_outliers = []
+		coeff_outliers = [[] for i in range(12)]
+		if cutoff == None:
+			cutoff = 1.1
+		for (i, magn) in enumerate(rel_magn):
+			print(i)
+			if (magn > cutoff) or (1./magn > cutoff):
+				print('True')
+				x_outliers.append(x[i])
+				y_outliers.append(y[i])
+				rel_magn_outliers.append(magn)
+				for k in range(12):
+					coeff_outliers[k].append(coeff[k][i])
+
+		if len(x_outliers) == 0:
+			print('No outliers found. Continuing with next plot...')
+			return
+
+		print('Plotting...')
+		for (i, coeff) in enumerate(self.coeff_array):
+			ax = plt.gca()
+			ax.scatter(coeff, rel_magn, s=size, color='black', lw=None)
+			ax.scatter(coeff_outliers[i], rel_magn_outliers, s=size, color='red', lw=None)
+			ax.set_yscale('log')
+			xmin = min(coeff)
+			xmax = max(coeff)
+			dx = xmax - xmin
+			plt.xlabel(self.coeff_string[i])
+			plt.ylabel('Relative Magnification')
+			plt.xlim(xmin - 0.01*dx, xmax + 0.01*dx)
+			plt.ylim(0, max(rel_magn_outliers))
+			plt.title('Outliers for {}'.format(self.coeff_string[i]))
+			plt.show()
 
 	def get_magn_outliers(self, data = None):
 		"""
