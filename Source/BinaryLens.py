@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import MulensModel as mm
 from astropy.io import fits
-from copy import deepcopy
 
 MODULE_PATH = os.path.abspath(__file__)
 for i in range(3):
@@ -204,6 +203,7 @@ class BinaryLens(object):
 
 		self.get_variables()
 
+
 		coeff5 = (self.z1**2 - self.zeta_conj**2)
 
 		coeff4 = (-(self.z1*(2*self.dm + self.z1*self.zeta)) - 2*self.m*self.zeta_conj + self.zeta*self.zeta_conj**2)
@@ -215,8 +215,8 @@ class BinaryLens(object):
 		coeff1 = self.z1*(-4*self.dm**2*self.z1 - 4*self.m**2*self.z1 + self.z1**5 - 8*self.dm*self.m*self.zeta - 4*self.z1*(self.dm*self.z1 + self.m*self.zeta)*self.zeta_conj - self.z1**3*self.zeta_conj**2)
 
 		coeff0 = self.z1**2*(4*self.dm*self.m*self.z1 - 2*self.dm*self.z1**3 + 4*self.dm**2*self.zeta - self.z1**4*self.zeta + 2*self.z1*(self.m*self.z1 + 2*self.dm*self.zeta)*self.zeta_conj + self.z1**2*self.zeta*self.zeta_conj**2)
-
 		"""
+
 		coeff5 = (-self.zeta_conj + self.z1)*(self.zeta_conj- self.z2)
 
 		coeff4 = (self.m*self.z1 + self.m*self.z2 + 2.*(self.z1**2)*self.z2 + 2.*self.z1*(self.z2**2) + self.dm*(-self.z1 + self.z2) + self.z1*self.z2*self.zeta + (self.zeta_conj**2)*(2.*self.z1 + 2.*self.z2 + self.zeta) - self.zeta_conj*(2.*self.m + (self.z1 + self.z2)*(2.*self.z1 + 2.*self.z2 + self.zeta)))
@@ -250,6 +250,8 @@ class BinaryLens(object):
 			return self.roots
 		elif self.solver == 'zroots':
 			rev_list = coeff_list[::-1]
+			#print(rev_list)
+			#print(self.s, self.q, self.x, self.y)
 			out = _zroots_5(*(rev_list.real.tolist() + rev_list.imag.tolist()))
 			self.roots = [out[i] + out[i+5] * 1.j for i in range(5)]
 			return self.roots
@@ -377,7 +379,7 @@ class BinaryLens(object):
 				self.x = xx
 				self.y = yy
 
-	def grid_plots(self, data, region, sample_res):
+	def grid_plots(self, data, region, sample_res = None):
 		"""
 		Fills arrays for the total magnification and number of images at each
 		point in the grid arrays.
@@ -487,16 +489,17 @@ class BinaryLens(object):
 		Plot showing number of images on a grid (x,y) around planetary caustic
 		"""
 
-		self.grid_plots(region = region, data = 'n_solns', sample_res = None)
+		self.grid_plots(region = region, data = 'n_solns')
 		if print_errors:
 			self.print_errors()
 
-		plt.scatter(self.x_array, self.y_array, c=self.num_images, s=((500./self.res)**2), 
+		plt.scatter(self.x_array, self.y_array, c=self.num_images, s=((600./self.res)**2), 
 						marker = 'o', cmap='plasma', lw=None)
 		im_plot = plt.colorbar()
 		im_plot.set_label('Num Images')
-		plt.xlabel('X-position of source')
-		plt.ylabel('Y-position of source')
+		plt.xlabel('X-position of Source', fontsize = 12)
+		plt.ylabel('Y-position of Source', fontsize = 12)
+		plt.gcf().set_size_inches(8, 6)
 		plt.xlim(min(self.x_array), max(self.x_array))
 		plt.ylim(min(self.y_array), max(self.y_array))
 		plt.title('Number Images\nFrame: {}; Solver: {}'.format(
@@ -521,7 +524,7 @@ class BinaryLens(object):
 				False, it will do nothing.
 		"""
 
-		self.grid_plots(region = region, data = 'magn', sample_res = None)
+		self.grid_plots(region = region, data = 'magn')
 
 		# Assign the appropriate data, based on whether we want to include all
 		# the data, or just the outliers.
@@ -546,8 +549,8 @@ class BinaryLens(object):
 		plt.ylim(min(self.y_array), max(self.y_array))
 		mag_plot = plt.colorbar()
 		mag_plot.set_label('Magnification')
-		plt.xlabel('X-position of source', fontsize = 12)
-		plt.ylabel('Y-position of source', fontsize = 12)
+		plt.xlabel('X-position of Source', fontsize = 12)
+		plt.ylabel('Y-position of Source', fontsize = 12)
 		plt.gcf().set_size_inches(8, 6)
 		if outliers:
 			plt.title('High Magnification with Caustic:\n{} Frame; {} Solver; M > {:.0f}, q={}'.
@@ -572,6 +575,81 @@ class BinaryLens(object):
 				except:
 					continue
 				break
+
+	def plot_rel_magnification(self, other_BL, region = 'caustic', outliers = False,
+							cutoff = None, log_colorbar = False, save=False):
+		"""
+		Plots the fractional difference in magnification between two sets of data.
+
+		Attributes:
+			log_colorbar (bool):
+				If True, the magnification colorbar will go on log
+				scale. Otherwise, the scale will be linear.
+
+			save (bool):
+				If True, file will be saved by convention determined below. If
+				False, it will do nothing.
+		"""
+
+		self.grid_plots(region = region, data = 'magn')
+		other_BL.grid_plots(region = region, data = 'magn')
+
+		print('Plotting the relative magnification...')
+
+		if log_colorbar:
+			norm = colors.LogNorm()
+		else:
+			norm = None
+
+		# Assign the appropriate data, based on whether we want to include all
+		# the data, or just the outliers.
+
+		(x, y, magn1, magn2) = (self.x_array, self.y_array, self.magn_array,
+													other_BL.magn_array)
+		rel_magn = (magn1 / magn2)
+
+		size = (500/self.res)**2
+
+		if outliers:
+			self.cutoff = cutoff
+			self.get_magn_outliers()
+			(x, y, magn) = (self.x_outliers, self.y_outliers, self.magn_outliers)
+		else:
+			(x, y, magn) = (self.x_array, self.y_array, self.magn_array)
+
+		if outliers:
+			rel_magn_outliers = []
+			x_outliers = []
+			y_outliers = []
+			if cutoff == None:
+				cutoff = 0.01
+			for (i, magn) in enumerate(rel_magn):
+				if abs(magn - 1.) > cutoff:
+					x_outliers.append(x[i])
+					y_outliers.append(y[i])
+					rel_magn_outliers.append(magn)
+			x = x_outliers
+			y = y_outliers
+			rel_magn = rel_magn_outliers
+			if len(x) == 0:
+				print('No outliers found. Continuing with next plot...')
+				return
+		else:
+			size = (500/self.res)**2
+
+
+		plt.scatter(x, y, c = rel_magn, s=size, marker = 'o',
+										cmap='bwr', lw=None, norm=norm)
+		rel_plot = plt.colorbar()
+		rel_plot.set_label('Fractional Difference')
+		plt.xlabel('X-position of Source', fontsize = 12)
+		plt.ylabel('Y-position of Source', fontsize = 12)
+		plt.gcf().set_size_inches(8, 6)
+		plt.xlim(min(self.x_array), max(self.x_array))
+		plt.ylim(min(self.y_array), max(self.y_array))
+		plt.title('Relative Magnification\n({}, {} Frame) / ({}, {} Frame)'.
+							format(self.solver_title, self.origin_title,
+								other_BL.solver_title, other_BL.origin_title))
 
 	def get_magn_outliers(self, data = None):
 		"""

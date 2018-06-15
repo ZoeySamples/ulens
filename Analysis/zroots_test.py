@@ -1,19 +1,20 @@
 # Zoey Samples
 # Created: Jun 08, 2018
 # BinaryLensPlots.py
-# Last Updated: Jun 08, 2018
+# Last Updated: Jun 15, 2018
 
 import matplotlib.pyplot as plt
 from BinaryLens import BinaryLens as BL
 import MulensModel as mm
 
 # Input parameters
-s = 1.2
-q = 1.e-7
-res = int(15)
-origin = 'plan'
+s = 1.1
+q = 1.e-2
+res = int(100)
+origin = 'geo_cent'
 solver = 'zroots'
-tolerance = 0.0001
+tolerance = 0.001
+
 """
 Test runs:
 	Works properly for me when I use:
