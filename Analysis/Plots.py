@@ -8,13 +8,13 @@ from BinaryLens import BinaryLens as BL
 import MulensModel as mm
 
 # Input parameters
-s = 1.9
-mass_ratios = [5e-8]
+s = 1.5
+mass_ratios = [1e-7]
 res = int(100)
 method =  ['SG12']
-coordinates = ['geo_cent']
+coordinates = ['plan']
 tolerance = 0.00007
-region = 'caustic'
+region = 'offax_cusp'
 param = []
 plot = []
 
@@ -38,7 +38,7 @@ if plot_on:
 plot_on = True
 if plot_on:
 	for p in plot:
-		p.plot_magnification(outliers = True, region = region, log_colorbar = False,
+		p.plot_magnification(outliers = False, region = region, log_colorbar = True,
 									cutoff = None)
 		caustics = mm.Caustics(s=s, q=p.q)
 		caustics.plot(s=1)

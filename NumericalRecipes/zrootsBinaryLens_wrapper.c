@@ -1,9 +1,11 @@
 //zrootsBinaryLens_wrapper.c
 
+#define FLOAT double
+#define float double
 #include <stdlib.h>
 #include <stdio.h>
 #include "complex.h"
-#define FLOAT double
+
 
 FLOAT* zroots_5(FLOAT p0, FLOAT p1, 
 		FLOAT p2, FLOAT p3, FLOAT p4, FLOAT p5, FLOAT p6, 
