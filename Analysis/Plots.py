@@ -10,7 +10,7 @@ import MulensModel as mm
 # Input parameters
 s = 1.5
 mass_ratios = [1e-7]
-res = int(100)
+res = int(50)
 method =  ['SG12']
 coordinates = ['plan']
 tolerance = 0.00007
@@ -29,7 +29,7 @@ for solver in method:
 plot_on = False
 if plot_on:
 	for p in plot:
-		p.plot_n_solns(region = region, save=False, print_errors=True)
+		p.plot_n_solns(region = 'caustic', save=False, print_errors=True)
 		caustics = mm.Caustics(s=s, q=p.q)
 		caustics.plot(s=2)
 		plt.show()
@@ -39,7 +39,7 @@ plot_on = True
 if plot_on:
 	for p in plot:
 		p.plot_magnification(outliers = False, region = region, log_colorbar = True,
-									cutoff = None)
+				cutoff = None, save = False)
 		caustics = mm.Caustics(s=s, q=p.q)
 		caustics.plot(s=1)
 		plt.show()

@@ -5,6 +5,7 @@
 
 import sys
 import os
+from pathlib import Path
 import ctypes
 import numpy as np
 import cmath
@@ -118,7 +119,8 @@ class BinaryLens(object):
 					write_to_fits():
 	"""
 
-	def __init__(self, s, q, origin, solver, x=None, y=None, res=None, tolerance=0.0001):
+	def __init__(self, s, q, origin, solver, x=None, y=None, res=None,
+				 tolerance=0.0001):
 		self.s = s
 		self.q = q
 		self.origin = origin
@@ -127,53 +129,62 @@ class BinaryLens(object):
 		self.x = x
 		self.y = y
 		self.tolerance = tolerance
-		self.roots = None
 		self.strings()
 
-	def get_variables(self):
+### The following functions assign values to variables pertaining to the class.
+
+	def get_variables(self, x, y):
 		"""
 		Assign all variables to be used in polynomial. Assigns:
 	
-			dm	 - defined as half the difference of the masses (positive)
-			m	 - defined as half the sum of the masses
-			zeta - the source's position
-			z1	 - the planet's position
-			z2	 - the star's position
-	
+			dm (float):
+				Half the difference of the masses (positive).
+
+			m (float):
+				Half the sum of the masses.
+
+			zeta (complex):
+				The source's position in complex space.
+
+			zeta_conj (complex):
+				The complex conjugate of the source's position.
+
+			z1 (float):
+				The planet's position (on the real axis by definition).
+
+			z2 (float):
+				The star's position (on the real axis by definition).
 		"""
 	
 		self.mass_ratio()
-		self.source_position()
+		self.source_position(x=x, y=y)
 		self.lensing_body_positions()
 
 	def mass_ratio(self):
-		"""Define m and dm for use in polynomial."""
+		"""Define m and dm."""
 
 		self.dm = (1. - self.q) / 2.
 		self.m = (1. + self.q) / 2.
 
-	def source_position(self):
-		"""Assign the position of the source in complex space."""
+	def source_position(self, x, y):
+		"""Define zeta and zeta_conj."""
 
 		if self.origin == 'geo_cent':
-			self.zeta = self.x + self.y*1.j
+			self.zeta = x + y*1.j
 		elif self.origin == 'star':
-			self.zeta = (self.x + self.s/2.) + self.y*1.j
+			self.zeta = (x + self.s/2.) + y*1.j
 		elif self.origin == 'plan':
-			self.zeta = (self.x - self.s/2.) + self.y*1.j
+			self.zeta = (x - self.s/2.) + y*1.j
 		elif self.origin == 'com':
-			self.zeta = (self.x + self.s*self.dm/(2.*self.m)) + self.y*1.j
+			self.zeta = (x + self.s*self.dm/(2.*self.m)) + y*1.j
 		elif self.origin == 'caustic':
-			self.zeta = (self.x + 1./(self.s) - self.s/2.) + self.y*1.j
+			self.zeta = (x + 1./(self.s) - self.s/2.) + y*1.j
 		else:
 			raise ValueError('Unknown coordinate system: {:}'.format(origin))
 		self.zeta_conj = self.zeta.conjugate()
 
 	def lensing_body_positions(self):
-		"""
-		Assign the positions of the lensing bodies (assumed to be on the 
-		real axis).
-		"""
+		"""Define z1 and z2."""
 
 		if self.origin == 'geo_cent':
 			self.z1 = 0.5*self.s
@@ -196,12 +207,16 @@ class BinaryLens(object):
 		self.z1_conj = self.z1.conjugate()
 		self.z2_conj = self.z2.conjugate()
 
-	def get_coefficients(self):
-		"""
-		Returns the coefficients for the polynomial equation.
-		"""
+### The following functions calculate physical values for further analysis.
 
-		self.get_variables()
+	def get_coefficients(self, x, y):
+		"""Returns the coefficients for the polynomial equation."""
+
+		self.get_variables(x=x, y=y)
+
+		# Assign the values of the coefficients of the polynomial.
+		# Be aware that these expressions are very long and messy. They trail off
+		# the screen without text wrapping and look non-indented with text wrapping.
 
 		"""
 		coeff5 = (self.z1**2 - self.zeta_conj**2)
@@ -229,35 +244,28 @@ class BinaryLens(object):
 
 		coeff0 = (-2.*(self.m**2)*(self.z1**2)*self.z2 - 2.*(self.m**2)*self.z1*(self.z2**2) - self.m*(self.z1**3)*(self.z2**2) - self.m*(self.z1**2)*(self.z2**3) + (self.m**2)*(self.z1**2)*self.zeta + (self.dm**2)*((self.z1 - self.z2)**2)*self.zeta + 2.*(self.m**2)*self.z1*self.z2*self.zeta + self.m*(self.z1**3)*self.z2*self.zeta + (self.m**2)*(self.z2**2)*self.zeta + (self.zeta_conj**2)*(self.z1**2)*(self.z2**2)*self.zeta + 2.*self.m*(self.z1**2)*(self.z2**2)*self.zeta + self.m*self.z1*(self.z2**3)*self.zeta + (self.z1**3)*(self.z2**3)*self.zeta - self.dm*(self.z1 - self.z2)*(2.*self.m + self.z1*self.z2)*(self.z1*(self.z2 - self.zeta) - self.z2*self.zeta) - self.zeta_conj*self.z1*self.z2*((2.*self.dm*(self.z1 - self.z2) + self.z1*self.z2*(self.z1 + self.z2))*self.zeta + self.m*(-2.*self.z1*self.z2 + 2.*self.z1*self.zeta + 2.*self.z2*self.zeta)))
 
-
 		coeff_list = np.array([coeff5, coeff4, coeff3, coeff2, coeff1, coeff0])
 		return coeff_list
 
-	def solutions(self):
-		"""Return solutions of polynomial -- written in general form."""
+	def get_solutions(self, x, y):
+		"""Return solutions of polynomial."""
 
-		# Assign the values of the coefficients of the polynomial.
-		# Be aware that these expressions are very long and messy. They trail off
-		# the screen without text wrapping and look non-indented with text wrapping.
-
-		coeff_list = self.get_coefficients()
+		coeff_list = self.get_coefficients(x=x, y=y)
 
 		# Return the roots of the polynomial via the given root finder
 		if self.solver == 'SG12':
 			rev_list = coeff_list[::-1]
 			out = _vbbl_SG12_5(*(rev_list.real.tolist() + rev_list.imag.tolist()))
-			self.roots = [out[i] + out[i+5] * 1.j for i in range(5)]
-			return self.roots
+			roots = [out[i] + out[i+5] * 1.j for i in range(5)]
+			return roots
 		elif self.solver == 'zroots':
 			rev_list = coeff_list[::-1]
-			#print(rev_list)
-			#print(self.s, self.q, self.x, self.y)
 			out = _zroots_5(*(rev_list.real.tolist() + rev_list.imag.tolist()))
-			self.roots = [out[i] + out[i+5] * 1.j for i in range(5)]
-			return self.roots
+			roots = [out[i] + out[i+5] * 1.j for i in range(5)]
+			return roots
 		elif self.solver == 'numpy':
-			self.roots = np.roots(coeff_list).tolist()
-			return self.roots
+			roots = np.roots(coeff_list).tolist()
+			return roots
 
 	def check_solution(self, solution):
 		"""
@@ -265,15 +273,11 @@ class BinaryLens(object):
 		lens equation.
 		"""
 
-		# Make sure the roots have been determined before checking them
-		if self.roots == None:
-			raise ValueError('Solutions have not been found yet')
-
 		z = solution
 
 		# This is the binary lens equation.
 		zeta_actual = (z + (self.m - self.dm) / (self.z1_conj - z.conjugate()) +
-					(self.m + self.dm) / (self.z2_conj - z.conjugate()))
+					  (self.m + self.dm) / (self.z2_conj - z.conjugate()))
 		if np.abs(self.zeta - zeta_actual) > self.tolerance:
 			return False
 		else:
@@ -285,94 +289,81 @@ class BinaryLens(object):
 		check). Returns a list of the positions.
 		"""
 
-		self.solutions()
-		image_pos = []
-		for solution in self.roots:
+		roots = self.get_solutions(x=self.x, y=self.y)
+		image_positions = []
+		for solution in roots:
 			if self.check_solution(solution=solution):
-				image_pos.append(solution)
-		return image_pos
+				image_positions.append(solution)
+		return image_positions
 
-	def magnification(self):
-		"""Returns the magnification for each configuration"""
+	def get_magnification(self, x, y):
+		"""Returns the magnification for each configuration."""
 
-		# Make sure the roots have been determined before calculating magnification
-		if self.roots == None:
-			raise ValueError('Solutions have not been found yet')
-
+		roots = self.get_solutions(x=x, y=y)
 		magn = list(range(5))
-		for (i, z) in enumerate(self.roots):
-			detJ = (1. - ((self.m - self.dm) / ((z - self.z1)**2) + (self.m + 
-				self.dm) / ((z - self.z2)**2)) * ((self.m - self.dm) / ((z.conjugate() - 
-				self.z1)**2) + (self.m + self.dm) / ((z.conjugate() - self.z2)**2)))
-			if self.check_solution(solution = z):
+		for (i, z) in enumerate(roots):
+			detJ = (1. - ((self.m - self.dm) / ((z - self.z1)**2) + (self.m +
+					self.dm) / ((z - self.z2)**2)) * ((self.m - self.dm) /
+					((z.conjugate() - self.z1)**2) + (self.m + self.dm) / 
+					((z.conjugate() - self.z2)**2)))
+			if self.check_solution(solution=z):
 				magn[i] = np.abs(1./detJ)
 			else:
 				magn[i] = 0.
 
 		# This is the sum of the calculated magnitude after removing 
 		# non-physical results.
-		self.tot_magn = sum(magn)
+		return sum(magn)
 
-	def print_image_position(self, print_input=True):
+	def get_size_caustic(self):
 		"""
-		Prints the image positions with the option to display the input parameters. 
-		"""
-
-		if print_input:
-			self.print_input()
-		self.solutions()
-		image_pos = self.image_positions()
-		print('Image locations:')
-		for (i, pos) in enumerate(image_pos):
-			print('{:.5f}'.format(pos))
-
-	def print_magnification(self, print_input=True):
-		"""
-		Prints the total magnification with the option to display the input 
-		parameters.
+		Determines the width, height, and position of the center of the
+		caustic.
 		"""
 
-		if print_input:
-			self.print_input()
-		self.solutions()
-		self.magnification()
-		print('Magnification: {:.5f}'.format(self.tot_magn))
+		self.width_caustic = 4.*np.sqrt(self.q)*(1. + 1./(2.*(self.s**2))) / (self.s**2)
+		self.height_caustic = 4.*np.sqrt(self.q)*(1. - 1./(2.*(self.s**2))) / (self.s**2)
+		self.xcenter_caustic = 0.5*self.s - 1.0/self.s
 
-	def size_caustic(self):
+### The following functions are used for assigning data into grids.
+
+	def get_position_arrays(self, region):
 		"""
-		Determines the width, height, and position of the center of the caustic.
+		Fills arrays for the x- and y-position to prepare grid plots.
+
+		Parameters:
+			region (string):
+				The area on which the grid will be calculated.
+				Accepted values:
+
+				'caustic' - the zoomed-out view showing the full
+						planetary caustic.
+				'onax-cusp' - the zoomed-in view to the right of the cusp
+						on the horizontal axis.
+				'offax-cusp' - the zoomed-in view above the cusp on the
+						vertical axis.
 		"""
 
-		w = 4.*np.sqrt(self.q)*(1. + 1./(2.*(self.s**2))) / (self.s**2)
-		h = 4.*np.sqrt(self.q)*(1. - 1./(2.*(self.s**2))) / (self.s**2)
-		x = 0.5*self.s - 1.0/self.s
-		self.delta = 2.*w / 200.
-		self.epsilon = 2.*h / 200.
-		return w, h, x
-
-	def fill_grid_arrays(self, region):
-		"""Fills arrays for the x- and y-position to prepare grid plots."""
-
-		(w_caustic, h_caustic, x_center) = self.size_caustic()
+		self.get_size_caustic()
 
 		if region == 'caustic':
-			region_xmin = x_center - w_caustic
-			region_xmax = x_center + w_caustic
-			region_ymin = -h_caustic
-			region_ymax = h_caustic
+			region_xmin = self.xcenter_caustic - 0.8*self.width_caustic
+			region_xmax = self.xcenter_caustic + 0.8*self.width_caustic
+			region_ymin = -0.8*self.height_caustic
+			region_ymax = 0.8*self.height_caustic
 		if region == 'onax_cusp':
-			region_xmin = x_center + 0.3*w_caustic
-			region_xmax = x_center + 0.9*w_caustic
-			region_ymin = -0.15*h_caustic
-			region_ymax = 0.15*h_caustic
+			region_xmin = self.xcenter_caustic + 0.55*self.width_caustic
+			region_xmax = self.xcenter_caustic + 0.8*self.width_caustic
+			region_ymin = -0.10*self.height_caustic
+			region_ymax = 0.10*self.height_caustic
 		if region == 'offax_cusp':
-			region_xmin = x_center - 0.15*w_caustic
-			region_xmax = x_center + 0.15*w_caustic
-			region_ymin = 0.3*h_caustic
-			region_ymax = 0.9*h_caustic
+			region_xmin = self.xcenter_caustic - 0.10*self.width_caustic
+			region_xmax = self.xcenter_caustic + 0.10*self.width_caustic
+			region_ymin = 0.55*self.height_caustic
+			region_ymax = 0.8*self.height_caustic
+
 		x_grid = np.linspace(region_xmin, region_xmax, self.res)
 		y_grid = np.linspace(region_ymin, region_ymax, self.res)
-
 		self.x_array = np.zeros(self.res**2)
 		self.y_array = np.zeros(self.res**2)
 
@@ -381,86 +372,193 @@ class BinaryLens(object):
 				idx = self.res*i + j
 				self.x_array[idx] = xx
 				self.y_array[idx] = yy
-				self.x = xx
-				self.y = yy
 
-	def grid_plots(self, data, region, sample_res = None):
-		"""
-		Fills arrays for the total magnification and number of images at each
-		point in the grid arrays.
+	def get_magnification_array(self):
+		"""Fills an array for the magnification through the grid."""
 
-			data (string):
-				'n_solns' - returns information for plot_n_solns
-				'magn'	  - returns information for plot_magnification
-				'tstat'	  - returns information for plot_coeff_tstat
-		"""
-
-		self.fill_grid_arrays(region = region)
-		self.num_images = np.zeros(self.res**2, dtype=int)
 		self.magn_array = np.zeros(self.res**2, dtype=float)
-		self.tstat_array = np.zeros(self.res**2)
-		self.coeff_array = [[]*self.res**2 for i in range(12)]
-		if data == 'tstat':
-			self.coeff_array = [[]*self.res**2 for i in range(12)]
-			self.sample_magn = [[]*sample_res**2 for i in range(self.res**2)]
-		self.get_coeff_strings()
-
-		print('Getting data...')
 		for idx in range(self.res**2):
+			x = self.x_array[idx]
+			y = self.y_array[idx]
+			self.magn_array[idx] = self.get_magnification(x=x, y=y)
 
-			if idx == (self.res**2)/int(4):
-				print('25%...')
-			if idx == (self.res**2)/int(2):
-				print('50%...')
-			if idx == int(3)*(self.res**2)/int(4):
-				print('75%...')
+	def get_num_images_array(self):
+		"""Fills an array for the number of images through the grid."""
 
-			self.x = self.x_array[idx]
-			self.y = self.y_array[idx]
-			roots = self.solutions()
-			coeffs = self.get_coeff_list()
+		self.num_images = np.zeros(self.res**2, dtype=int)
+		for idx in range(self.res**2):
+			x = self.x_array[idx]
+			y = self.y_array[idx]
+			roots = self.get_solutions(x=x, y=y)
+			for solution in roots:
+				if self.check_solution(solution=solution):
+					self.num_images[idx] += 1
+
+	def get_coeff_array(self):
+		"""
+		Fills an array for the values of the coefficients through the grid.
+		"""
+
+		self.coeff_array = [[]*self.res**2 for i in range(12)]
+		for idx in range(self.res**2):
+			x = self.x_array[idx]
+			y = self.y_array[idx]
+			roots = self.get_solutions(x=x, y=y)
+			coeffs = self.get_coeff_list(x=x, y=y)
 			for k in range(12):
 				self.coeff_array[k].append(coeffs[k])
-			if data == 'n_solns':
-				for solution in self.roots:
-					if self.check_solution(solution=solution):
-						self.num_images[idx] += 1
-			else:
-				self.magnification()
-				self.magn_array[idx] = self.tot_magn
-				if data == 'tstat':
-					coeffs = self.get_coeff_list()
-					for k in range(12):
-						self.coeff_array[k].append(coeffs[k])
-					self.sample_magn[idx] = self.return_sample_magn(x = self.x,
-											y = self.x, sample_res = sample_res)
-					self.tstat_array[idx] = self.get_tstat(magn = self.magn_array[idx],
-										sample_magn = self.sample_magn[idx])
+		self.get_coeff_strings()
 
-	def return_sample_magn(self, x, y, sample_res):
-		sample_xgrid = np.linspace(x - 0.2*self.delta, x + 0.2*self.delta, sample_res)
-		sample_ygrid = np.linspace(y - 0.2*self.epsilon, y + 0.2*self.epsilon, sample_res)
+	def get_tstat_array(self, sample_res):
+		"""
+		Fills an array for the t-stat values through the grid.
+
+		Parameters:
+			sample_res (float):
+				The resolution of the sample area around each point
+				used to calculate the t-stat.
+		"""
+
+		self.tstat_array = np.zeros(self.res**2)
+		self.sample_magn = [[]*sample_res**2 for i in range(self.res**2)]
+		self.get_magnification_array()
+		for idx in range(self.res**2):
+			x = self.x_array[idx]
+			y = self.y_array[idx]
+			self.sample_magn[idx] = self.return_sample_magnification(
+					x=x, y=y, sample_res = sample_res)
+			self.tstat_array[idx] = self.get_tstat(
+					point_magn = self.magn_array[idx],
+					sample_magn_array = self.sample_magn[idx])
+
+	def get_magnification_outliers(self, cutoff=None):
+		"""
+		Creates new arrays of (x, y, magn) only for magnification values that
+		are above the cutoff value.
+
+		Parameters:
+			cutoff (float):
+				The minimum magnification a point can have for it to be
+				accepted as an 'outlier'.
+		"""
+
+		self.x_outliers = []
+		self.y_outliers = []
+		self.magn_outliers = []
+
+		# If the cutoff value is not specified, the arrays will default
+		# to the 10 largest points.
+		if cutoff==None:
+			magn_sorted = sorted(self.magn_array)
+			cutoff = magn_sorted[(self.res**2) - 11]
+			print('No cutoff value specified; selecting only upper 10 points')
+
+		print('Finding the magnification outliers...')
+
+		for (i, magn) in enumerate(self.magn_array):
+			if magn > cutoff:
+				self.x_outliers.append(self.x_array[i])
+				self.y_outliers.append(self.y_array[i])
+				self.magn_outliers.append(magn)
+
+	def get_tstat_outliers(self):
+		"""
+		Fills an array with the values of t-stat for points determined
+		to be outliers.
+		"""
+
+		self.tstat_outliers = []
+
+		try:
+			for i in range(len(self.magn_outliers)):
+				self.tstat_outliers.append(self.tstat_array[i])
+		except:
+			raise ValueError('You must call get_magnification_outliers()',
+									'before calling get_tstat_outliers()')
+
+### The following functions return a single element to a grid variable.
+
+	def return_sample_magnification(self, x, y, sample_res):
+		"""
+		Returns an array of magnification values for points in a small
+		area around each sample point.
+
+		Parameters:
+			x (float):
+				The x-position around which the sample area will be centered.
+
+			y (float):
+				The y-position around which the sample area will be centered.
+
+			sample_res (float):
+				The resolution (number of points on each side) of the
+				sample area.
+
+		Returns:
+			sample_magn (array):
+				An array containing local magnification values for each
+				point centered around sample point.
+		"""
+
+		sample_xgrid = np.linspace(x - self.width_caustic/500.,
+				x + self.width_caustic/500., sample_res)
+		sample_ygrid = np.linspace(y - self.height_caustic/500.,
+				y + self.height_caustic/500., sample_res)
 		sample_magn = np.zeros(sample_res**2)
-		for (i, xx) in enumerate(sample_xgrid):
-			for (j, yy) in enumerate(sample_ygrid):
+
+		for (i, sample_x) in enumerate(sample_xgrid):
+			for (j, sample_y) in enumerate(sample_ygrid):
 				sample_idx = sample_res*i + j
-				self.x = xx
-				self.y = yy
-				roots = self.solutions()
-				self.magnification()
-				sample_magn[sample_idx] = self.tot_magn
+				sample_magn[sample_idx] = self.get_magnification(
+						x=sample_x, y=sample_y)
 		return sample_magn
 
-	def get_tstat(self, magn, sample_magn):
+	def get_tstat(self, point_magn, sample_magn_array):
+		"""
+		Returns the t-stat value for a given sample point.
+
+		Parameters:
+			point_magn (float):
+				The magnification at the sample point.
+
+			sample_magn_array (array):
+				The array of magnification values centered around the
+				sample point.
+
+		Returns:
+			tstat (float):
+				The t-stat value determined for the sample point.
+		"""
+
 		mean_magn = sum(sample_magn) / len(sample_magn)
 		stderr_magn = np.std(sample_magn) / np.sqrt(len(sample_magn))
 		tstat = abs(magn - mean_magn) / stderr_magn
 		return tstat
 
-	def get_coeff_list(self):
-		coeffs = self.get_coefficients()
+	def get_coeff_list(self, x, y):
+		"""
+		Returns a list of values corresponding to each coefficient in
+		the binary lens polynomial.
+
+		Parameters:
+			x (float):
+				The x-position of the source (i.e. the current value of x
+				in the grid)
+
+			y (float):
+				The y-position of the source (i.e. the current value of y
+				in the grid)
+
+		Returns:
+			c (list of floats):
+				The value of all 6 real followed by all 6 imaginary
+				coefficients for the given source position (x, y)
+		"""
+
+		coeffs = self.get_coefficients(x=x, y=y)
 		c_real = []
 		c_imag = []
+
 		# This fills the c_real and c_imag lists in descending order. Specifically,
 		# c_real[n] is the real component of the nth-degree term, etc.
 		for i in range(len(coeffs)):
@@ -469,61 +567,103 @@ class BinaryLens(object):
 			c_real.append(c_r)
 			c_imag.append(c_i)
 
-		"""
-		This reverses the order of the coefficients and places the real
-		coefficients in front of the imaginary. For example, c[4] is the real
-		component of the 4th degree term, and c[9] is the imaginary component of
-		the (9-6)=3rd degree term.
-		"""
+		# This reverses the order of the coefficients and places the real
+		# coefficients in front of the imaginary. For example, c[4] is the real
+		# component of the 4th degree term, and c[9] is the imaginary component
+		# of the (9-6)=3rd degree term.
 		c = c_real[::-1] + c_imag[::-1]
+
 		return c
 
-	def print_errors(self):
+	def check_kwargs(self, log_colorbar=False, **kwargs):
 		"""
-		Prints the number of points that have n images, where n is an integer
-		ranging from 0 to 5.
+		Checks if the user specified keyword arguments for plots, and
+		assigns default values for those not specified.
+
+		Parameters:
+			log_colorbar (bool):
+				If True, kwargs will be assigned value for norm that displays
+				the colormap in a logarithmic fashion.
+
+			**kwargs (dictionary):
+				Keyword arguments specified by the user.
+
+		Returns:
+			kwargs (dictionary):
+				Keyword arguments after being assigned default values for
+				those not specified by the user.
 		"""
 
-		num = np.zeros(6, dtype = int)
-		for num_im in self.num_images:
-			for i in range(len(num)):
-				if num_im == i:
-					num[i] += 1
-		print('Concern: number of points where the number of images is',
-			'\n0: {:}\n1: {:}\n2: {:}\n3: {:}\n4: {:}\n5: {:}\nTotal: {:}'
-			.format(*num, sum(num)))
+		if 's' not in kwargs:
+			kwargs['s'] = (400. / self.res)**2
+		if 'cmap' not in kwargs:
+			kwargs['cmap'] = 'plasma'
+		if 'linewidths' not in kwargs and 'lw' not in kwargs:
+			kwargs['lw'] = None
+		if 'marker' not in kwargs:
+			kwargs['marker'] = 'o'
+		if log_colorbar:
+			kwargs['norm'] = colors.LogNorm()
+		return kwargs
 
-	def plot_n_solns(self, save=False, print_errors = True, region = 'caustic'):
+### The following functions make plots for grid data.
+
+	def plot_n_solns(self, print_errors=True, region='caustic',
+					 save=False, **kwargs):
 		"""
-		Plot showing number of images on a grid (x,y) around planetary caustic
+		Creates a plot showing number of images on a grid (x,y) around
+		the planetary caustic.
+
+		Parameters:
+			print_errors (bool):
+				Prints the number of instances where the number of accepted
+				solutions was equal to each integer value from 0 to 5
+				inclusive.
+
+			region (string):
+				The region in which the grid is to be filled. See the
+				function, "get_position_arrays," to see accepted values.
+
+			save (bool):
+				If True, saves the plot to a .png file.
+
+			**kwargs (dictionary):
+				Keyword arguments for pyplot module.
 		"""
 
-		self.grid_plots(region = region, data = 'n_solns')
+		kwargs = self.check_kwargs(**kwargs)
+		self.get_position_arrays(region = region)
+		self.get_num_images_array()
+
 		if print_errors:
-			self.print_errors()
+			self.print_num_images_errors()
 
-		plt.scatter(self.x_array, self.y_array, c=self.num_images, s=((600./self.res)**2), 
-						marker = 'o', cmap='plasma', lw=None)
+		plt.scatter(self.x_array, self.y_array, c=self.num_images, **kwargs)
 		im_plot = plt.colorbar()
 		im_plot.set_label('Num Images')
 		plt.xlabel('X-position of Source', fontsize = 12)
 		plt.ylabel('Y-position of Source', fontsize = 12)
 		plt.gcf().set_size_inches(8, 6)
-		plt.xlim(min(self.x_array), max(self.x_array))
-		plt.ylim(min(self.y_array), max(self.y_array))
-		plt.title('Number Images\nFrame: {}; Solver: {}'.format(
-			self.origin_title, self.solver_title))
+		(xmin, xmax) = (min(self.x_array), max(self.x_array))
+		(ymin, ymax) = (min(self.y_array), max(self.y_array))
+		plt.xlim(xmin, xmax)
+		plt.ylim(ymin, ymax)
+		plt.xticks(np.arange(xmin, xmax, (xmax - xmin) / 6))
+		plt.suptitle('Number of Images', x=0.44)
+		title = ('Frame: {}; Solver: {}; Region: {}\ns = {}, q = {}'.format(
+				self.origin_title, self.solver_title, region, self.s, self.q))
+		plt.title(title, fontsize = 11)
 
 		if save:
-			file_name = '../Tables/NumIm_{}_{}.png'.format(origin_str, solver_str)
-			plt.savefig(file_name)
-			print(file_name, 'has been saved')
+			file_name = '../Tables/NumIm_{}_{}.png'.format(
+					self.origin_str, self.solver_str)
+			self.save_png(file_name = file_name)
 
 	def plot_magnification(self, region = 'caustic', outliers = False, cutoff = None,
-							log_colorbar = False, save=False):
+							log_colorbar = False, save = False, **kwargs):
 		"""
 		Make square grid of points that shows the magnification at each point.
-		Attributes:
+		Parameters:
 			log_colorbar (bool):
 				If True, the magnification colorbar will go on log
 				scale. Otherwise, the scale will be linear.
@@ -533,64 +673,59 @@ class BinaryLens(object):
 				False, it will do nothing.
 		"""
 
-		self.grid_plots(region = region, data = 'magn')
+		kwargs = self.check_kwargs(log_colorbar, **kwargs)
+		self.get_position_arrays(region = region)
+		self.get_magnification_array()
 
 		# Assign the appropriate data, based on whether we want to include all
 		# the data, or just the outliers.
 		if outliers:
-			self.cutoff = cutoff
-			self.get_magn_outliers()
+			self.get_magnification_outliers(cutoff)
 			(x, y, magn) = (self.x_outliers, self.y_outliers, self.magn_outliers)
-			size = (1000/self.res)**2
 			print('Plotting the magnification of outliers...')
 		else:
 			(x, y, magn) = (self.x_array, self.y_array, self.magn_array)
-			size = (500/self.res)**2
 			print('Plotting the magnification...')
 
-		if log_colorbar:
-			norm = colors.LogNorm()
-		else:
-			norm = None
-		plt.scatter(x, y, c = magn, norm=norm, s=size, marker = 'o',
-														 cmap='plasma', lw=None)
-		plt.xlim(min(self.x_array), max(self.x_array))
-		plt.ylim(min(self.y_array), max(self.y_array))
+		plot = plt.scatter(x, y, c = magn, **kwargs)
+		(xmin, xmax) = (min(self.x_array), max(self.x_array))
+		(ymin, ymax) = (min(self.y_array), max(self.y_array))
+		plt.xlim(xmin, xmax)
+		plt.ylim(ymin, ymax)
+		plt.xticks(np.arange(xmin, xmax, (xmax - xmin) / 6))
 		mag_plot = plt.colorbar()
 		mag_plot.set_label('Magnification')
 		plt.xlabel('X-position of Source', fontsize = 12)
 		plt.ylabel('Y-position of Source', fontsize = 12)
 		plt.gcf().set_size_inches(8, 6)
+
 		if outliers:
-			plt.title('High Magnification with Caustic:\n{} Frame; {} Solver; M > {:.0f}, q={}'.
-						format(self.origin_title, self.solver_title, self.cutoff, self.q))
+			plt.suptitle('High Magnification')
+			title = ('Frame: {}; Solver: {}; Region: {}\n'.format(
+					self.origin_title, self.solver_title, region) + 
+					's = {}, q = {}, M > {:.0f}'.format(self.s, self.q, 
+					min(magn)))
+			plt.title(title, fontsize = 11)
+			file_name = ('../Tables/HighMagn_{}_{}.png'.format(
+					self.solver_file, self.origin_file))
 		else:
-			plt.title('Magnification\nFrame: {}; Solver: {}'.format(
-				self.origin_title, self.solver_title))
+			plt.suptitle('Magnification', x=0.44)
+			title = ('Frame: {}; Solver: {}; Region: {}\n'.format(
+					self.origin_title, self.solver_title, region) + 
+					's = {}, q = {}'.format(self.s, self.q))
+			plt.title(title, fontsize = 11)
+			file_name = ('../Tables/Magn_{}_{}.png'.format(self.solver_file,
+					self.origin_file))
 
 		if save:
-			for i in range(10):
-				try:
-					if outliers:
-						file_name = ('../Tables/HighMagn_{}_{}{}'.format(
-									self.solver_file, self.origin_file, i))
-						plt.savefig(file_name)
-						print(file_name, 'has been saved')
-					else:
-						file_name = '../Tables/Magn_{}_{}{}.png'.format(origin_str,
-																	solver_str, i)
-						plt.savefig(file_name)
-						print(file_name, 'has been saved')
-				except:
-					continue
-				break
+			self.save_png(file_name = file_name)
 
 	def plot_rel_magnification(self, other_BL, region = 'caustic', outliers = False,
-				cutoff = None, log_colorbar = False, save = False, hl_out = False):
+				ratio_cutoff = None, log_colorbar = False, save = False, **kwargs):
 		"""
 		Plots the fractional difference in magnification between two sets of data.
 
-		Attributes:
+		Parameters:
 			log_colorbar (bool):
 				If True, the magnification colorbar will go on log
 				scale. Otherwise, the scale will be linear.
@@ -600,15 +735,13 @@ class BinaryLens(object):
 				False, it will do nothing.
 		"""
 
-		self.grid_plots(region = region, data = 'magn')
-		other_BL.grid_plots(region = region, data = 'magn')
+		kwargs = self.check_kwargs(log_colorbar, **kwargs)
+		self.get_position_arrays(region = region)
+		self.get_magnification_array()
+		other_BL.get_position_arrays(region = region)
+		other_BL.get_magnification_array()
 
 		print('Plotting the relative magnification...')
-
-		if log_colorbar:
-			norm = colors.LogNorm()
-		else:
-			norm = None
 
 		# Assign the appropriate data, based on whether we want to include all
 		# the data, or just the outliers.
@@ -616,53 +749,58 @@ class BinaryLens(object):
 		(x, y, magn1, magn2) = (self.x_array, self.y_array, self.magn_array,
 													other_BL.magn_array)
 		rel_magn = (magn1 / magn2)
-
-		size = (400/self.res)**2
-		#(x, y, magn) = (self.x_array, self.y_array, self.magn_array)
-
+		file_name = ('../Tables/RelMagn_{}_{}.png'.format(self.solver_file,
+															self.origin_file))
 
 		if outliers:
 			rel_magn_outliers = []
 			x_outliers = []
 			y_outliers = []
-			if cutoff == None:
-				cutoff = 1.1
+			if ratio_cutoff == None:
+				ratio_cutoff = 2.0
 			for (i, magn) in enumerate(rel_magn):
-				if (magn > cutoff) or (1./magn > cutoff):
+				if (magn > ratio_cutoff) or (1./magn > ratio_cutoff):
 					x_outliers.append(x[i])
 					y_outliers.append(y[i])
 					rel_magn_outliers.append(magn)
 			x = x_outliers
 			y = y_outliers
 			rel_magn = rel_magn_outliers
+			file_name = ('../Tables/RelMagnOut_{}_{}.png'.format(self.solver_file,
+															self.origin_file))
 			if len(x) == 0:
 				print('No outliers found. Continuing with next plot...')
 				return
 
-		if (hl_out and outliers):
-			plt.scatter(self.x_array, self.y_array, c='cyan', lw=None, s=size)
-			plt.scatter(x, y, c='red', lw=None, s=size)
-		else:
-			plt.scatter(x, y, c = rel_magn, s=size, marker = 'o',
-											cmap='plasma', lw=None, norm=norm)
-			rel_plot = plt.colorbar()
-			rel_plot.set_label('Fractional Difference')
+		plot = plt.scatter(x, y, c = rel_magn, **kwargs)
+		rel_plot = plt.colorbar()
+		rel_plot.set_label('Magnification Ratio')
 		plt.xlabel('X-position of Source', fontsize = 12)
 		plt.ylabel('Y-position of Source', fontsize = 12)
 		plt.gcf().set_size_inches(8, 6)
-		plt.xlim(min(self.x_array), max(self.x_array))
-		plt.ylim(min(self.y_array), max(self.y_array))
+		(xmin, xmax) = (min(self.x_array), max(self.x_array))
+		(ymin, ymax) = (min(self.y_array), max(self.y_array))
+		plt.xlim(xmin, xmax)
+		plt.ylim(ymin, ymax)
+		plt.xticks(np.arange(xmin, xmax, (xmax - xmin) / 6))
 		plt.title('Relative Magnification\n({}, {} Frame) / ({}, {} Frame)'.
 							format(self.solver_title, self.origin_title,
 								other_BL.solver_title, other_BL.origin_title))
+		if save:
+			self.save_png(file_name = file_name)
 
-	def plot_outlier_coeff(self, other_BL, region = 'caustic', cutoff = None):
+	def plot_outlier_coeff(self, other_BL, region = 'caustic', ratio_cutoff = None,
+														save = False, **kwargs):
 
-		self.grid_plots(region = region, data = 'magn')
-		other_BL.grid_plots(region = region, data = 'magn')
-
-		print('Plotting the relative magnification...')
-
+		if 's' not in kwargs:
+			kwargs['s'] = 8
+		kwargs = self.check_kwargs(**kwargs)
+		self.get_position_arrays(region = region)
+		self.get_magnification_array()
+		self.get_coeff_array()
+		other_BL.get_position_arrays(region = region)
+		other_BL.get_magnification_array()
+		other_BL.get_coeff_array()
 
 		# Assign the appropriate data, based on whether we want to include all
 		# the data, or just the outliers.
@@ -670,18 +808,15 @@ class BinaryLens(object):
 		(x, y, magn1, magn2, coeff) = (self.x_array, self.y_array, self.magn_array,
 											other_BL.magn_array, self.coeff_array)
 		rel_magn = (magn1 / magn2)
-		size = (300/self.res)**2
 
 		rel_magn_outliers = []
 		x_outliers = []
 		y_outliers = []
 		coeff_outliers = [[] for i in range(12)]
-		if cutoff == None:
-			cutoff = 1.1
+		if ratio_cutoff == None:
+			ratio_cutoff = 2.0
 		for (i, magn) in enumerate(rel_magn):
-			print(i)
-			if (magn > cutoff) or (1./magn > cutoff):
-				print('True')
+			if (magn > ratio_cutoff) or (1./magn > ratio_cutoff):
 				x_outliers.append(x[i])
 				y_outliers.append(y[i])
 				rel_magn_outliers.append(magn)
@@ -694,9 +829,13 @@ class BinaryLens(object):
 
 		print('Plotting...')
 		for (i, coeff) in enumerate(self.coeff_array):
+			file_name = ('../Tables/BL_{}_{}_{}.png'.format(self.coeff_file[i],
+										 self.solver_file, self.origin_file))
 			ax = plt.gca()
-			ax.scatter(coeff, rel_magn, s=size, color='black', lw=None)
-			ax.scatter(coeff_outliers[i], rel_magn_outliers, s=size, color='red', lw=None)
+			kwargs['color'] = 'black'
+			ax.scatter(coeff, rel_magn, **kwargs)
+			kwargs['color'] = 'red'
+			ax.scatter(coeff_outliers[i], rel_magn_outliers, **kwargs)
 			ax.set_yscale('log')
 			xmin = min(coeff)
 			xmax = max(coeff)
@@ -705,55 +844,25 @@ class BinaryLens(object):
 			plt.ylabel('Relative Magnification')
 			plt.xlim(xmin - 0.01*dx, xmax + 0.01*dx)
 			plt.ylim(0, max(rel_magn_outliers))
+			plt.xticks(np.arange(xmin, xmax, dx/6))
 			plt.title('Outliers for {}'.format(self.coeff_string[i]))
+			if save:
+				self.save_png(file_name = file_name)
 			plt.show()
 
-	def get_magn_outliers(self, data = None):
-		"""
-		Creates new arrays of (x, y, magn) only for magnification values that
-		are above the cutoff value.
-		"""
-
-		self.x_outliers = []
-		self.y_outliers = []
-		self.magn_outliers = []
-		self.tstat_outliers = []
-
-		# If the cutoff value is not specified, default to the 90th percentile
-		# of magnification.
-		if self.cutoff==None:
-			magn_sorted = sorted(self.magn_array)
-			self.cutoff = magn_sorted[(self.res**2) - 11]
-			print('No cutoff value specified; selecting only upper 10 points')
-
-		print('Finding the magnification outliers...')
-
-		for (i, magn) in enumerate(self.magn_array):
-			if magn > self.cutoff:
-				self.x_outliers.append(self.x_array[i])
-				self.y_outliers.append(self.y_array[i])
-				self.magn_outliers.append(magn)
-				if data == 'tstat':
-					self.tstat_outliers.append(self.tstat_array[i])
-
-	def print_input(self):
-		print('\nInput:\nx = {:}\ny = {:}\ns = {:}\nq = {:}\n'
-			.format(self.x, self.y, self.s, self.q))
-		print('Calculated in the {} using {}\n'.format(self.origin_phrase,
-					self.solver_phrase))
-
-	#Step 1
 	def plot_coeff_tstat(self, cutoff = None, region = 'caustic',
 			plot_position_tstat = False, sample_res = 5, save = False,
-			outliers = False, plot_coeffs = True):
+			outliers = False, plot_coeffs = True, **kwargs):
 
-#		self.tstat_grid_plot(region = region, region_res = region_res,
-#								sample_res = sample_res)
-		self.grid_plots(region = region, data = 'tstat', sample_res = sample_res)
+		if 's' not in kwargs:
+			kwargs['s'] = 5
+		kwargs = self.check_kwargs(**kwargs)
+		self.get_position_arrays(region = region)
+		self.get_coeff_array()
+		self.get_tstat_array(sample_res = sample_res)
 
 		if outliers:
-			self.cutoff = cutoff
-			self.get_magn_outliers(data = 'tstat')
+			self.get_magnification_outliers(cutoff, data = 'tstat')
 			(x, y, magn, tstat) = (self.x_outliers, self.y_outliers,
 								self.magn_outliers, self.tstat_outliers)
 		else:
@@ -766,7 +875,9 @@ class BinaryLens(object):
 		if plot_coeffs:
 			print('Plotting...')
 			for (i, coeff) in enumerate(self.coeff_array):
-				plt.scatter(coeff, self.tstat_array, s=5, color='black', lw=None)
+				file_name = ('../Tables/BL_tstat_{}_{}_{}.png'.format(
+						self.coeff_file[i], self.solver_file, self.origin_file))
+				plt.scatter(coeff, self.tstat_array, color='black', **kwargs)
 				xmin = min(coeff)
 				xmax = max(coeff)
 				dx = xmax - xmin
@@ -775,144 +886,36 @@ class BinaryLens(object):
 				plt.ylabel('t-Test Result')
 				plt.xlim(xmin - 0.01*dx, xmax + 0.01*dx)
 				plt.ylim(0, 1.01*ymax)
+				plt.xticks(np.arange(xmin, xmax, dx/6))
 				plt.title('t-Test Result vs. {}'.format(self.coeff_string[i]))
-				plt.show()
 				if save:
-					continue	#FIXME: Include save condition
+					self.save_png(file_name = file_name)
+				plt.show()
 
-	#Step 3 (opt)
-	def plot_position_tstat(self, x, y, tstat, outliers):
-		plt.scatter(x, y, c = tstat, marker = 'o', s=(300/self.res)**2)
-		plt.xlim(min(self.x_array), max(self.x_array))
-		plt.ylim(min(self.y_array), max(self.y_array))
+	def plot_position_tstat(self, x, y, tstat, outliers, cutoff = None, **kwargs):
+
+		kwargs = self.check_kwargs(**kwargs)
+		plt.scatter(x, y, c = tstat, **kwargs)
+		(xmin, xmax) = (min(self.x_array), max(self.x_array))
+		(ymin, ymax) = (min(self.y_array), max(self.y_array))
+		plt.xlim(xmin, xmax)
+		plt.ylim(ymin, ymax)
+		plt.xticks(np.arange(xmin, xmax, (xmax - xmin) / 6))
 		plt.xlabel('X-position')
 		plt.ylabel('Y-position')
 		region_plot = plt.colorbar()
 		region_plot.set_label('t-value')
 		if outliers:
 			plt.title(('Magnification outliers t-test Score\n{} Frame; {} Solver; M > {:.0f}, q={}'.
-				format(self.origin_title, self.solver_title, self.cutoff, self.q)))
+				format(self.origin_title, self.solver_title, cutoff, self.q)))
 		else:
 			plt.title('t-test Score vs Position\nFrame: {}; Solver: {}'.format(
 				self.origin_title, self.solver_title))
 		caustic = mm.Caustics(s=self.s, q=self.q)
-		caustic.plot(s=(40/self.res)**2)
+		caustic.plot(s=1)
 		plt.show()
 
-	"""
-	#Step 2
-	def tstat_grid_plot(self, region, region_res, sample_res):
-		self.fill_region_grid_arrays(region = region, region_res = region_res)
-		self.get_region_arrays(region_res = region_res, sample_res = sample_res)
-		print('Getting t-test values...')
-		for (idx, magn) in enumerate(self.region_magn):
-			if idx == len(self.region_magn)/int(4):
-				print('25%...')
-			elif idx == len(self.region_magn)/int(2):
-				print('50%...')
-			elif idx == 3*len(self.region_magn)/int(4):
-				print('75%...')
-			self.sample_magn[idx] = self.return_sample_magn(x = self.region_xarray[idx],
-							y = self.region_yarray[idx], sample_res = sample_res)
-			self.region_tstat[idx] = self.get_tstat(magn = magn, sample_magn =
-														self.sample_magn[idx])
-			self.x = self.region_xarray[idx]
-			self.y = self.region_yarray[idx]
-		self.get_coeff_strings()
-
-	#Step 2.5
-	def get_coeff_strings(self):
-		self.coeff_string = [None]*12
-		for i in range(6):
-			self.coeff_string[i] = ('Re(coeff{})'.format(i))
-			self.coeff_string[i+6] = ('Im(coeff{})'.format(i))
-
-	#Step 2.4
-	def get_tstat(self, magn, sample_magn):
-		mean_magn = sum(sample_magn) / len(sample_magn)
-		stderr_magn = np.std(sample_magn) / np.sqrt(len(sample_magn))
-		tstat = abs(magn - mean_magn) / stderr_magn
-		return tstat
-
-	#Step 2.3
-	def return_sample_magn(self, x, y, sample_res):
-		sample_xgrid = np.linspace(x - 0.2*self.delta, x + 0.2*self.delta, sample_res)
-		sample_ygrid = np.linspace(y - 0.2*self.epsilon, y + 0.2*self.epsilon, sample_res)
-		sample_magn = np.zeros(sample_res**2)
-		for (i, xx) in enumerate(sample_xgrid):
-			for (j, yy) in enumerate(sample_ygrid):
-				sample_idx = sample_res*i + j
-				self.x = xx
-				self.y = yy
-				roots = self.solutions()
-				self.magnification()
-				sample_magn[sample_idx] = self.tot_magn
-		return sample_magn
-
-	#Step 2.2
-	def get_region_arrays(self, region_res, sample_res):		
-		plt.xlim(min(self.region_xarray), max(self.region_xarray))
-		plt.ylim(min(self.region_yarray), max(self.region_yarray))
-		self.region_xarray = np.zeros(region_res**2)
-		self.region_yarray = np.zeros(region_res**2)
-		self.region_magn = np.zeros(region_res**2)
-		self.region_tstat = np.zeros(region_res**2)
-		self.coeff_array = [[]*region_res**2 for i in range(12)]
-		self.sample_magn = [[]*sample_res**2 for i in range(region_res**2)]
-		for (i, xx) in enumerate(self.region_xgrid):
-			for (j, yy) in enumerate(self.region_ygrid):
-				idx = region_res*i + j
-				self.region_xarray[idx] = xx
-				self.region_yarray[idx] = yy
-				self.x = xx
-				self.y = yy
-				roots = self.solutions()
-				self.magnification()
-				self.region_magn[idx] = self.tot_magn
-				coeffs = self.get_coeff_list()
-				for k in range(12):
-					self.coeff_array[k].append(coeffs[k])
-
-	#Step 2.2.1
-	print('Getting coefficient values...')
-	def get_coeff_list(self):
-		coeffs = self.get_coefficients()
-		c_real = []
-		c_imag = []
-		# This fills the c_real and c_imag lists in descending order. Specifically,
-		# c_real[n] is the real component of the nth-degree term, etc.
-		for i in range(len(coeffs)):
-			c_r = float(np.real(coeffs[i]))
-			c_i = float(np.imag(coeffs[i]))
-			c_real.append(c_r)
-			c_imag.append(c_i)
-
-		""
-		This reverses the order of the coefficients and places the real
-		coefficients in front of the imaginary. For example, c[4] is the real
-		component of the 4th degree term, and c[9] is the imaginary component of
-		the (9-6)=3rd degree term.
-		""
-		c = c_real[::-1] + c_imag[::-1]
-		return c
-
-	
-	#Step 2.1
-	def fill_region_grid_arrays(self, region, region_res):
-		(w_caustic, h_caustic, x_center) = self.size_caustic()
-		if region == 'cusp':
-			region_xmin = x_center + 0.4*w_caustic
-			region_xmax = x_center + 0.7*w_caustic
-			region_ymin = -0.1*h_caustic
-			region_ymax = 0.1*h_caustic
-		if region == 'caustic':
-			region_xmin = x_center - w_caustic
-			region_xmax = x_center + w_caustic
-			region_ymin = -h_caustic
-			region_ymax = h_caustic
-		self.region_xgrid = np.linspace(region_xmin, region_xmax, region_res)
-		self.region_ygrid = np.linspace(region_ymin, region_ymax, region_res)
-	"""
+### The following functions save the relevant data to a .png or .fits file
 
 	def write_to_fits(self, region = 'caustic'):
 		"""
@@ -920,7 +923,9 @@ class BinaryLens(object):
 		and number of images between different coordinate systems and solving methods.
 		"""
 
-		self.grid_plots(region = region, data = 'magn')
+		self.get_position_arrays(region = region)
+		self.get_magnification_array()
+		self.get_num_images_array()
 		col = []
 		col.append(fits.Column(name='x', array=self.x_array, format='D'))
 		col.append(fits.Column(name='y', array=self.y_array, format='D'))
@@ -946,15 +951,82 @@ class BinaryLens(object):
 				continue
 			break
 
+	def save_png(self, file_name):
+		for i in range(10):
+			name = file_name[:-4] + '{}'.format(i) + file_name[-4:]
+			if Path(name).is_file():
+				continue
+			plt.savefig(name)
+			print(name, 'has been saved')
+			return
+		print('Error: too many files of same name already exist. File not saved')
+
+### The following functions print optional information.
+
+	def print_num_images_errors(self):
+		"""
+		Prints the number of points that have n images, where n is an integer
+		ranging from 0 to 5.
+		"""
+
+		num = np.zeros(6, dtype = int)
+		for num_im in self.num_images:
+			for i in range(len(num)):
+				if num_im == i:
+					num[i] += 1
+		print('Concern: number of points where the number of images is',
+			'\n0: {:}\n1: {:}\n2: {:}\n3: {:}\n4: {:}\n5: {:}\nTotal: {:}'
+			.format(*num, sum(num)))
+
+	def print_input(self):
+		print('\nInput:\nx = {:}\ny = {:}\ns = {:}\nq = {:}\n'
+			.format(self.x, self.y, self.s, self.q))
+		print('Calculated in the {} using {}\n'.format(self.origin_phrase,
+					self.solver_phrase))
+
+	def print_image_position(self, print_input=True):
+		"""
+		Prints the image positions with the option to display the input parameters. 
+		"""
+
+		if print_input:
+			self.print_input()
+		self.get_solutions(x=self.x, y=self.y)
+		image_pos = self.image_positions()
+		print('Image locations:')
+		for (i, pos) in enumerate(image_pos):
+			print('{:.5f}'.format(pos))
+
+	def print_magnification(self, print_input=True):
+		"""
+		Prints the total magnification with the option to display the input
+		parameters.
+
+		Parameters:
+			print_input (bool):
+				Prints the input parameteers specified by the user if True.
+		"""
+
+		if print_input:
+			self.print_input()
+		magn = self.get_magnification(x=self.x, y=self.y)
+		print('Magnification: {:.5f}'.format(magn))
+
+### The following functions gather string data that are used within the source code.
+
 	def get_coeff_strings(self):
 		self.coeff_string = [None]*12
+		self.coeff_file = [None]*12
 		for i in range(6):
 			self.coeff_string[i] = ('Re(coeff{})'.format(i))
 			self.coeff_string[i+6] = ('Im(coeff{})'.format(i))
+			self.coeff_file[i] = ('Re_c{}'.format(i))
+			self.coeff_file[i+6] = ('Im_c{}'.format(i))
 
 	def strings(self):
 		"""
 		Assign appropriate strings for file-naming, printing, and plot titles.
+		Return an error if an input string parameter is not recognized.
 		"""
 
 		if self.origin == 'geo_cent':
@@ -994,3 +1066,4 @@ class BinaryLens(object):
 			self.solver_phrase = 'Numerical Recipes: zroots root finder'
 		else:
 			raise ValueError('Unknown solver: {:}'.format(self.solver))
+

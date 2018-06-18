@@ -11,7 +11,7 @@ import numpy as np
 
 # Input parameters
 s = 1.5
-q = 2e-8
+q = 1e-7
 res = int(50)
 coordinates = ['geo_cent', 'caustic', 'plan']
 method = ['SG12', 'numpy']
@@ -39,8 +39,8 @@ print('Plotting...')
 for (j, origin) in enumerate(coordinates):
 	for (i, solver) in enumerate(method):
 		for k in range(i+1, len(method)):
-			plt.scatter(x_array, y_array, c = (mag_BL[i][j] / mag_BL[k][j])**(1/3), s=10, marker = 'o',
-										cmap='plasma', lw=None)
+			plt.scatter(x_array, y_array, c = (mag_BL[i][j] / mag_BL[k][j]), 
+									s=10, marker = 'o', cmap='plasma', lw=None)
 			mag_plot = plt.colorbar()
 			mag_plot.ax.tick_params(labelsize=10)
 			mag_plot.set_label('Magnification Ratio')

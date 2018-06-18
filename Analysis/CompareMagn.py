@@ -78,7 +78,7 @@ for (i, p) in enumerate(plot):
 								cmap='plasma', lw=None)
 	mag_plot = plt.colorbar()
 	mag_plot.ax.tick_params(labelsize=10)
-	mag_plot.set_label('Magnification (MulensModel - zroots)')
+	mag_plot.set_label('Magnification (MulensModel / zroots)')
 	plt.xlabel('X-position of source', fontsize = 12)
 	plt.ylabel('Y-position of source', fontsize = 12)
 	plt.xlim(min(x_array), max(x_array))
