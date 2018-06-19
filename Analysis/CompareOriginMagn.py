@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: Jun 15, 2018
 # CompareOriginMagn.py
-# Last Updated: Jun 15, 2018
+# Last Updated: Jun 19, 2018
 
 import matplotlib.pyplot as plt
 from BinaryLens import BinaryLens as BL
@@ -11,12 +11,13 @@ import numpy as np
 # Input parameters
 s = 1.5
 mass_ratios = [1e-7]
-res = int(150)
-coordinates = ['caustic', 'plan']
+res = int(100)
+coordinates = ['plan', 'geo_cent']
 method = ['SG12']
-tolerance = 0.005
-region = 'offax_cusp'
-ratio_cutoff = 2
+tolerance = 0.0007
+region = 'custom'
+region_lim = (-.3, .3, .7, 1.3)
+ratio_cutoff = 1.5
 
 param = [[[None] * len(coordinates) for i in range(len(method))] 
 		for j in range(len(mass_ratios))]
@@ -40,9 +41,9 @@ if plot_on:
 		for (j, solver) in enumerate(method):
 			for (k, origin) in enumerate(coordinates):
 				for l in range(k+1, len(coordinates)):
-					plot[i][j][k].plot_outlier_coeff(region=region,
-							other_BL=plot[i][j][l], ratio_cutoff=ratio_cutoff,
-							save = False)
+					plot[i][j][k].plot_rel_magn_coeff(region=region,
+							region_lim=region_lim, other_BL=plot[i][j][l],
+							ratio_cutoff=ratio_cutoff, save=False)
 
 #Plot relative magnification vs position.
 plot_on = True
@@ -53,6 +54,7 @@ if plot_on:
 				for l in range(k+1, len(coordinates)):
 					plot[i][j][k].plot_rel_magnification(
 							other_BL=plot[i][j][l], region=region,
-							outliers=False, ratio_cutoff=ratio_cutoff,
-							log_colorbar=True, save=False)
+							region_lim=region_lim, outliers=True,
+							ratio_cutoff=ratio_cutoff, log_colorbar=True,
+							save=False)
 					plt.show()
