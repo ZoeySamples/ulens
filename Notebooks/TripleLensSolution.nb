@@ -1,0 +1,275 @@
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[         0,          0]
+NotebookDataLength[      9846,        274]
+NotebookOptionsPosition[      8840,        236]
+NotebookOutlinePosition[      9304,        254]
+CellTagsIndexPosition[      9261,        251]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell["Write the equation for a triple lens.", "Text",
+ CellChangeTimes->{{3.73549291074622*^9, 3.7354929161538153`*^9}, 
+   3.736605259624775*^9, {3.7384092173674726`*^9, 3.738409224835462*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"zeta", " ", "=", " ", 
+  RowBox[{"z", " ", "+", " ", 
+   RowBox[{"m1", "/", 
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"Conjugate", "[", "z1", "]"}], "-", 
+      RowBox[{"Conjugate", "[", "z", "]"}]}], ")"}]}], "+", 
+   RowBox[{"m2", " ", "/", " ", 
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"Conjugate", "[", "z2", "]"}], "-", 
+      RowBox[{"Conjugate", "[", "z", "]"}]}], ")"}]}], " ", "+", " ", 
+   RowBox[{"m3", " ", "/", " ", 
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"Conjugate", "[", "z3", "]"}], "-", 
+      RowBox[{"Conjugate", "[", "z", "]"}]}], ")"}]}]}]}]], "Input",
+ CellChangeTimes->{{3.7374685580298023`*^9, 3.737468575793311*^9}}],
+
+Cell[BoxData[
+ RowBox[{"z", "+", 
+  FractionBox[
+   RowBox[{
+    RowBox[{"-", "dm"}], "+", "m"}], 
+   RowBox[{
+    RowBox[{"-", 
+     RowBox[{"Conjugate", "[", "z", "]"}]}], "+", 
+    RowBox[{"Conjugate", "[", "z1", "]"}]}]], "+", 
+  FractionBox[
+   RowBox[{"dm", "+", "m"}], 
+   RowBox[{
+    RowBox[{"-", 
+     RowBox[{"Conjugate", "[", "z", "]"}]}], "+", 
+    RowBox[{"Conjugate", "[", "z2", "]"}]}]], "+", 
+  FractionBox["m3", 
+   RowBox[{
+    RowBox[{"-", 
+     RowBox[{"Conjugate", "[", "z", "]"}]}], "+", 
+    RowBox[{"Conjugate", "[", "z3", "]"}]}]]}]], "Output",
+ CellChangeTimes->{
+  3.735492874328898*^9, 3.735494459904933*^9, 3.735572092768404*^9, 
+   3.735572794790063*^9, 3.736605113243164*^9, 3.737468579174019*^9, {
+   3.7384092142132587`*^9, 3.738409227784113*^9}}]
+}, Open  ]],
+
+Cell["\<\
+Take the conjugate of the triple lens equation. Solve for the conjugate of z, \
+and substitute this back into binary lens equation. Assume the lensing bodies \
+lie on the real axis, and that the masses are real. Then \[Zeta] is equal to \
+the following expression:\
+\>", "Text",
+ CellChangeTimes->{{3.7354929872898893`*^9, 3.735493004986307*^9}, {
+   3.7354932691302347`*^9, 3.7354932755939503`*^9}, 3.7366052487283907`*^9, {
+   3.736605641032777*^9, 3.73660564716055*^9}, {3.73660587503281*^9, 
+   3.7366058753860493`*^9}, {3.736606044826284*^9, 3.736606098666217*^9}, {
+   3.737470036959694*^9, 3.737470037835877*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"zetaexpression", " ", "=", " ", 
+  RowBox[{"Refine", "[", 
+   RowBox[{
+    RowBox[{"zeta", "/.", 
+     RowBox[{"Solve", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Conjugate", "[", "zeta", "]"}], "\[Equal]", 
+        RowBox[{"Conjugate", "[", "\[Zeta]", "]"}]}], ",", 
+       RowBox[{"Conjugate", "[", "z", "]"}]}], "]"}]}], ",", " ", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+      "m1", ",", " ", "m2", ",", " ", "m3", ",", "z1", ",", "z2", ",", " ", 
+       "z3"}], "}"}], " ", "\[Element]", " ", "Reals"}]}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.7354931333413754`*^9, 3.7354931339324627`*^9}, {
+  3.735572829843171*^9, 3.735572841649927*^9}, {3.73660565430129*^9, 
+  3.736605678413106*^9}, {3.736605809007292*^9, 3.736605849405705*^9}, {
+  3.737470054451826*^9, 3.737470090785035*^9}, {3.737470153763297*^9, 
+  3.737470160992893*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"z", "+", 
+   FractionBox[
+    RowBox[{
+     RowBox[{"-", "dm"}], "+", "m"}], 
+    RowBox[{"z1", "+", 
+     FractionBox[
+      RowBox[{"dm", "+", "m"}], 
+      RowBox[{
+       RowBox[{"-", "z"}], "+", "z2"}]], "+", 
+     FractionBox["m3", 
+      RowBox[{
+       RowBox[{"-", "z"}], "+", "z3"}]], "+", 
+     FractionBox[
+      RowBox[{
+       RowBox[{"-", 
+        RowBox[{"Conjugate", "[", "dm", "]"}]}], "+", 
+       RowBox[{"Conjugate", "[", "m", "]"}]}], 
+      RowBox[{
+       RowBox[{"-", "z"}], "+", "z1"}]], "-", 
+     RowBox[{"Conjugate", "[", "\[Zeta]", "]"}]}]], "+", 
+   FractionBox[
+    RowBox[{"dm", "+", "m"}], 
+    RowBox[{"z2", "+", 
+     FractionBox[
+      RowBox[{"dm", "+", "m"}], 
+      RowBox[{
+       RowBox[{"-", "z"}], "+", "z2"}]], "+", 
+     FractionBox["m3", 
+      RowBox[{
+       RowBox[{"-", "z"}], "+", "z3"}]], "+", 
+     FractionBox[
+      RowBox[{
+       RowBox[{"-", 
+        RowBox[{"Conjugate", "[", "dm", "]"}]}], "+", 
+       RowBox[{"Conjugate", "[", "m", "]"}]}], 
+      RowBox[{
+       RowBox[{"-", "z"}], "+", "z1"}]], "-", 
+     RowBox[{"Conjugate", "[", "\[Zeta]", "]"}]}]], "+", 
+   FractionBox["m3", 
+    RowBox[{
+     FractionBox[
+      RowBox[{"dm", "+", "m"}], 
+      RowBox[{
+       RowBox[{"-", "z"}], "+", "z2"}]], "+", "z3", "+", 
+     FractionBox["m3", 
+      RowBox[{
+       RowBox[{"-", "z"}], "+", "z3"}]], "+", 
+     FractionBox[
+      RowBox[{
+       RowBox[{"-", 
+        RowBox[{"Conjugate", "[", "dm", "]"}]}], "+", 
+       RowBox[{"Conjugate", "[", "m", "]"}]}], 
+      RowBox[{
+       RowBox[{"-", "z"}], "+", "z1"}]], "-", 
+     RowBox[{"Conjugate", "[", "\[Zeta]", "]"}]}]]}], "}"}]], "Output",
+ CellChangeTimes->{
+  3.735572800512332*^9, 3.7355728419480753`*^9, 3.736605131132717*^9, 
+   3.736605692991395*^9, 3.7366058619906683`*^9, 3.7366060822219963`*^9, {
+   3.737470070487483*^9, 3.737470093117084*^9}, 3.7374701688935213`*^9, 
+   3.738409230952331*^9}]
+}, Open  ]],
+
+Cell["\<\
+Move \[Zeta] to other side and combine the expression into one fraction. \
+Collect only the numerator (since this polynomial is equal to zero) into \
+powers of z, and mulitply by -1 for convention. This is the form of the \
+polynomial in a general coordinate system, and it is equal to 0.\
+\>", "Text",
+ CellChangeTimes->{{3.7354936527492313`*^9, 3.735493733113718*^9}, {
+  3.7366052418168373`*^9, 3.736605269001212*^9}, {3.7366061178353243`*^9, 
+  3.7366061342971697`*^9}, {3.737470209371087*^9, 3.737470212138259*^9}}],
+
+Cell[BoxData[
+ RowBox[{"pgeneral", "=", 
+  RowBox[{"Collect", "[", 
+   RowBox[{
+    RowBox[{"-", 
+     RowBox[{"Numerator", "[", 
+      RowBox[{"Together", "[", 
+       RowBox[{"zetaexpression", " ", "-", " ", "\[Zeta]"}], "]"}], "]"}]}], 
+    ",", " ", "z", ",", " ", "Simplify"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.735493768769026*^9, 3.735493787813723*^9}, 
+   3.735494291420422*^9, 3.735573081261142*^9, {3.736605176397903*^9, 
+   3.7366051819325523`*^9}, {3.736605217104457*^9, 3.7366052230405684`*^9}, {
+   3.7366053596187353`*^9, 3.736605365888051*^9}, {3.737470129028388*^9, 
+   3.737470130078269*^9}, {3.737470174943634*^9, 3.737470182383555*^9}}],
+
+Cell["Substitute mass ratios into the expression.", "Text",
+ CellChangeTimes->{{3.738409484547567*^9, 3.7384095084993553`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"pgeneralEpsilon", " ", "=", " ", 
+  RowBox[{"Collect", "[", 
+   RowBox[{
+    RowBox[{"Expand", "[", 
+     RowBox[{"pgeneral", "/.", 
+      RowBox[{"{", 
+       RowBox[{
+        RowBox[{"m1", "\[Rule]", "m"}], ",", " ", 
+        RowBox[{"m2", "\[Rule]", 
+         RowBox[{"\[Epsilon]1", "*", "m"}]}], ",", " ", 
+        RowBox[{"m3", "\[Rule]", 
+         RowBox[{"\[Epsilon]2", "*", "m"}]}]}], "}"}]}], "]"}], ",", " ", "z",
+     ",", " ", "Simplify"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.7374705332416553`*^9, 3.737470555961659*^9}, {
+  3.737470709241399*^9, 3.7374707693740463`*^9}, {3.737470801566036*^9, 
+  3.737470833695133*^9}, {3.737471268737247*^9, 3.7374712946417627`*^9}}],
+
+Cell["Output in a form more suited for Python.", "Text",
+ CellChangeTimes->{{3.738409518547365*^9, 3.7384095352516727`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"pgeneralEpsPython", " ", "=", " ", 
+  RowBox[{"FortranForm", "[", 
+   RowBox[{"Simplify", "[", 
+    RowBox[{"pgeneralEpsilon", "/.", 
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"\[Epsilon]1", "\[Rule]", "\"\<self.eps1\>\""}], ",", " ", 
+       RowBox[{"\[Epsilon]2", " ", "\[Rule]", "\"\<self.eps2\>\""}], ",", " ", 
+       RowBox[{"m", "\[Rule]", "\"\<self.m\>\""}], ",", " ", 
+       RowBox[{"\[Zeta]", "\[Rule]", "\"\<self.zeta\>\""}], ",", " ", 
+       RowBox[{
+        RowBox[{"Conjugate", "[", "\[Zeta]", "]"}], "\[Rule]", 
+        "\"\<self.zeta_conj\>\""}], ",", " ", 
+       RowBox[{"z1", "\[Rule]", "\"\<self.z1\>\""}], ",", " ", 
+       RowBox[{"z2", "\[Rule]", "\"\<self.z2\>\""}], ",", " ", 
+       RowBox[{"z3", "\[Rule]", "\"\<self.z3\>\""}]}], "}"}]}], "]"}], 
+   "]"}]}]], "Input",
+ CellChangeTimes->{{3.737471313387946*^9, 3.737471561175377*^9}, {
+  3.7374717320828743`*^9, 3.7374717355541677`*^9}, {3.737471874144498*^9, 
+  3.737471892542367*^9}, {3.737471923587734*^9, 3.7374719309712257`*^9}}]
+},
+WindowSize->{836, 970},
+WindowMargins->{{Automatic, 0}, {Automatic, 25}},
+CellLabelAutoDelete->True,
+Magnification:>FEPrivate`If[
+  FEPrivate`Equal[FEPrivate`$VersionNumber, 6.], 1.25, 1.25 Inherited],
+FrontEndVersion->"7.0 for Linux x86 (64-bit) (November 11, 2008)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[400, 13, 194, 2, 37, "Text"],
+Cell[CellGroupData[{
+Cell[619, 19, 684, 18, 89, "Input"],
+Cell[1306, 39, 781, 23, 104, "Output"]
+}, Open  ]],
+Cell[2102, 65, 630, 10, 85, "Text"],
+Cell[CellGroupData[{
+Cell[2757, 79, 882, 20, 89, "Input"],
+Cell[3642, 101, 1965, 61, 181, "Output"]
+}, Open  ]],
+Cell[5622, 165, 530, 8, 85, "Text"],
+Cell[6155, 175, 663, 13, 64, "Input"],
+Cell[6821, 190, 127, 1, 37, "Text"],
+Cell[6951, 193, 711, 16, 89, "Input"],
+Cell[7665, 211, 124, 1, 37, "Text"],
+Cell[7792, 214, 1044, 20, 164, "Input"]
+}
+]
+*)
+
