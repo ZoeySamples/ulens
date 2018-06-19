@@ -10,7 +10,7 @@ import MulensModel as mm
 # Input parameters
 s = 1.5
 mass_ratios = [1e-7]
-res = int(200)
+res = int(50)
 method =  ['SG12']
 coordinates = ['geo_cent']
 tolerance = 0.00006
@@ -28,7 +28,7 @@ for solver in method:
 			plot.append(BL(**param[-1]))
 
 # Plots the number of solutions in a grid of points centered on the caustic
-plot_on = True
+plot_on = False
 if plot_on:
 	for p in plot:
 		p.plot_n_solns(errors_only=False, region=region, region_lim=region_lim,
@@ -47,6 +47,12 @@ if plot_on:
 		caustics = mm.Caustics(s=s, q=p.q)
 		caustics.plot(s=1)
 		plt.show()
+
+plot_on = True
+if plot_on:
+	for p in plot:
+		p.plot_magn_coeff(cutoff=cutoff, outliers=False, region=region,
+						region_lim=region_lim, save=False)
 
 # Writes data to fits table
 plot_on = False

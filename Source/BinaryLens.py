@@ -327,7 +327,7 @@ class BinaryLens(object):
 
 ### The following functions are used for assigning data into grids.
 
-	def get_position_arrays(self, region):
+	def get_position_arrays(self, region, region_lim=None):
 		"""
 		Fills arrays for the x- and y-position to prepare grid plots.
 
@@ -336,12 +336,28 @@ class BinaryLens(object):
 				The area on which the grid will be calculated.
 				Accepted values:
 
-				'caustic' - the zoomed-out view showing the full
-						planetary caustic.
-				'onax-cusp' - the zoomed-in view to the right of the cusp
-						on the horizontal axis.
-				'offax-cusp' - the zoomed-in view above the cusp on the
-						vertical axis.
+				'caustic'
+					The zoomed-out view showing the full planetary caustic.
+
+				'onax-cusp'
+					The zoomed-in view to the right of the cusp on the
+					horizontal axis.
+
+				'offax-cusp'
+					The zoomed-in view above the cusp on the vertical axis.
+
+				'custom'
+					The user-specified region determined by the parameters:
+					xmin, xmax, ymin, ymax
+
+			region_lim (tuple):
+				The limits of the grid area when region is given by 'custom.'
+				It is given by (xmin, xmax, ymin, ymax).
+
+				xmin, xmax, ymin, ymax (floats):
+					The limits of the grid area when region is 'custom.'
+					The on-axis cusps are given by: (x, y) = {(-1, 0), (1, 0)}
+					The off-axis cusps are given by: (x, y) = {(0, 1), (0, -1)}
 		"""
 
 		self.get_size_caustic()
@@ -361,6 +377,12 @@ class BinaryLens(object):
 			region_xmax = self.xcenter_caustic + 0.10*self.width_caustic
 			region_ymin = 0.55*self.height_caustic
 			region_ymax = 0.8*self.height_caustic
+		if region == 'custom':
+			(xmin, xmax, ymin, ymax) = (*region_lim,)
+			region_xmin = self.xcenter_caustic + 0.5*xmin*self.width_caustic
+			region_xmax = self.xcenter_caustic + 0.5*xmax*self.width_caustic
+			region_ymin = 0.5*ymin*self.height_caustic
+			region_ymax = 0.5*ymax*self.height_caustic
 
 		x_grid = np.linspace(region_xmin, region_xmax, self.res)
 		y_grid = np.linspace(region_ymin, region_ymax, self.res)
@@ -461,6 +483,74 @@ class BinaryLens(object):
 				self.y_outliers.append(self.y_array[i])
 				self.magn_outliers.append(magn)
 
+	def get_num_images_errors(self):
+		"""
+		Returns only the points in the grid where the number of images is
+		not equal to 3 or 5.
+
+		Returns:
+
+			x_err (array of floats):
+				The x-position for each erroneous point.
+
+			y_err (array of floats):
+				The y-position for each erroneous point.
+
+			num_images_err (array of floats):
+				The number of images for each erroneous point.
+		"""
+
+		x_err = []
+		y_err = []
+		num_images_err = []
+
+		for (i, num) in enumerate(self.num_images):
+			if (num == 0) or (num == 1) or (num == 2) or (num == 4):
+				x_err.append(self.x_array[i])
+				y_err.append(self.y_array[i])
+				num_images_err.append(num)
+
+		return (x_err, y_err, num_images_err)
+
+	def get_ratio_outliers(self, other_BL, ratio_cutoff=None):
+		"""
+		Returns the values of x, y, and the relative magnification where the
+		relative magnification is greater than the specified cutoff limit.
+
+		Required parameters:
+
+			other_BL (object):
+				Another instance of the class BinaryLens against which
+				magnification values will be compared.
+
+
+		Optional parameters:
+
+			ratio_cutoff (float):
+				The minimum relative magnification a point can have to be
+				included in the array. If not specified, the value will default
+				to 2.0.
+		"""
+
+
+		(x, y, magn1, magn2) = (self.x_array, self.y_array, self.magn_array,
+								other_BL.magn_array)
+		rel_magn = magn1 / magn2
+
+		rel_magn_outliers = []
+		x_outliers = []
+		y_outliers = []
+
+		# If ratio_cutoff has not been specified, default to 2.0
+		if ratio_cutoff == None:
+			ratio_cutoff = 2.0
+		for (i, magn) in enumerate(rel_magn):
+			if (magn > ratio_cutoff) or (1./magn > ratio_cutoff):
+				x_outliers.append(x[i])
+				y_outliers.append(y[i])
+				rel_magn_outliers.append(magn)
+		return x_outliers, y_outliers, rel_magn_outliers
+
 	def get_tstat_outliers(self):
 		"""
 		Fills an array with the values of t-stat for points determined
@@ -475,6 +565,52 @@ class BinaryLens(object):
 		except:
 			raise ValueError('You must call get_magnification_outliers()',
 									'before calling get_tstat_outliers()')
+
+	def get_tstat_plot_data(self, cutoff=None, outliers=False,
+			region='caustic', region_lim=None, sample_res=5):
+		"""
+		Optional parameters:
+
+			cutoff (float):
+				The minimum magnification a point can have for the t-stat to
+				be plotted. If not specified, the default is to include only
+				the 10 greatest	values. Feature only implemented when 
+				outliers == True.
+
+			outliers (bool):
+				If true, only the points with magnification above the cutoff
+				will be plotted.
+
+			region (string):
+				The region in which the grid is to be filled. See the
+				function, "get_position_arrays," to see accepted values.
+
+			region_lim (tuple containing floats):
+				The limits of the grid area when region is given by 'custom.'
+				It is given by (xmin, xmax, ymin, ymax). See the method, 
+				'get_position_arrays' to see what the limits correspond to.
+
+			sample_res (int):
+				The resolution (side length) of the sample grid created
+				around each point in the region grid. These points are used
+				to determine the t-stat value. If not specified, the default
+				grid size is 5x5.
+		"""
+
+		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_coeff_array()
+		self.get_tstat_array(sample_res = sample_res)
+
+		if outliers:
+			self.get_magnification_outliers(cutoff)
+			self.get_tstat_outliers()
+			(x, y, magn, tstat) = (self.x_outliers, self.y_outliers,
+								   self.magn_outliers, self.tstat_outliers)
+		else:
+			(x, y, magn, tstat) = (self.x_array, self.y_array, self.magn_array,
+								   self.tstat_array)
+		return (x, y, magn, tstat)
+
 
 ### The following functions return a single element to a grid variable.
 
@@ -608,21 +744,31 @@ class BinaryLens(object):
 
 ### The following functions make plots for grid data.
 
-	def plot_n_solns(self, print_errors=True, region='caustic',
-					 save=False, **kwargs):
+	def plot_n_solns(self, errors_only=False, print_errors=True,
+			region='caustic', save=False, region_lim=None, **kwargs):
 		"""
-		Creates a plot showing number of images on a grid (x,y) around
-		the planetary caustic.
+		Creates a plot showing number of images on a grid over the specified
+		region.
 
-		Parameters:
+		Optional parameters:
+
+			errors_only (bool):
+				If True, only plots the points where the number of solutions
+				is not equal to 3 or 5.
+
 			print_errors (bool):
-				Prints the number of instances where the number of accepted
-				solutions was equal to each integer value from 0 to 5
+				If True, prints the number of instances where the number of
+				accepted solutions was equal to each integer value from 0 to 5
 				inclusive.
 
 			region (string):
 				The region in which the grid is to be filled. See the
 				function, "get_position_arrays," to see accepted values.
+
+			region_lim (tuple containing floats):
+				The limits of the grid area when region is given by 'custom.'
+				It is given by (xmin, xmax, ymin, ymax). See the method, 
+				'get_position_arrays' to see what the limits correspond to.
 
 			save (bool):
 				If True, saves the plot to a .png file.
@@ -631,18 +777,29 @@ class BinaryLens(object):
 				Keyword arguments for pyplot module.
 		"""
 
+		# Get data for plotting
 		kwargs = self.check_kwargs(**kwargs)
-		self.get_position_arrays(region = region)
+		kwargs['cmap'] = 'coolwarm'
+		self.get_position_arrays(region=region, region_lim=region_lim)
 		self.get_num_images_array()
 
 		if print_errors:
 			self.print_num_images_errors()
 
-		plt.scatter(self.x_array, self.y_array, c=self.num_images, **kwargs)
+		if errors_only:
+			(x, y, num_images) = self.get_num_images_errors()
+			file_name = '../Tables/NumImErr_{}_{}.png'.format(
+					self.origin_file, self.solver_file)
+		else:
+			(x, y, num_images) = (self.x_array, self.y_array, self.num_images)
+			file_name = '../Tables/NumIm_{}_{}.png'.format(
+					self.origin_file, self.solver_file)
+
+		plt.scatter(x, y, c=num_images, **kwargs)
 		im_plot = plt.colorbar()
 		im_plot.set_label('Num Images')
-		plt.xlabel('X-position of Source', fontsize = 12)
-		plt.ylabel('Y-position of Source', fontsize = 12)
+		plt.xlabel('X-position of Source', fontsize=12)
+		plt.ylabel('Y-position of Source', fontsize=12)
 		plt.gcf().set_size_inches(8, 6)
 		(xmin, xmax) = (min(self.x_array), max(self.x_array))
 		(ymin, ymax) = (min(self.y_array), max(self.y_array))
@@ -650,42 +807,64 @@ class BinaryLens(object):
 		plt.ylim(ymin, ymax)
 		plt.xticks(np.arange(xmin, xmax, (xmax - xmin) / 6))
 		plt.suptitle('Number of Images', x=0.44)
-		title = ('Frame: {}; Solver: {}; Region: {}\ns = {}, q = {}'.format(
+		title = ('Frame: {}; Solver: {}; Region: {}\ns={}, q={}'.format(
 				self.origin_title, self.solver_title, region, self.s, self.q))
-		plt.title(title, fontsize = 11)
+		plt.title(title, fontsize=11)
 
 		if save:
-			file_name = '../Tables/NumIm_{}_{}.png'.format(
-					self.origin_str, self.solver_str)
-			self.save_png(file_name = file_name)
+			self.save_png(file_name=file_name)
 
-	def plot_magnification(self, region = 'caustic', outliers = False, cutoff = None,
-							log_colorbar = False, save = False, **kwargs):
+	def plot_magnification(self, cutoff=None, log_colorbar=False, 
+			outliers=False, region='caustic', region_lim=None, save=False,
+			**kwargs):
 		"""
-		Make square grid of points that shows the magnification at each point.
-		Parameters:
+		Creates a plot showing the magnification on a grid over the specified
+		region.
+
+		Optional parameters:
+
+			cutoff (float):
+				The minimum magnification a point can have and still be
+				plotted. If not specified, the default is to include only
+				the 10 greatest	values. Feature only implemented when 
+				outliers == True.
+
 			log_colorbar (bool):
 				If True, the magnification colorbar will go on log
 				scale. Otherwise, the scale will be linear.
 
+			outliers (bool):
+				If true, only the points with magnification above the cutoff
+				will be plotted.
+
+			region (string):
+				The region in which the grid is to be filled. See the
+				function, "get_position_arrays," to see accepted values.
+
+			region_lim (tuple containing floats):
+				The limits of the grid area when region is given by 'custom.'
+				It is given by (xmin, xmax, ymin, ymax). See the method, 
+				'get_position_arrays' to see what the limits correspond to.
+
 			save (bool):
-				If True, file will be saved by convention determined below. If
-				False, it will do nothing.
+				If True, saves the plot to a .png file.
+
+			**kwargs (dictionary):
+				Keyword arguments for pyplot module.
 		"""
 
+		# Get data for plotting
 		kwargs = self.check_kwargs(log_colorbar, **kwargs)
-		self.get_position_arrays(region = region)
+		self.get_position_arrays(region=region, region_lim=region_lim)
 		self.get_magnification_array()
 
-		# Assign the appropriate data, based on whether we want to include all
-		# the data, or just the outliers.
+		# Assign plotting variables data according to whether we include
+		# all points or only the outliers.
 		if outliers:
 			self.get_magnification_outliers(cutoff)
 			(x, y, magn) = (self.x_outliers, self.y_outliers, self.magn_outliers)
-			print('Plotting the magnification of outliers...')
 		else:
 			(x, y, magn) = (self.x_array, self.y_array, self.magn_array)
-			print('Plotting the magnification...')
 
 		plot = plt.scatter(x, y, c = magn, **kwargs)
 		(xmin, xmax) = (min(self.x_array), max(self.x_array))
@@ -695,235 +874,489 @@ class BinaryLens(object):
 		plt.xticks(np.arange(xmin, xmax, (xmax - xmin) / 6))
 		mag_plot = plt.colorbar()
 		mag_plot.set_label('Magnification')
-		plt.xlabel('X-position of Source', fontsize = 12)
-		plt.ylabel('Y-position of Source', fontsize = 12)
+		plt.xlabel('X-position of Source', fontsize=12)
+		plt.ylabel('Y-position of Source', fontsize=12)
 		plt.gcf().set_size_inches(8, 6)
 
 		if outliers:
-			plt.suptitle('High Magnification')
+			if cutoff == None:
+				cutoff = int(min(magn))
+			plt.suptitle('High Magnification', x=0.44)
 			title = ('Frame: {}; Solver: {}; Region: {}\n'.format(
 					self.origin_title, self.solver_title, region) + 
-					's = {}, q = {}, M > {:.0f}'.format(self.s, self.q, 
-					min(magn)))
-			plt.title(title, fontsize = 11)
+					's={}, q={}, M>{:.0f}'.format(self.s, self.q, 
+					cutoff))
+			plt.title(title, fontsize=11)
 			file_name = ('../Tables/HighMagn_{}_{}.png'.format(
 					self.solver_file, self.origin_file))
 		else:
 			plt.suptitle('Magnification', x=0.44)
 			title = ('Frame: {}; Solver: {}; Region: {}\n'.format(
 					self.origin_title, self.solver_title, region) + 
-					's = {}, q = {}'.format(self.s, self.q))
-			plt.title(title, fontsize = 11)
+					's={}, q={}'.format(self.s, self.q))
+			plt.title(title, fontsize=11)
 			file_name = ('../Tables/Magn_{}_{}.png'.format(self.solver_file,
 					self.origin_file))
 
 		if save:
-			self.save_png(file_name = file_name)
+			self.save_png(file_name=file_name)
 
-	def plot_rel_magnification(self, other_BL, region = 'caustic', outliers = False,
-				ratio_cutoff = None, log_colorbar = False, save = False, **kwargs):
+	def plot_rel_magnification(self, other_BL, log_colorbar=False,
+			outliers=False, ratio_cutoff=None, region='caustic',
+			region_lim=None, save=False, **kwargs):
 		"""
-		Plots the fractional difference in magnification between two sets of data.
+		Creates a plot showing the relative magnification of two instances
+		of the class on a grid over the specified region.
 
-		Parameters:
+		Required parameters:
+
+			other_BL (object):
+				Another instance of the class BinaryLens against which
+				magnification values will be compared.
+
+		Optional parameters:
+
+			ratio_cutoff (float):
+				The minimum relative magnification a point can have and still
+				be plotted. If not specified, the value will default to that
+				assigned in get_ratio_outliers. Feature only implemented when
+				outliers == True.
+
 			log_colorbar (bool):
 				If True, the magnification colorbar will go on log
 				scale. Otherwise, the scale will be linear.
 
+			outliers (bool):
+				If true, only the points with magnification above the cutoff
+				will be plotted.
+
+			region (string):
+				The region in which the grid is to be filled. See the
+				function, "get_position_arrays," to see accepted values.
+
+			region_lim (tuple containing floats):
+				The limits of the grid area when region is given by 'custom.'
+				It is given by (xmin, xmax, ymin, ymax). See the method, 
+				'get_position_arrays' to see what the limits correspond to.
+
 			save (bool):
-				If True, file will be saved by convention determined below. If
-				False, it will do nothing.
+				If True, saves the plot to a .png file.
+
+			**kwargs (dictionary):
+				Keyword arguments for pyplot module.
 		"""
 
+		# Get data for plotting
 		kwargs = self.check_kwargs(log_colorbar, **kwargs)
-		self.get_position_arrays(region = region)
+		kwargs['s'] *= 0.8
+		self.get_position_arrays(region=region, region_lim=region_lim)
 		self.get_magnification_array()
-		other_BL.get_position_arrays(region = region)
+		other_BL.get_position_arrays(region=region, region_lim=region_lim)
 		other_BL.get_magnification_array()
-
-		print('Plotting the relative magnification...')
 
 		# Assign the appropriate data, based on whether we want to include all
 		# the data, or just the outliers.
 
-		(x, y, magn1, magn2) = (self.x_array, self.y_array, self.magn_array,
-													other_BL.magn_array)
-		rel_magn = (magn1 / magn2)
-		file_name = ('../Tables/RelMagn_{}_{}.png'.format(self.solver_file,
-															self.origin_file))
-
 		if outliers:
-			rel_magn_outliers = []
-			x_outliers = []
-			y_outliers = []
-			if ratio_cutoff == None:
-				ratio_cutoff = 2.0
-			for (i, magn) in enumerate(rel_magn):
-				if (magn > ratio_cutoff) or (1./magn > ratio_cutoff):
-					x_outliers.append(x[i])
-					y_outliers.append(y[i])
-					rel_magn_outliers.append(magn)
-			x = x_outliers
-			y = y_outliers
-			rel_magn = rel_magn_outliers
-			file_name = ('../Tables/RelMagnOut_{}_{}.png'.format(self.solver_file,
-															self.origin_file))
-			if len(x) == 0:
-				print('No outliers found. Continuing with next plot...')
-				return
+			(x, y, rel_magn) = self.get_ratio_outliers(other_BL, ratio_cutoff)
+			file_name = ('../Tables/RelMagnOut_{}_{}.png'.format(
+						 self.solver_file, self.origin_file))
+		else:
+			(x, y, magn1, magn2) = (self.x_array, self.y_array, self.magn_array,
+									other_BL.magn_array)
+			rel_magn = (magn1 / magn2)
+			file_name = ('../Tables/RelMagn_{}_{}.png'.format(self.solver_file,
+						 self.origin_file))
+
+		# If no outliers were found, this aborts the function.
+		if len(x) == 0:
+			print('No outliers found. Continuing with next plot...')
+			return
 
 		plot = plt.scatter(x, y, c = rel_magn, **kwargs)
 		rel_plot = plt.colorbar()
 		rel_plot.set_label('Magnification Ratio')
-		plt.xlabel('X-position of Source', fontsize = 12)
-		plt.ylabel('Y-position of Source', fontsize = 12)
+		plt.xlabel('X-position of Source', fontsize=12)
+		plt.ylabel('Y-position of Source', fontsize=12)
 		plt.gcf().set_size_inches(8, 6)
 		(xmin, xmax) = (min(self.x_array), max(self.x_array))
 		(ymin, ymax) = (min(self.y_array), max(self.y_array))
 		plt.xlim(xmin, xmax)
 		plt.ylim(ymin, ymax)
 		plt.xticks(np.arange(xmin, xmax, (xmax - xmin) / 6))
-		plt.title('Relative Magnification\n({}, {} Frame) / ({}, {} Frame)'.
-							format(self.solver_title, self.origin_title,
-								other_BL.solver_title, other_BL.origin_title))
+		plt.suptitle('Relative Magnification', x=0.44)
+		title = ('({} Solver, {} Frame) / ({} Solver, {} Frame)\n'.format(
+				self.solver_title, self.origin_title, other_BL.solver_title,
+				other_BL.origin_title)) + ('Region: {}, s={}, q={}'.format(
+				region, self.s, self.q))
+		plt.title(title, fontsize=11)
+							
 		if save:
-			self.save_png(file_name = file_name)
+			self.save_png(file_name=file_name)
 
-	def plot_outlier_coeff(self, other_BL, region = 'caustic', ratio_cutoff = None,
-														save = False, **kwargs):
+	def plot_magn_coeff(self, cutoff=None, outliers=False, region='caustic',
+						region_lim=None, save=False, **kwargs):
+		"""
+		Creates a plot showing the magnification on a grid over the specified
+		region.
 
+		Optional parameters:
+
+			cutoff (float):
+				The minimum magnification a point can have and still be
+				plotted. If not specified, the default is to include only
+				the 10 greatest	values. Feature only implemented when 
+				outliers == True.
+
+			outliers (bool):
+				If true, only the points with magnification above the cutoff
+				will be plotted.
+
+			region (string):
+				The region in which the grid is to be filled. See the
+				function, "get_position_arrays," to see accepted values.
+
+			region_lim (tuple containing floats):
+				The limits of the grid area when region is given by 'custom.'
+				It is given by (xmin, xmax, ymin, ymax). See the method, 
+				'get_position_arrays' to see what the limits correspond to.
+
+			save (bool):
+				If True, saves the plot to a .png file.
+
+			**kwargs (dictionary):
+				Keyword arguments for pyplot module.
+		"""
+
+		# Get data for plotting
 		if 's' not in kwargs:
 			kwargs['s'] = 8
 		kwargs = self.check_kwargs(**kwargs)
-		self.get_position_arrays(region = region)
+		self.get_position_arrays(region=region, region_lim=region_lim)
 		self.get_magnification_array()
 		self.get_coeff_array()
-		other_BL.get_position_arrays(region = region)
-		other_BL.get_magnification_array()
-		other_BL.get_coeff_array()
+		(x, y, magn) = (self.x_array, self.y_array, self.magn_array)
 
-		# Assign the appropriate data, based on whether we want to include all
-		# the data, or just the outliers.
-
-		(x, y, magn1, magn2, coeff) = (self.x_array, self.y_array, self.magn_array,
-											other_BL.magn_array, self.coeff_array)
-		rel_magn = (magn1 / magn2)
-
-		rel_magn_outliers = []
-		x_outliers = []
-		y_outliers = []
-		coeff_outliers = [[] for i in range(12)]
-		if ratio_cutoff == None:
-			ratio_cutoff = 2.0
-		for (i, magn) in enumerate(rel_magn):
-			if (magn > ratio_cutoff) or (1./magn > ratio_cutoff):
-				x_outliers.append(x[i])
-				y_outliers.append(y[i])
-				rel_magn_outliers.append(magn)
+		if outliers:
+			coeff_out = [[] for i in range(12)]
+			self.get_magnification_outliers(cutoff)
+			(x_out, y_out, magn_out) = (self.x_outliers, self.y_outliers,
+							self.magn_outliers)
+			for i in range(len(magn_out)):
+				coeff_temp = self.get_coeff_list(x=x_out[i], y=y_out[i])
 				for k in range(12):
-					coeff_outliers[k].append(coeff[k][i])
+					coeff_out[k].append(coeff_temp[k])
 
-		if len(x_outliers) == 0:
-			print('No outliers found. Continuing with next plot...')
-			return
-
-		print('Plotting...')
 		for (i, coeff) in enumerate(self.coeff_array):
-			file_name = ('../Tables/BL_{}_{}_{}.png'.format(self.coeff_file[i],
-										 self.solver_file, self.origin_file))
-			ax = plt.gca()
 			kwargs['color'] = 'black'
-			ax.scatter(coeff, rel_magn, **kwargs)
-			kwargs['color'] = 'red'
-			ax.scatter(coeff_outliers[i], rel_magn_outliers, **kwargs)
-			ax.set_yscale('log')
+			plt.scatter(coeff, magn, **kwargs)
+			if outliers:
+				file_name = ('../Tables/mag_coeff_out_{}_{}_{}.png'.format(
+					self.coeff_file[i], self.solver_file,
+					self.origin_file))
+				kwargs['color'] = 'red'
+				plt.scatter(coeff_out[i], magn_out, **kwargs)
+			else:
+				file_name = ('../Tables/mag_coeff_{}_{}_{}.png'.format(
+						self.coeff_file[i], self.solver_file,
+						self.origin_file))
 			xmin = min(coeff)
 			xmax = max(coeff)
 			dx = xmax - xmin
-			plt.xlabel(self.coeff_string[i])
-			plt.ylabel('Relative Magnification')
-			plt.xlim(xmin - 0.01*dx, xmax + 0.01*dx)
-			plt.ylim(0, max(rel_magn_outliers))
-			plt.xticks(np.arange(xmin, xmax, dx/6))
-			plt.title('Outliers for {}'.format(self.coeff_string[i]))
+			plt.xlabel(self.coeff_string[i], fontsize=12)
+			plt.ylabel('Magnification', fontsize=12)
+			plt.gcf().set_size_inches(8, 6)
+			plt.xlim(xmin - 0.05*dx, xmax + 0.05*dx)
+			plt.ylim(0.90*min(magn), 1.05*max(magn))
+			plt.yscale('log')
+			plt.xticks(np.arange(xmin, xmax, dx / 4))
+			plt.suptitle('Magnification for {}'.format(self.coeff_string[i]),
+						 x=0.50)
+			title = ('{} Solver, {} Frame\n'.format(self.solver_title,
+					self.origin_title)) + ('Region: {}, s={}, q={}'.format(
+					region, self.s, self.q))
+			plt.title(title, fontsize=11)
 			if save:
-				self.save_png(file_name = file_name)
+				self.save_png(file_name=file_name)
 			plt.show()
 
-	def plot_coeff_tstat(self, cutoff = None, region = 'caustic',
-			plot_position_tstat = False, sample_res = 5, save = False,
-			outliers = False, plot_coeffs = True, **kwargs):
+	def plot_rel_magn_coeff(self, other_BL, outliers=True, ratio_cutoff=None,
+				region='caustic', region_lim=None, save=False, **kwargs):
+		"""
+		Creates a plot showing the relative magnification of two instances
+		of the class vs. the coefficient value on a grid over the specified
+		region.
+
+		Required parameters:
+
+			other_BL (object):
+				Another instance of the class BinaryLens against which
+				magnification values will be compared.
+
+		Optional parameters:
+
+			outliers (bool):
+				If True, the points with magnification outside the range
+				determined by ratio_cutoff will be colored red, while the
+				rest will be colored black.
+
+			ratio_cutoff (float):
+				The relative magnification cutoff. Points with relative
+				magnification outside the range will be colored red, while 
+				the rest will be colored black. If not specified, the value
+				will default to that assigned in get_ratio_outliers. Feature
+				does not work if outliers==False.
+
+			region (string):
+				The region in which the grid is to be filled. See the
+				function, "get_position_arrays," to see accepted values.
+
+			region_lim (tuple containing floats):
+				The limits of the grid area when region is given by 'custom.'
+				It is given by (xmin, xmax, ymin, ymax). See the method, 
+				'get_position_arrays' to see what the limits correspond to.
+
+			save (bool):
+				If True, saves all 12 plots to a .png file.
+
+			**kwargs (dictionary):
+				Keyword arguments for pyplot module.
+		"""
+
+		# Get data for plotting
+		if 's' not in kwargs:
+			kwargs['s'] = 8
+		kwargs = self.check_kwargs(**kwargs)
+		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_magnification_array()
+		self.get_coeff_array()
+		other_BL.get_position_arrays(region=region, region_lim=region_lim)
+		other_BL.get_magnification_array()
+
+		rel_magn = self.magn_array / other_BL.magn_array
+
+		if outliers:
+			coeff_out = [[] for i in range(12)]
+			(x_out, y_out, rel_magn_out) = self.get_ratio_outliers(
+					other_BL, ratio_cutoff)
+
+			for i in range(len(rel_magn_out)):
+				coeff_temp = self.get_coeff_list(x=x_out[i], y=y_out[i])
+				for k in range(12):
+					coeff_out[k].append(coeff_temp[k])
+
+			if len(x_out) == 0:
+				print('No outliers found. Continuing with next plot...')
+				return
+
+		for (i, coeff) in enumerate(self.coeff_array):
+			kwargs['color'] = 'black'
+			plt.scatter(coeff, rel_magn, **kwargs)
+			if outliers:
+				kwargs['color'] = 'red'
+				plt.scatter(coeff_out[i], rel_magn_out, **kwargs)
+				file_name = ('../Tables/relcoeff_out_{}_{}_{}.png'.format(
+						self.coeff_file[i], self.solver_file,
+						self.origin_file))
+
+			else:
+				file_name = ('../Tables/relcoeff_{}_{}_{}.png'.format(
+						self.coeff_file[i], self.solver_file,
+						self.origin_file))
+
+			xmin = min(coeff)
+			xmax = max(coeff)
+			dx = xmax - xmin
+			plt.xlabel(self.coeff_string[i], fontsize=12)
+			plt.ylabel('Relative Magnification', fontsize=12)
+			plt.gcf().set_size_inches(8, 6)
+			plt.xlim(xmin - 0.05*dx, xmax + 0.05*dx)
+			plt.ylim(0.90*min(rel_magn), 1.10*max(rel_magn))
+			plt.yscale('log')
+			plt.xticks(np.arange(xmin, xmax, dx / 4))
+			plt.suptitle('Relative Magnification for {}'.format(
+						 self.coeff_string[i]), x=0.50)
+			title = ('({} Solver, {} Frame) / ({} Solver, {} Frame)\n'.format(
+					self.solver_title, self.origin_title, other_BL.solver_title,
+					other_BL.origin_title)) + ('Region: {}, s={}, q={}'.format(
+					region, self.s, self.q))
+			plt.title(title, fontsize=11)
+			if save:
+				self.save_png(file_name=file_name)
+			plt.show()
+
+	def plot_coeff_tstat(self, cutoff=None, outliers=False,	region='caustic',
+						region_lim=None, sample_res=5, save=False, **kwargs):
+		"""
+		Creates a plot showing the t-stat vs. coefficient value for each of 
+		the 12 coefficients.
+
+		Optional parameters:
+
+			cutoff (float):
+				The minimum magnification a point can have for the t-stat to
+				be plotted. If not specified, the default is to include only
+				the 10 greatest	values. Feature only implemented when 
+				outliers == True.
+
+			outliers (bool):
+				If true, only the points with magnification above the cutoff
+				will be plotted.
+
+			region (string):
+				The region in which the grid is to be filled. See the
+				function, "get_position_arrays," to see accepted values.
+
+			region_lim (tuple containing floats):
+				The limits of the grid area when region is given by 'custom.'
+				It is given by (xmin, xmax, ymin, ymax). See the method, 
+				'get_position_arrays' to see what the limits correspond to.
+
+			sample_res (int):
+				The resolution (side length) of the sample grid created
+				around each point in the region grid. These points are used
+				to determine the t-stat value. If not specified, the default
+				grid size is 5x5.
+
+			save (bool):
+				If True, saves all 12 plots to a .png file.
+
+			**kwargs (dictionary):
+				Keyword arguments for pyplot module.
+
+		Note: This feature has been determined not to be particularly useful
+		or informative.
+		"""
 
 		if 's' not in kwargs:
 			kwargs['s'] = 5
 		kwargs = self.check_kwargs(**kwargs)
-		self.get_position_arrays(region = region)
-		self.get_coeff_array()
-		self.get_tstat_array(sample_res = sample_res)
+		(x, y, magn, tstat) = self.get_tstat_plot_data(cutoff=cutoff,
+				outliers=outliers, region=region, region_lim=region_lim,
+				sample_res=sample_res)
+		if cutoff==None:
+			cutoff = int(min(magn))
 
-		if outliers:
-			self.get_magnification_outliers(cutoff, data = 'tstat')
-			(x, y, magn, tstat) = (self.x_outliers, self.y_outliers,
-								self.magn_outliers, self.tstat_outliers)
-		else:
-			(x, y, magn, tstat) = (self.x_array, self.y_array, self.magn_array,
-																self.tstat_array)
+		print('Plotting...')
+		for (i, coeff) in enumerate(self.coeff_array):
+			file_name = ('../Tables/BL_tstat_{}_{}_{}.png'.format(
+					self.coeff_file[i], self.solver_file, self.origin_file))
+			plt.scatter(coeff, self.tstat_array, color='black', **kwargs)
+			xmin = min(coeff)
+			xmax = max(coeff)
+			dx = xmax - xmin
+			ymax = max(self.tstat_array)
+			plt.xlabel(self.coeff_string[i], fontsize=12)
+			plt.ylabel('t-Test Result', fontsize=12)
+			plt.gcf().set_size_inches(8, 6)
+			plt.xlim(xmin - 0.01*dx, xmax + 0.01*dx)
+			plt.ylim(0, 1.01*ymax)
+			plt.xticks(np.arange(xmin, xmax, dx / 4))
+			plt.suptitle('t-Test Result vs. {}'.format(self.coeff_string[i]),
+						  x=0.50)
+			title = ('{} Solver, {} Frame\nRegion: {}, M>{}, s={}, q={}'.
+					format(self.solver_title, self.origin_title, region,
+					cutoff, self.s, self.q))
+			plt.title(title, fontsize=11)
+			if save:
+				self.save_png(file_name=file_name)
+			plt.show()
 
-		if plot_position_tstat:
-			print('Plotting...')
-			self.plot_position_tstat(x=x, y=y, tstat=tstat, outliers = outliers)
-		if plot_coeffs:
-			print('Plotting...')
-			for (i, coeff) in enumerate(self.coeff_array):
-				file_name = ('../Tables/BL_tstat_{}_{}_{}.png'.format(
-						self.coeff_file[i], self.solver_file, self.origin_file))
-				plt.scatter(coeff, self.tstat_array, color='black', **kwargs)
-				xmin = min(coeff)
-				xmax = max(coeff)
-				dx = xmax - xmin
-				ymax = max(self.tstat_array)
-				plt.xlabel(self.coeff_string[i])
-				plt.ylabel('t-Test Result')
-				plt.xlim(xmin - 0.01*dx, xmax + 0.01*dx)
-				plt.ylim(0, 1.01*ymax)
-				plt.xticks(np.arange(xmin, xmax, dx/6))
-				plt.title('t-Test Result vs. {}'.format(self.coeff_string[i]))
-				if save:
-					self.save_png(file_name = file_name)
-				plt.show()
+	def plot_position_tstat(self, cutoff=None, outliers=False,
+			region='caustic', region_lim=None, sample_res=5, save=False,
+			**kwargs):
+		"""
+		Creates a plot showing the t-stat vs. position in the specified region.
 
-	def plot_position_tstat(self, x, y, tstat, outliers, cutoff = None, **kwargs):
+		Optional parameters:
 
+			cutoff (float):
+				The minimum magnification a point can have for the t-stat to
+				be plotted. If not specified, the default is to include only
+				the 10 greatest	values. Feature only implemented when 
+				outliers == True.
+
+			outliers (bool):
+				If true, only the points with magnification above the cutoff
+				will be plotted.
+
+			region (string):
+				The region in which the grid is to be filled. See the
+				function, "get_position_arrays," to see accepted values.
+
+			region_lim (tuple containing floats):
+				The limits of the grid area when region is given by 'custom.'
+				It is given by (xmin, xmax, ymin, ymax). See the method, 
+				'get_position_arrays' to see what the limits correspond to.
+
+			sample_res (int):
+				The resolution (side length) of the sample grid created around
+				each point in the region grid. These points are used to
+				determine the t-stat value. If not specified, the default is 5.
+
+			save (bool):
+				If True, saves all 12 plots to a .png file.
+
+			**kwargs (dictionary):
+				Keyword arguments for pyplot module.
+		"""
+
+		if 's' not in kwargs:
+			kwargs['s'] = 5
 		kwargs = self.check_kwargs(**kwargs)
-		plt.scatter(x, y, c = tstat, **kwargs)
+		(x, y, magn, tstat) = self.get_tstat_plot_data(cutoff=cutoff,
+				outliers=outliers, region=region, region_lim=region_lim,
+				sample_res=sample_res)
+		if cutoff==None:
+			cutoff = int(min(magn))
+
+		plt.scatter(x, y, c=tstat, **kwargs)
 		(xmin, xmax) = (min(self.x_array), max(self.x_array))
 		(ymin, ymax) = (min(self.y_array), max(self.y_array))
 		plt.xlim(xmin, xmax)
 		plt.ylim(ymin, ymax)
-		plt.xticks(np.arange(xmin, xmax, (xmax - xmin) / 6))
-		plt.xlabel('X-position')
-		plt.ylabel('Y-position')
+		plt.xticks(np.arange(xmin, xmax, (xmax - xmin) / 4))
+		plt.xlabel('X-position', fontsize=12)
+		plt.ylabel('Y-position', fontsize=12)
+		plt.gcf().set_size_inches(8, 6)
 		region_plot = plt.colorbar()
 		region_plot.set_label('t-value')
 		if outliers:
-			plt.title(('Magnification outliers t-test Score\n{} Frame; {} Solver; M > {:.0f}, q={}'.
-				format(self.origin_title, self.solver_title, cutoff, self.q)))
+			plt.suptitle('t-test Score vs. Position (Outliers Only)', x=0.44)
+			title('{} Solver; {} Frame\nRegion: {}, M>{:.0f}, s={}, q={}'.
+					format(self.solver_title, self.origin_title, region,
+					cutoff, self.s, self.q))
+			plt.title(title, fontsize=11)
 		else:
-			plt.title('t-test Score vs Position\nFrame: {}; Solver: {}'.format(
-				self.origin_title, self.solver_title))
+			plt.suptitle('t-test Score vs. Position', x=0.44)
+			title('{} Solver; {} Frame\nRegion: {}, s={}, q={}'.
+					format(self.solver_title, self.origin_title, region,
+					self.s, self.q))
+			plt.title(title, fontsize=11)
 		caustic = mm.Caustics(s=self.s, q=self.q)
 		caustic.plot(s=1)
 		plt.show()
 
 ### The following functions save the relevant data to a .png or .fits file
 
-	def write_to_fits(self, region = 'caustic'):
+	def write_to_fits(self, region='caustic', region_lim=None):
 		"""
-		Writes information about grid to a .fits table for comparison of magnification
-		and number of images between different coordinate systems and solving methods.
+		Writes grid data (x, y, magnification, number of images) at each
+		point to a .fits table. Useful for comparing results between
+		different solvers and coordinate frames.
+
+		Optional parameters:
+			region (string):
+				The region in which the grid is to be filled. See the
+				function, "get_position_arrays," to see accepted values.
+
+			region_lim (tuple containing floats):
+				The limits of the grid area when region is given by 'custom.'
+				It is given by (xmin, xmax, ymin, ymax). See the method, 
+				'get_position_arrays' to see what the limits correspond to.				
 		"""
 
-		self.get_position_arrays(region = region)
+		self.get_position_arrays(region=region, region_lim=region_lim)
 		self.get_magnification_array()
 		self.get_num_images_array()
 		col = []
@@ -941,10 +1374,12 @@ class BinaryLens(object):
 		hdu0 = fits.PrimaryHDU(header = hdr)
 		hdus = fits.HDUList([hdu0, hdu1])
 
+		# This checks if file of same name already exists. If so, it 
+		# increases the integer value preceding the .fits extension.
 		for i in range(10):
 			try:
 				file_name = '../Tables/BL_{}_{}_{}.fits'.format(
-									self.origin_file, self.solver_file, i)
+						self.origin_file, self.solver_file, i)
 				hdus.writeto(file_name)
 				print(file_name, 'has been saved')
 			except:
@@ -952,6 +1387,18 @@ class BinaryLens(object):
 			break
 
 	def save_png(self, file_name):
+		"""
+		Saves a plot to a .png file.
+
+		Required parameters:
+			file_name (string):
+				The name to which the file will be saved (exluding an integer
+				before the .png extension, to denote which number of times
+				the same file name has been saved). The file_name is
+				specified within each plotting method, and the user does
+				not need to type any information to obtain it.
+		"""
+
 		for i in range(10):
 			name = file_name[:-4] + '{}'.format(i) + file_name[-4:]
 			if Path(name).is_file():
@@ -979,6 +1426,8 @@ class BinaryLens(object):
 			.format(*num, sum(num)))
 
 	def print_input(self):
+		"""Prints the input parameters for a single test point."""
+
 		print('\nInput:\nx = {:}\ny = {:}\ns = {:}\nq = {:}\n'
 			.format(self.x, self.y, self.s, self.q))
 		print('Calculated in the {} using {}\n'.format(self.origin_phrase,
@@ -986,7 +1435,14 @@ class BinaryLens(object):
 
 	def print_image_position(self, print_input=True):
 		"""
-		Prints the image positions with the option to display the input parameters. 
+		Prints the positions of those images which pass the check_solutions
+		test, for a single test point.
+
+		Optional parameters:
+
+			print_input (bool):
+				If True, prints the user-specified input parameters before
+				displaying the image positions.
 		"""
 
 		if print_input:
@@ -999,12 +1455,13 @@ class BinaryLens(object):
 
 	def print_magnification(self, print_input=True):
 		"""
-		Prints the total magnification with the option to display the input
-		parameters.
+		Prints the total magnification for single test point.
 
 		Parameters:
+
 			print_input (bool):
-				Prints the input parameteers specified by the user if True.
+				If True, prints the user-specified input parameters before
+				displaying the image positions.
 		"""
 
 		if print_input:
@@ -1015,6 +1472,10 @@ class BinaryLens(object):
 ### The following functions gather string data that are used within the source code.
 
 	def get_coeff_strings(self):
+		"""
+		Assigns strings to global lists regarding coefficient names.
+		"""
+
 		self.coeff_string = [None]*12
 		self.coeff_file = [None]*12
 		for i in range(6):

@@ -16,8 +16,8 @@ coordinates = ['plan', 'geo_cent']
 method = ['SG12']
 tolerance = 0.0007
 region = 'custom'
-region_lim = (-.3, .3, .7, 1.3)
-ratio_cutoff = 1.5
+region_lim = (-.3, .3, .5, 1.5)
+ratio_cutoff = 4
 
 param = [[[None] * len(coordinates) for i in range(len(method))] 
 		for j in range(len(mass_ratios))]
@@ -35,18 +35,19 @@ for (i, q) in enumerate(mass_ratios):
 					plot[i][j][k].solver_phrase, plot[i][j][k].origin_phrase))
 
 # Plot relative magnification value vs coefficient value.
-plot_on = False
+plot_on = True
 if plot_on:
 	for (i, q) in enumerate(mass_ratios):
 		for (j, solver) in enumerate(method):
 			for (k, origin) in enumerate(coordinates):
 				for l in range(k+1, len(coordinates)):
-					plot[i][j][k].plot_rel_magn_coeff(region=region,
-							region_lim=region_lim, other_BL=plot[i][j][l],
-							ratio_cutoff=ratio_cutoff, save=False)
+					plot[i][j][k].plot_rel_magn_coeff(outliers=True, 
+							region=region, region_lim=region_lim,
+							other_BL=plot[i][j][l], ratio_cutoff=ratio_cutoff,
+							save=False)
 
 #Plot relative magnification vs position.
-plot_on = True
+plot_on = False
 if plot_on:
 	for (i, q) in enumerate(mass_ratios):
 		for (j, solver) in enumerate(method):
