@@ -9,53 +9,99 @@ import MulensModel as mm
 
 # Input parameters
 s = 1.5
-mass_ratios = [1e-7]
-res = int(50)
+mass_ratios = [0.5*1e-7]
+res = int(100)
 method =  ['SG12']
-coordinates = ['geo_cent']
-tolerance = 0.00006
+coordinates = ['caustic']
+tolerance = 0.00007
 cutoff = 1.5
 region = 'custom'
-region_lim = (-.3, .1, 1.0, 1.3)
+region_lim = (-.15, .1, 0.9, 1.3)
+coeff_multiplier = None
 param = []
 plot = []
+
+print('coeff_multiplier =', coeff_multiplier)
+
+def make_plot():
+
+	for p in plot:
+		for plot_type in plot_types:
+
+			caustic = mm.Caustics(s=s, q=p.q)
+
+			if plot_type == 'num_images':
+				p.plot_num_images(errors_only=False, region=region,
+						region_lim=region_lim, save=False, print_errors=True)
+				caustic.plot(s=1)
+				plt.show()
+
+			if plot_type == 'magn':
+				p.plot_magnification(outliers=True, region=region,
+						region_lim=region_lim, log_colorbar=True, cutoff=cutoff,
+						save=False)
+				caustic.plot(s=1)
+				plt.show()
+
+			if plot_type == 'num_iamges_coeff':
+				p.plot_num_images_coeff(color_magn=True, log_colorbar=True,
+						region='caustic', region_lim=None, save=False)
+
+			if plot_type == 'magn_coeff':
+				p.plot_magn_coeff(color_num=True, cutoff=cutoff,
+						outliers=False, region=region, region_lim=region_lim,
+						save=False)
+
+			if plot_type == 'coeff':
+				p.plot_coefficients(cutoff=cutoff, log_colorbar=False,
+						outliers=False, region=region, region_lim=region_lim,
+						save=False)
+
+			if plot_type == 'fits':
+				p.write_to_fits()
+
 
 for solver in method:
 	for origin in coordinates:
 		for q in mass_ratios:
 			param.append(({'s': s, 'q': q, 'res': res, 'origin': origin,
-							'solver': solver, 'tolerance': tolerance}))
+							'solver': solver, 'tolerance': tolerance,
+							'coeff_multiplier': coeff_multiplier}))
 			plot.append(BL(**param[-1]))
 
-# Plots the number of solutions in a grid of points centered on the caustic
-plot_on = False
-if plot_on:
-	for p in plot:
-		p.plot_n_solns(errors_only=False, region=region, region_lim=region_lim,
-					   save=False, print_errors=True, s=3)
-		caustics = mm.Caustics(s=s, q=p.q)
-		caustics.plot(s=1)
-		plt.show()
+plot_types = []
+#plot_types.append('num_images')
+#plot_types.append('magn')
+#plot_types.append('num_iamges_coeff')
+plot_types.append('magn_coeff')
+#plot_types.append('coeff')
+#plot_types.append('fits')
 
-# Plots magnification in a grid of points centered on the caustic
-plot_on = False
-if plot_on:
-	for p in plot:
-		p.plot_magnification(outliers=False, region=region,
-				region_lim=region_lim, log_colorbar=True, cutoff=cutoff,
-				save=False)
-		caustics = mm.Caustics(s=s, q=p.q)
-		caustics.plot(s=1)
-		plt.show()
+make_plot()
+print('\n')
+"""
+p = plot[0]
+p.get_position_arrays(region=region, region_lim=region_lim)
+p.get_coeff_array()
+coeff = p.coeff_array
 
-plot_on = True
-if plot_on:
-	for p in plot:
-		p.plot_magn_coeff(cutoff=cutoff, outliers=False, region=region,
-						region_lim=region_lim, save=False)
+import numpy as np
+mean_coeff = [[]]*len(coeff)
+for (i, c) in enumerate(coeff):
+	mean_coeff[i] = np.mean(c)
 
-# Writes data to fits table
-plot_on = False
-if plot_on:
-	for p in plot:
-		p.write_to_fits()
+print(mean_coeff)
+
+"""
+
+
+
+
+
+
+
+
+
+
+
+
