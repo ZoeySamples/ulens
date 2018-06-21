@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: May 22, 2018
 # BinaryLensPlots.py
-# Last Updated: Jun 19, 2018
+# Last Updated: Jun 21, 2018
 
 import matplotlib.pyplot as plt
 from BinaryLens import BinaryLens as BL
@@ -20,8 +20,6 @@ region_lim = (-.15, .1, 0.9, 1.3)
 coeff_multiplier = None
 param = []
 plot = []
-
-print('coeff_multiplier =', coeff_multiplier)
 
 def make_plot():
 
@@ -79,29 +77,4 @@ plot_types.append('magn_coeff')
 
 make_plot()
 print('\n')
-"""
-p = plot[0]
-p.get_position_arrays(region=region, region_lim=region_lim)
-p.get_coeff_array()
-coeff = p.coeff_array
-
-import numpy as np
-mean_coeff = [[]]*len(coeff)
-for (i, c) in enumerate(coeff):
-	mean_coeff[i] = np.mean(c)
-
-print(mean_coeff)
-
-"""
-
-
-
-
-
-
-
-
-
-
-
 

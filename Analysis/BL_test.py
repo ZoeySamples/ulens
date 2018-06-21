@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: Jun 7, 2018
 # BL_Test.py
-# Last Updated: Jun 7, 2018
+# Last Updated: Jun 21, 2018
 
 from BinaryLens import BinaryLens as BL
 

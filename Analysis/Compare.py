@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: Jun 15, 2018
 # CompareOriginMagn.py
-# Last Updated: Jun 19, 2018
+# Last Updated: Jun 21, 2018
 
 import matplotlib.pyplot as plt
 from BinaryLens import BinaryLens as BL
@@ -9,7 +9,12 @@ import MulensModel as mm
 import numpy as np
 
 def initialize():
-
+	"""
+	Initializes the objects that are to be plotted. Can set plots up so that
+	they compare solvers or coordinate frames. Does not take in any
+	parameters; consider re-writing.
+	"""
+	
 	for (i, q) in enumerate(mass_ratios):
 		for (j, const) in enumerate(const_param):
 			for (k, comp) in enumerate(comp_param):
@@ -25,6 +30,11 @@ def initialize():
 				lens[i][j][k] = (BL(**param[i][j][k]))
 
 def prepare_plot(plot_type, **plot_args):
+	"""
+	This sets up the plots with two appropriate objects, then calls make_plot
+	to do the plotting. User calls this function to make the plots, providing
+	any optional arguments from the function call.
+	"""
 
 	for (i, q) in enumerate(mass_ratios):
 		for (j, const) in enumerate(const_param):
@@ -35,6 +45,11 @@ def prepare_plot(plot_type, **plot_args):
 					make_plot(lens1, lens2, plot_type, **plot_args)
 
 def make_plot(lens1, lens2, plot_type, **plot_args):
+	"""
+	Makes a plot of the type given by plot_type. User does not call this
+	function. User may provide optional	arguments when calling prepare_plot
+	function.
+	"""
 
 	if plot_type == 'rel_magn_coeff':
 		lens1.plot_rel_magn_coeff(other_BL=lens2, **plot_args)

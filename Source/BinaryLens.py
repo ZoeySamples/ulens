@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: June 06, 2018
 # BinaryLens.py
-# Last Updated: June 13, 2018
+# Last Updated: June 21, 2018
 
 import sys
 import os
@@ -37,7 +37,7 @@ for i in range(2):
 	MODULE_PATH = os.path.dirname(MODULE_PATH)
 PATH = os.path.join(MODULE_PATH, 'NumericalRecipes', "zrootsBinaryLens_wrapper.so")
 
-# Here we attempt to access the zroots root finder
+# Here we attempt to access the Numerical Recipes zroots solver
 try:
 	zroots = ctypes.cdll.LoadLibrary(PATH)
 except OSError as error:
@@ -675,9 +675,9 @@ class BinaryLens(object):
 				The t-stat value determined for the sample point.
 		"""
 
-		mean_magn = sum(sample_magn) / len(sample_magn)
-		stderr_magn = np.std(sample_magn) / np.sqrt(len(sample_magn))
-		tstat = abs(magn - mean_magn) / stderr_magn
+		mean_magn = sum(sample_magn_array) / len(sample_magn_array)
+		stderr_magn = np.std(sample_magn_array) / np.sqrt(len(sample_magn_array))
+		tstat = abs(point_magn - mean_magn) / stderr_magn
 		return tstat
 
 	def get_coeff_list(self, x, y):
@@ -876,7 +876,7 @@ class BinaryLens(object):
 		else:
 			(x, y, magn) = (self.x_array, self.y_array, self.magn_array)
 
-		plt.scatter(x, y, c = magn, **kwargs)
+		plt.scatter(x, y, c=magn, **kwargs)
 		(xmin, xmax) = (min(self.x_array), max(self.x_array))
 		(ymin, ymax) = (min(self.y_array), max(self.y_array))
 		dx = xmax - xmin
@@ -1301,8 +1301,6 @@ class BinaryLens(object):
 				Keyword arguments for pyplot module.
 		"""
 
-		if 's' not in kwargs:
-			kwargs['s'] = 5
 		kwargs = self.check_kwargs(**kwargs)
 		(x, y, magn, tstat) = self.get_tstat_plot_data(cutoff=cutoff,
 				outliers=outliers, region=region, region_lim=region_lim,
@@ -1330,7 +1328,7 @@ class BinaryLens(object):
 			plt.title(title, fontsize=11)
 		else:
 			plt.suptitle('t-test Score vs. Position', x=0.435)
-			title('{} Solver; {} Frame\nRegion: {}, s={}, q={}'.
+			title = ('{} Solver; {} Frame\nRegion: {}, s={}, q={}'.
 					format(self.solver_title, self.origin_title, region,
 					self.s, self.q))
 			plt.title(title, fontsize=11)
