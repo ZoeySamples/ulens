@@ -386,6 +386,11 @@ class BinaryLens(object):
 			region_xmax = self.xcenter_caustic + 0.10*self.width_caustic
 			region_ymin = 0.55*self.height_caustic
 			region_ymax = 0.8*self.height_caustic
+		if region == 'both':
+			region_xmin = self.xcenter_caustic - 1.1*self.s + 1./self.s
+			region_xmax = self.xcenter_caustic + 0.1*self.s
+			region_ymin = -0.2*self.s
+			region_ymax = 0.2*self.s
 		if region == 'custom':
 			(xmin, xmax, ymin, ymax) = (*region_lim,)
 			region_xmin = self.xcenter_caustic + 0.5*xmin*self.width_caustic
@@ -1621,7 +1626,7 @@ class BinaryLens(object):
 			for i in range(len(num)):
 				if num_im == i:
 					num[i] += 1
-		print('Concern: number of points where the number of images is',
+		print('Number of points where the number of images is',
 			'\n0: {:}\n1: {:}\n2: {:}\n3: {:}\n4: {:}\n5: {:}\nTotal: {:}'
 			.format(*num, sum(num)))
 
@@ -1716,7 +1721,7 @@ class BinaryLens(object):
 		if self.solver == 'numpy':
 			self.solver_file = 'np'
 			self.solver_title = 'Numpy'
-			self.solver_phrase = 'numpy root finder'
+			self.solver_phrase = 'Numpy root finder'
 		elif self.solver == 'SG12':
 			self.solver_file = 'SG'
 			self.solver_title = 'SG 2012'

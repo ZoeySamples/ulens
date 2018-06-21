@@ -1,6 +1,6 @@
 # Zoey Samples
 # Created: Jun 15, 2018
-# CompareOriginMagn.py
+# Compare.py
 # Last Updated: Jun 21, 2018
 
 import matplotlib.pyplot as plt
