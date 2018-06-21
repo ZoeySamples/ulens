@@ -6,6 +6,7 @@
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 from astropy.io import fits
 import MulensModel as mm
 
@@ -21,14 +22,9 @@ class HDUL(object):
 		Required:
 			file_name (string):
 				The name of the fits file.
-
-		Optional:
-			cutoff (string):
-				The minimum magnification value accepted when assessing "outliers."
 	"""
 
-	def __init__(self, file_name, cutoff=None):
-		self.cutoff = cutoff
+	def __init__(self, file_name):
 		self.file_name = file_name
 		self.get_variables()
 		self.strings()
@@ -75,6 +71,91 @@ class HDUL(object):
 			if np.abs(z1[i] - z2[i]) > 1e-10:
 				sys.exit('Error: Grids are not formed over the same region')
 		print('Test passed for all points.')
+		
+	def check_kwargs(self, log_colorbar=False, **kwargs):
+		"""
+		Checks if the user specified keyword arguments for plots, and
+		assigns default values for those not specified.
+
+		Parameters:
+			log_colorbar (bool):
+				If True, kwargs will be assigned value for norm that displays
+				the colormap in a logarithmic fashion.
+
+			**kwargs (dictionary):
+				Keyword arguments specified by the user.
+
+		Returns:
+			kwargs (dictionary):
+				Keyword arguments after being assigned default values for
+				those not specified by the user.
+		"""
+
+		if 's' not in kwargs:
+			kwargs['s'] = (400. / self.res)**2
+		if 'cmap' not in kwargs:
+			kwargs['cmap'] = 'plasma'
+		if 'linewidths' not in kwargs and 'lw' not in kwargs:
+			kwargs['lw'] = None
+		if 'marker' not in kwargs:
+			kwargs['marker'] = 'o'
+		if log_colorbar:
+			kwargs['norm'] = colors.LogNorm()
+		return kwargs
+		
+	def plot_magnification(self, cutoff=None, log_colorbar=False, 
+						   outliers=False, save = False, **kwargs):
+		"""
+		Makes a plot of the magnification vs. position.
+		"""
+
+		# Assign the appropriate data, based on whether we want to include all
+		# the data, or just the outliers.
+		kwargs = self.check_kwargs(log_colorbar, **kwargs)
+
+		if outliers:
+			self.get_magnification_outliers(cutoff=cutoff)
+			(x, y, magn) = (self.x_outliers, self.y_outliers, self.magn_outliers)
+			print('Plotting the magnification of outliers...')
+		else:
+			(x, y, magn) = (self.x, self.y, self.magn)
+			print('Plotting the magnification...')
+
+		plt.scatter(x, y, c=magn, **kwargs)
+		(xmin, xmax) = (min(self.x), max(self.x))
+		(ymin, ymax) = (min(self.y), max(self.y))
+		dx = xmax - xmin
+		plt.xlim(xmin, xmax)
+		plt.ylim(ymin, ymax)
+		plt.xticks(np.arange(xmin, xmin + 1.2*dx, dx / 4))
+		mag_plot = plt.colorbar()
+		mag_plot.set_label('Magnification')
+		plt.xlabel('X-position of Source', fontsize=12)
+		plt.ylabel('Y-position of Source', fontsize=12)
+		plt.gcf().set_size_inches(8, 6)
+
+		if outliers:
+			if cutoff == None:
+				cutoff = int(min(magn))
+			plt.suptitle('High Magnification', x=0.435)
+			title = ('Frame: {}; Solver: {}\n'.format(
+					self.origin_title, self.solver_title) + 
+					's={}, q={}, M>{:.0f}'.format(self.s, self.q, 
+					cutoff))
+			plt.title(title, fontsize=11)
+			file_name = ('../Tables/HighMagn_{}_{}.png'.format(
+					self.solver_file, self.origin_file))
+		else:
+			plt.suptitle('Magnification', x=0.435)
+			title = ('Frame: {}; Solver: {}\n'.format(
+					self.origin_title, self.solver_title) + 
+					's={}, q={}'.format(self.s, self.q))
+			plt.title(title, fontsize=11)
+			file_name = ('../Tables/Magn_{}_{}.png'.format(self.solver_file,
+					self.origin_file))
+
+		if save:
+			self.save_png(file_name=file_name)
 
 	def plot_rel_magn(self, other_hdul, save = False, outliers = False):
 		"""
@@ -106,85 +187,38 @@ class HDUL(object):
 		plt.ylim(self.ymin, self.ymax)
 		plt.title('Relative Magnification')
 
-	def plot_magnification(self, save = False, outliers = False):
-		"""
-		Makes a plot of the magnification vs. position.
-		"""
-
-		# Assign the appropriate data, based on whether we want to include all
-		# the data, or just the outliers.
-		if outliers:
-			(x, y, magn) = (self.x_outliers, self.y_outliers, self.magn_outliers)
-			print('Plotting the magnification of outliers...')
-		else:
-			(x, y, magn) = (self.x, self.y, self.magn)
-			print('Plotting the magnification...')
-
-		plt.scatter(x, y, c=magn, s=7, marker = '^', cmap='plasma', lw=None)
-		mag_plot = plt.colorbar()
-		mag_plot.ax.tick_params(labelsize=10)
-		mag_plot.set_label('Magnification')
-		plt.xlabel('X-position of source', fontsize = 12)
-		plt.ylabel('Y-position of source', fontsize = 12)
-		plt.xlim(self.xmin, self.xmax)
-		plt.ylim(self.ymin, self.ymax)
-		if not outliers:
-			plt.title('Magnification\n{} Frame; {} Solver'.format(
-								self.origin_title, self.solver_title))
-
-	def plot_magn_outliers(self, save = False):
-		"""
-		Plots the magnification at each position where the magnification is
-		greater than the specified cutoff value.
-		"""
-
-		self.get_magn_outliers()
-		self.plot_magnification(save=save, outliers=True)
-
-		caustics = mm.Caustics(s=(self.s), q=(self.q))
-		caustics.plot(s=5, c='red')
-
-		plt.gcf().set_size_inches(8, 6)
-		plt.title('High Magnification with Caustic:\n{} Frame; {} Solver; M > {}, q={}'.
-						format(self.origin_title, self.solver_title, self.cutoff, self.q))
-
-		if save:
-			for i in range(10):
-				try:
-					file_name = ('../Tables/high_mag_{}_{}{}'.format(self.solver_file,
-									self.origin_file, i))
-					plt.savefig(file_name)
-					print(file_name, 'has been saved')
-				except:
-					continue
-				break
-
-	def get_magn_outliers(self):
+	def get_magnification_outliers(self, cutoff=None):
 		"""
 		Creates new arrays of (x, y, magn) only for magnification values that
 		are above the cutoff value.
+
+		Parameters:
+			cutoff (float):
+				The minimum magnification a point can have for it to be
+				accepted as an 'outlier'.
 		"""
 
 		self.x_outliers = []
 		self.y_outliers = []
 		self.magn_outliers = []
 
-		# If the cutoff value is not specified, default to the 90th percentile
-		# of magnification.
-		if self.cutoff==None:
-			magn_sorted = sorted(magn_outliers)
-			self.cutoff = magn_sorted[0.9 * self.res]
-			print('No cutoff value specified; defaulting to 90th percentile.')
+		# If the cutoff value is not specified, the arrays will default
+		# to the 10 largest points.
+		if cutoff==None:
+			magn_sorted = sorted(self.magn)
+			cutoff = magn_sorted[int(0.95*(self.res**2))]
+			print('No cutoff value specified; selecting only upper 5% of points')
 
 		print('Finding the magnification outliers...')
 
 		for (i, magn) in enumerate(self.magn):
-			if magn > self.cutoff:
+			if magn > cutoff:
 				self.x_outliers.append(self.x[i])
 				self.y_outliers.append(self.y[i])
 				self.magn_outliers.append(magn)
 
-	def plot_n_solutions(self, save = False, outliers = False):
+	def plot_num_images(self, errors_only=False, print_errors=True,
+						save=False, **kwargs):
 		"""
 		Makes a plot of the number of solutions vs. position.
 		"""
@@ -193,68 +227,107 @@ class HDUL(object):
 
 		# Assign the appropriate data, based on whether we want to include all
 		# the data, or just the outliers.
-		if outliers:
-			(x, y, num_images) = (self.x_errors, self.y_errors,
-											self.num_images_errors)
+
+		kwargs = self.check_kwargs(**kwargs)
+		kwargs['cmap'] = 'coolwarm'
+
+		if print_errors:
+			self.print_num_images_errors()
+
+		if errors_only:
+			(x, y, num_images) = self.get_num_images_errors()
+			file_name = '../Tables/NumImErr_{}_{}.png'.format(
+					self.origin_file, self.solver_file)
 		else:
 			(x, y, num_images) = (self.x, self.y, self.num_images)
+			file_name = '../Tables/NumIm_{}_{}.png'.format(
+					self.origin_file, self.solver_file)
 
-		plt.scatter(x, y, c=num_images, s=1,
-							marker = 'o', cmap='copper', lw=None)
-		soln_plot = plt.colorbar()
-		soln_plot.set_label('Num Images')
-
-		plt.xlabel('X-position of source', fontsize = 12)
-		plt.ylabel('Y-position of source', fontsize = 12)
-		plt.xlim(self.xmin, self.xmax)
-		plt.ylim(self.ymin, self.ymax)
-		if not outliers:
-			plt.title('Num Images\n{} Frame; {} Solver'.format(self.origin_title,
-								 self.solver_title))
-
-	def plot_n_solutions_errors(self, save = False):
-		"""
-		Plots the number of images at each position where the number of images is
-		not equal to 3 or 5.
-		"""
-
-		self.get_num_images_errors()
-		self.plot_n_solutions(save = save, outliers = True)
-
-		caustics = mm.Caustics(s=(self.s), q=(self.q))
-		caustics.plot(s=5, c='red')
-
+		plt.scatter(x, y, c=num_images, **kwargs)
+		im_plot = plt.colorbar()
+		im_plot.set_label('Num Images')
+		plt.xlabel('X-position of Source', fontsize=12)
+		plt.ylabel('Y-position of Source', fontsize=12)
 		plt.gcf().set_size_inches(8, 6)
-		plt.title('Erroneous Num Images with Caustic:\n{} Frame; {} Solver; q={}'.
-					format(self.origin_title, self.solver_title, self.q))
+		(xmin, xmax) = (min(self.x), max(self.x))
+		(ymin, ymax) = (min(self.y), max(self.y))
+		dx = xmax - xmin
+		plt.xlim(xmin, xmax)
+		plt.ylim(ymin, ymax)
+		plt.xticks(np.arange(xmin, xmin + 1.2*dx, dx / 4))
+		plt.suptitle('Number of Images', x=0.435)
+		title = ('Frame: {}; Solver: {}\ns={}, q={}'.format(
+				self.origin_title, self.solver_title, self.s, self.q))
+		plt.title(title, fontsize=11)
+
 		if save:
-			for i in range(10):
-				try:
-					file_name = ('../Tables/num_errors_{}_{}{}'.format(self.solver_file,
-									self.origin_file, i))
-					plt.savefig(file_name)
-					print(file_name, 'has been saved')
-				except:
-					continue
-				break
+			self.save_png(file_name=file_name)
 
 	def get_num_images_errors(self):
 		"""
-		Plots where the number of images is not equal to what we expect; i.e.
-		where num_images != (3 or 5)
+		Returns only the points in the grid where the number of images is
+		not equal to 3 or 5.
+
+		Returns:
+
+			x_err (array of floats):
+				The x-position for each erroneous point.
+
+			y_err (array of floats):
+				The y-position for each erroneous point.
+
+			num_images_err (array of floats):
+				The number of images for each erroneous point.
 		"""
 
-		print('Finding erroneous numbers of images...')
-
-		self.x_errors = []
-		self.y_errors = []
-		self.num_images_errors = []
+		x_err = []
+		y_err = []
+		num_images_err = []
 
 		for (i, num) in enumerate(self.num_images):
-			if (num != 3) and (num != 5):
-				self.x_errors.append(self.x[i])
-				self.y_errors.append(self.y[i])
-				self.num_images_errors.append(num)
+			if (num == 0) or (num == 1) or (num == 2) or (num == 4):
+				x_err.append(self.x[i])
+				y_err.append(self.y[i])
+				num_images_err.append(num)
+
+		return (x_err, y_err, num_images_err)
+
+	def print_num_images_errors(self):
+		"""
+		Prints the number of points that have n images, where n is an integer
+		ranging from 0 to 5.
+		"""
+
+		num = np.zeros(6, dtype = int)
+		for num_im in self.num_images:
+			for i in range(len(num)):
+				if num_im == i:
+					num[i] += 1
+		print('Concern: number of points where the number of images is',
+			'\n0: {:}\n1: {:}\n2: {:}\n3: {:}\n4: {:}\n5: {:}\nTotal: {:}'
+			.format(*num, sum(num)))
+
+	def save_png(self, file_name):
+		"""
+		Saves a plot to a .png file.
+
+		Required parameters:
+			file_name (string):
+				The name to which the file will be saved (exluding an integer
+				before the .png extension, to denote which number of times
+				the same file name has been saved). The file_name is
+				specified within each plotting method, and the user does
+				not need to type any information to obtain it.
+		"""
+
+		for i in range(10):
+			name = file_name[:-4] + '{}'.format(i) + file_name[-4:]
+			if Path(name).is_file():
+				continue
+			plt.savefig(name)
+			print(name, 'has been saved')
+			return
+		print('Error: too many files of same name already exist. File not saved')
 
 	def write_to_fits(self, outliers=False):
 		"""
@@ -321,8 +394,7 @@ class HDUL(object):
 			self.solver_file = 'np'
 			self.solver_title = 'Numpy'
 			self.solver_phrase = 'numpy root finder'
-	#	elif self.solver == 'SG12':
-		elif self.solver ==	'Skowron_and_Gould_12':
+		elif self.solver ==	'Skowron_and_Gould_12' or self.solver == 'SG12':
 			self.solver_file = 'SG'
 			self.solver_title = 'SG 2012'
 			self.solver_phrase = 'Skowron and Gould 2012 root finder'
