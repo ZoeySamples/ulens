@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: June 06, 2018
 # BinaryLens.py
-# Last Updated: June 21, 2018
+# Last Updated: June 22, 2018
 
 import sys
 import os
@@ -105,6 +105,25 @@ class BinaryLens(object):
 				If provided, all polynomial coefficients will be multiplied
 				by this number before the root solver solves the polynomial.
 
+		Global Variables:
+			dm (float):
+				Half the difference of the masses (positive).
+
+			m (float):
+				Half the sum of the masses.
+
+			zeta (complex):
+				The source's position in complex space.
+
+			zeta_conj (complex):
+				The complex conjugate of the source's position.
+
+			z1 (float):
+				The planet's position (on the real axis by definition).
+
+			z2 (float):
+				The star's position (on the real axis by definition).
+
 		Methodology:
 			To find solutions of test parameters, follow these steps:
 				1. Write a dictionary to call BinaryLens with, including 
@@ -125,7 +144,8 @@ class BinaryLens(object):
 	"""
 
 	def __init__(self, s, q, origin, solver, x=None, y=None, res=None,
-				 tolerance=0.0001, coeff_multiplier=None):
+				 tolerance=0.0001, coeff_multiplier=None,
+				 specific_frame_derivation=False):
 		self.s = s
 		self.q = q
 		self.origin = origin
@@ -135,61 +155,20 @@ class BinaryLens(object):
 		self.y = y
 		self.tolerance = tolerance
 		self.coeff_multiplier = coeff_multiplier
+		self.specific_frame_derivation = specific_frame_derivation
+		self.get_lensing_body_positions()
+		self.get_mass()
 		self.strings()
 
 ### The following functions assign values to variables pertaining to the class.
 
-	def get_variables(self, x, y):
-		"""
-		Assign all variables to be used in polynomial. Assigns:
-	
-			dm (float):
-				Half the difference of the masses (positive).
-
-			m (float):
-				Half the sum of the masses.
-
-			zeta (complex):
-				The source's position in complex space.
-
-			zeta_conj (complex):
-				The complex conjugate of the source's position.
-
-			z1 (float):
-				The planet's position (on the real axis by definition).
-
-			z2 (float):
-				The star's position (on the real axis by definition).
-		"""
-	
-		self.mass_ratio()
-		self.source_position(x=x, y=y)
-		self.lensing_body_positions()
-
-	def mass_ratio(self):
+	def get_mass(self):
 		"""Define m and dm."""
 
 		self.dm = (1. - self.q) / 2.
 		self.m = (1. + self.q) / 2.
 
-	def source_position(self, x, y):
-		"""Define zeta and zeta_conj."""
-
-		if self.origin == 'geo_cent':
-			self.zeta = x + y*1.j
-		elif self.origin == 'star':
-			self.zeta = (x + self.s/2.) + y*1.j
-		elif self.origin == 'plan':
-			self.zeta = (x - self.s/2.) + y*1.j
-		elif self.origin == 'com':
-			self.zeta = (x + self.s*self.dm/(2.*self.m)) + y*1.j
-		elif self.origin == 'caustic':
-			self.zeta = (x + 1./(self.s) - self.s/2.) + y*1.j
-		else:
-			raise ValueError('Unknown coordinate system: {:}'.format(origin))
-		self.zeta_conj = self.zeta.conjugate()
-
-	def lensing_body_positions(self):
+	def get_lensing_body_positions(self):
 		"""Define z1 and z2."""
 
 		if self.origin == 'geo_cent':
@@ -208,74 +187,114 @@ class BinaryLens(object):
 			self.z1 = 1./self.s
 			self.z2 = -self.s + 1./self.s
 		else:
-			raise ValueError('Unknown coordinate system: {:}'.format(origin))
+			raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
 
 		self.z1_conj = self.z1.conjugate()
 		self.z2_conj = self.z2.conjugate()
+
+	def get_source_position(self, x, y):
+		"""Define zeta and zeta_conj."""
+
+		if self.origin == 'geo_cent':
+			self.zeta = x + y*1.j
+		elif self.origin == 'star':
+			self.zeta = (x + self.s/2.) + y*1.j
+		elif self.origin == 'plan':
+			self.zeta = (x - self.s/2.) + y*1.j
+		elif self.origin == 'com':
+			self.zeta = (x + self.s*self.dm/(2.*self.m)) + y*1.j
+		elif self.origin == 'caustic':
+			self.zeta = (x + 1./(self.s) - self.s/2.) + y*1.j
+		else:
+			raise ValueError('Unknown coordinate system: {:}'.format(origin))
+		self.zeta_conj = self.zeta.conjugate()
 
 ### The following functions calculate physical values for further analysis.
 
 	def get_coefficients(self, x, y):
 		"""Returns the coefficients for the polynomial equation."""
 
-		self.get_variables(x=x, y=y)
+		self.get_source_position(x=x, y=y)
 
 		# Assign the values of the coefficients of the polynomial.
-		# Be aware that these expressions are very long and messy. They trail off
-		# the screen without text wrapping and look non-indented with text wrapping.
+		# Be aware that these expressions are very long and messy. They trail
+		# off the screen when text wrapping is "off," and look non-indented
+		# when text wrapping is "on."
 
-		"""
-		coeff5 = (self.z1**2 - self.zeta_conj**2)
+		if (self.specific_frame_derivation and self.origin == 'geo_cent'):
+			# Specific form of the derived for the geometric center frame
 
-		coeff4 = (-(self.z1*(2*self.dm + self.z1*self.zeta)) - 2*self.m*self.zeta_conj + self.zeta*self.zeta_conj**2)
+			coeff5 = (self.z1**2 - self.zeta_conj**2)
 
-		coeff3 = (-2*self.z1**4 + 4*(self.dm*self.z1 + self.m*self.zeta)*self.zeta_conj + 2*self.z1**2*self.zeta_conj**2)
+			coeff4 = (-(self.z1*(2*self.dm + self.z1*self.zeta)) - 2*self.m*self.zeta_conj + self.zeta*self.zeta_conj**2)
 
-		coeff2 = (4*self.dm*self.z1*(self.m + self.z1**2) + 2*(2*self.m**2 + self.z1**4)*self.zeta - 4*self.dm*self.z1*self.zeta*self.zeta_conj - 2*self.z1**2*self.zeta*self.zeta_conj**2)
+			coeff3 = (-2*self.z1**4 + 4*(self.dm*self.z1 + self.m*self.zeta)*self.zeta_conj + 2*self.z1**2*self.zeta_conj**2)
 
-		coeff1 = self.z1*(-4*self.dm**2*self.z1 - 4*self.m**2*self.z1 + self.z1**5 - 8*self.dm*self.m*self.zeta - 4*self.z1*(self.dm*self.z1 + self.m*self.zeta)*self.zeta_conj - self.z1**3*self.zeta_conj**2)
+			coeff2 = (4*self.dm*self.z1*(self.m + self.z1**2) + 2*(2*self.m**2 + self.z1**4)*self.zeta - 4*self.dm*self.z1*self.zeta*self.zeta_conj - 2*self.z1**2*self.zeta*self.zeta_conj**2)
 
-		coeff0 = self.z1**2*(4*self.dm*self.m*self.z1 - 2*self.dm*self.z1**3 + 4*self.dm**2*self.zeta - self.z1**4*self.zeta + 2*self.z1*(self.m*self.z1 + 2*self.dm*self.zeta)*self.zeta_conj + self.z1**2*self.zeta*self.zeta_conj**2)
-		"""
+			coeff1 = self.z1*(-4*self.dm**2*self.z1 - 4*self.m**2*self.z1 + self.z1**5 - 8*self.dm*self.m*self.zeta - 4*self.z1*(self.dm*self.z1 + self.m*self.zeta)*self.zeta_conj - self.z1**3*self.zeta_conj**2)
 
-		coeff5 = (-self.zeta_conj + self.z1)*(self.zeta_conj- self.z2)
+			coeff0 = self.z1**2*(4*self.dm*self.m*self.z1 - 2*self.dm*self.z1**3 + 4*self.dm**2*self.zeta - self.z1**4*self.zeta + 2*self.z1*(self.m*self.z1 + 2*self.dm*self.zeta)*self.zeta_conj + self.z1**2*self.zeta*self.zeta_conj**2)
 
-		coeff4 = (self.m*self.z1 + self.m*self.z2 + 2.*(self.z1**2)*self.z2 + 2.*self.z1*(self.z2**2) + self.dm*(-self.z1 + self.z2) + self.z1*self.z2*self.zeta + (self.zeta_conj**2)*(2.*self.z1 + 2.*self.z2 + self.zeta) - self.zeta_conj*(2.*self.m + (self.z1 + self.z2)*(2.*self.z1 + 2.*self.z2 + self.zeta)))
+		elif (self.specific_frame_derivation and self.origin == 'plan'):
+			# Specific form of the derived for the planet frame
 
-		coeff3 = (self.dm*(self.z1**2) - self.m*(self.z1**2) - 2.*self.m*self.z1*self.z2 - (self.z1**3)*self.z2 - self.dm*(self.z2**2) - self.m*(self.z2**2) - 4.*(self.z1**2)*(self.z2**2) - self.z1*(self.z2**3) - 2.*self.m*self.z1*self.zeta - 2.*self.m*self.z2*self.zeta - 2.*(self.z1**2)*self.z2*self.zeta - 2.*self.z1*(self.z2**2)*self.zeta - (self.zeta_conj**2)*((self.z1**2) + 2.*self.z1*(2.*self.z2 + self.zeta) + self.z2*(self.z2 + 2.*self.zeta)) + self.zeta_conj*(2.*self.dm*(self.z1 - self.z2) + 2.*self.m*(self.z1 + self.z2 + 2.*self.zeta) + (self.z1 + self.z2)*((self.z1**2) + 4.*self.z1*self.z2 + (self.z2**2) + 2.*self.z1*self.zeta + 2.*self.z2*self.zeta)))
+			coeff5 = - (self.zeta_conj*(-self.z2 + self.zeta_conj))
 
-		coeff2 = (-2.*(self.m**2)*(self.z1 + self.z2 - 2.*self.zeta) - 3.*self.m*(2.*self.zeta_conj - self.z1 - self.z2)*(self.z1 + self.z2)*self.zeta + self.dm*(self.z1 - self.z2)*(2.*self.m - 2.*self.z1*self.z2 + self.z1*self.zeta + self.z2*self.zeta - 2.*self.zeta_conj*(self.z1 + self.z2 + self.zeta)) + (self.zeta_conj - self.z1)*(self.zeta_conj - self.z2)*((self.z2**2)*self.zeta + (self.z1**2)*(2.*self.z2 + self.zeta) + 2.*self.z1*self.z2*(self.z2 + 2.*self.zeta)))
+			coeff4 = (self.dm*self.z2 + self.m*(self.z2 - 2*self.zeta_conj) - (2*self.z2 + self.zeta)*(self.z2 - self.zeta_conj)*self.zeta_conj)
 
-		coeff1 = ((-self.dm**2)*((self.z1 - self.z2)**2) + (self.m**2)*((self.z1**2) + 6.*self.z1*self.z2 + (self.z2**2) - 4.*self.z1*self.zeta - 4.*self.z2*self.zeta) - self.m*(2.*self.zeta_conj - self.z1 - self.z2)*(self.z1*self.z2*(self.z2 - 4.*self.zeta) + (self.z1**2)*(self.z2 - self.zeta) - (self.z2**2)*self.zeta) - (self.zeta_conj - self.z1)*self.z1*(self.zeta_conj - self.z2)*self.z2*(2.*self.z2*self.zeta + self.z1*(self.z2 + 2.*self.zeta)) + self.dm*(self.z1 - self.z2)*(self.z1*self.z2*(self.z2 - 2.*self.zeta) + (self.z1**2)*(self.z2 - self.zeta) - (4.*self.m + (self.z2**2))*self.zeta + 2.*self.zeta_conj*(self.z2*self.zeta + self.z1*(self.z2 + self.zeta))))
+			coeff3 = (-(self.dm*self.z2*(self.z2 + 2*self.zeta_conj)) + (self.z2 + 2*self.zeta)*(-(self.m*(self.z2 - 2*self.zeta_conj)) + self.z2*(self.z2 - self.zeta_conj)*self.zeta_conj))
 
-		coeff0 = (-2.*(self.m**2)*(self.z1**2)*self.z2 - 2.*(self.m**2)*self.z1*(self.z2**2) - self.m*(self.z1**3)*(self.z2**2) - self.m*(self.z1**2)*(self.z2**3) + (self.m**2)*(self.z1**2)*self.zeta + (self.dm**2)*((self.z1 - self.z2)**2)*self.zeta + 2.*(self.m**2)*self.z1*self.z2*self.zeta + self.m*(self.z1**3)*self.z2*self.zeta + (self.m**2)*(self.z2**2)*self.zeta + (self.zeta_conj**2)*(self.z1**2)*(self.z2**2)*self.zeta + 2.*self.m*(self.z1**2)*(self.z2**2)*self.zeta + self.m*self.z1*(self.z2**3)*self.zeta + (self.z1**3)*(self.z2**3)*self.zeta - self.dm*(self.z1 - self.z2)*(2.*self.m + self.z1*self.z2)*(self.z1*(self.z2 - self.zeta) - self.z2*self.zeta) - self.zeta_conj*self.z1*self.z2*((2.*self.dm*(self.z1 - self.z2) + self.z1*self.z2*(self.z1 + self.z2))*self.zeta + self.m*(-2.*self.z1*self.z2 + 2.*self.z1*self.zeta + 2.*self.z2*self.zeta)))
+			coeff2 = (-2*self.m**2*(self.z2 - 2*self.zeta) + 3*self.m*self.z2*self.zeta*(self.z2 - 2*self.zeta_conj) + self.z2**2*self.zeta*self.zeta_conj*(-self.z2 + self.zeta_conj) + self.dm*self.z2*(-2*self.m - self.z2*self.zeta + 2*self.z2*self.zeta_conj + 2*self.zeta*self.zeta_conj))
 
-		coeff_list = np.array([coeff5, coeff4, coeff3, coeff2, coeff1, coeff0])
-		return coeff_list
+			coeff1 = - ((self.dm - self.m)*self.z2*(self.dm*self.z2 + self.m*(self.z2 - 4*self.zeta) - self.z2*self.zeta*(self.z2 - 2*self.zeta_conj)))
 
-	def get_solutions(self, x, y):
+			coeff0 = ((self.dm - self.m)**2*self.z2**2*self.zeta) 
+
+		else:
+			# General form of the coefficients
+		
+			coeff5 = (-self.zeta_conj + self.z1)*(self.zeta_conj- self.z2)
+
+			coeff4 = (self.m*self.z1 + self.m*self.z2 + 2.*(self.z1**2)*self.z2 + 2.*self.z1*(self.z2**2) + self.dm*(-self.z1 + self.z2) + self.z1*self.z2*self.zeta + (self.zeta_conj**2)*(2.*self.z1 + 2.*self.z2 + self.zeta) - self.zeta_conj*(2.*self.m + (self.z1 + self.z2)*(2.*self.z1 + 2.*self.z2 + self.zeta)))
+
+			coeff3 = (self.dm*(self.z1**2) - self.m*(self.z1**2) - 2.*self.m*self.z1*self.z2 - (self.z1**3)*self.z2 - self.dm*(self.z2**2) - self.m*(self.z2**2) - 4.*(self.z1**2)*(self.z2**2) - self.z1*(self.z2**3) - 2.*self.m*self.z1*self.zeta - 2.*self.m*self.z2*self.zeta - 2.*(self.z1**2)*self.z2*self.zeta - 2.*self.z1*(self.z2**2)*self.zeta - (self.zeta_conj**2)*((self.z1**2) + 2.*self.z1*(2.*self.z2 + self.zeta) + self.z2*(self.z2 + 2.*self.zeta)) + self.zeta_conj*(2.*self.dm*(self.z1 - self.z2) + 2.*self.m*(self.z1 + self.z2 + 2.*self.zeta) + (self.z1 + self.z2)*((self.z1**2) + 4.*self.z1*self.z2 + (self.z2**2) + 2.*self.z1*self.zeta + 2.*self.z2*self.zeta)))
+
+			coeff2 = (-2.*(self.m**2)*(self.z1 + self.z2 - 2.*self.zeta) - 3.*self.m*(2.*self.zeta_conj - self.z1 - self.z2)*(self.z1 + self.z2)*self.zeta + self.dm*(self.z1 - self.z2)*(2.*self.m - 2.*self.z1*self.z2 + self.z1*self.zeta + self.z2*self.zeta - 2.*self.zeta_conj*(self.z1 + self.z2 + self.zeta)) + (self.zeta_conj - self.z1)*(self.zeta_conj - self.z2)*((self.z2**2)*self.zeta + (self.z1**2)*(2.*self.z2 + self.zeta) + 2.*self.z1*self.z2*(self.z2 + 2.*self.zeta)))
+
+			coeff1 = ((-self.dm**2)*((self.z1 - self.z2)**2) + (self.m**2)*((self.z1**2) + 6.*self.z1*self.z2 + (self.z2**2) - 4.*self.z1*self.zeta - 4.*self.z2*self.zeta) - self.m*(2.*self.zeta_conj - self.z1 - self.z2)*(self.z1*self.z2*(self.z2 - 4.*self.zeta) + (self.z1**2)*(self.z2 - self.zeta) - (self.z2**2)*self.zeta) - (self.zeta_conj - self.z1)*self.z1*(self.zeta_conj - self.z2)*self.z2*(2.*self.z2*self.zeta + self.z1*(self.z2 + 2.*self.zeta)) + self.dm*(self.z1 - self.z2)*(self.z1*self.z2*(self.z2 - 2.*self.zeta) + (self.z1**2)*(self.z2 - self.zeta) - (4.*self.m + (self.z2**2))*self.zeta + 2.*self.zeta_conj*(self.z2*self.zeta + self.z1*(self.z2 + self.zeta))))
+
+			coeff0 = (-2.*(self.m**2)*(self.z1**2)*self.z2 - 2.*(self.m**2)*self.z1*(self.z2**2) - self.m*(self.z1**3)*(self.z2**2) - self.m*(self.z1**2)*(self.z2**3) + (self.m**2)*(self.z1**2)*self.zeta + (self.dm**2)*((self.z1 - self.z2)**2)*self.zeta + 2.*(self.m**2)*self.z1*self.z2*self.zeta + self.m*(self.z1**3)*self.z2*self.zeta + (self.m**2)*(self.z2**2)*self.zeta + (self.zeta_conj**2)*(self.z1**2)*(self.z2**2)*self.zeta + 2.*self.m*(self.z1**2)*(self.z2**2)*self.zeta + self.m*self.z1*(self.z2**3)*self.zeta + (self.z1**3)*(self.z2**3)*self.zeta - self.dm*(self.z1 - self.z2)*(2.*self.m + self.z1*self.z2)*(self.z1*(self.z2 - self.zeta) - self.z2*self.zeta) - self.zeta_conj*self.z1*self.z2*((2.*self.dm*(self.z1 - self.z2) + self.z1*self.z2*(self.z1 + self.z2))*self.zeta + self.m*(-2.*self.z1*self.z2 + 2.*self.z1*self.zeta + 2.*self.z2*self.zeta)))
+
+		coefficients = np.array([coeff5, coeff4, coeff3, coeff2, coeff1, coeff0])
+		return coefficients
+
+	def get_roots(self, x, y):
 		"""Return solutions of polynomial."""
 
-		coeff_list = self.get_coefficients(x=x, y=y)
+		coefficients = self.get_coefficients(x=x, y=y)
 
 		if (self.coeff_multiplier is not None):
-			coeff_list *= self.coeff_multiplier
+			coefficients *= self.coeff_multiplier
 
 		# Return the roots of the polynomial via the given root finder
 		if self.solver == 'SG12':
-			rev_list = coeff_list[::-1]
+			rev_list = coefficients[::-1]
 			out = _vbbl_SG12_5(*(rev_list.real.tolist() + rev_list.imag.tolist()))
 			roots = [out[i] + out[i+5] * 1.j for i in range(5)]
-			return roots
+			return np.array(roots)
 		elif self.solver == 'zroots':
-			rev_list = coeff_list[::-1]
+			rev_list = coefficients[::-1]
 			out = _zroots_5(*(rev_list.real.tolist() + rev_list.imag.tolist()))
 			roots = [out[i] + out[i+5] * 1.j for i in range(5)]
-			return roots
+			return np.array(roots)
 		elif self.solver == 'numpy':
-			roots = np.roots(coeff_list).tolist()
-			return roots
+			roots = np.roots(coefficients).tolist()
+			return np.array(roots)
 
+
+	# Old method for calculating image positions; somewhat reliable
+	# When adapting to new method, re-work every spot that calls this function
 	def check_solution(self, solution):
 		"""
 		Check if the determined solution is consistent with the binary 
@@ -292,23 +311,81 @@ class BinaryLens(object):
 		else:
 			return True
 
+	# New method for calculating image positions; not working
+	def get_accepted_solutions(self, x, y):
+		
+		roots = self.get_roots(x=x, y=y)
+		lensing_body1 = (self.m + self.dm) / np.conjugate(roots - self.z1)
+		lensing_body2 = (self.m - self.dm) / np.conjugate(roots - self.z2)
+		solutions = self.zeta + lensing_body1 + lensing_body2
+
+	
+		len1 = [None]*5
+		len2 = [None]*5
+		r = [None]*5
+		soln = [None]*5
+		for k in range(5):
+			len1[k] = ('{:.5f}'.format(abs(lensing_body1[k])))
+			len2[k] = ('{:.5f}'.format(abs(lensing_body2[k])))
+			r[k] = ('{:.4f}'.format(roots[k].real))
+			soln[k] = ('{:.4f}'.format(solutions[k]))
+		"""
+		print('The real parts of the roots are:\n', r)
+		print('The position of body 1 is:', self.z1, '\n')
+		print('Here are the values for terms 2 and 3 in binary lens eqn:')
+		print(len1, '\n', len2, '\n')
+		"""
+
+		accepted_solutions = []
+		distances = []
+		for (i, root) in enumerate(roots):
+			distances_from_root = abs((solutions - root)**2)
+			min_distance_arg = np.argmin(distances_from_root)
+
+
+			dis = []
+			for k in distances_from_root:
+				dis.append('{:.2f}'.format(k))
+
+			if i == min_distance_arg:
+				accepted_solutions.append(root)
+				distances.append(distances_from_root[min_distance_arg])
+				print('Root {}: Accepted'.format(i))
+			else:
+				print('Root {}: Rejected'.format(i))
+
+			print('The distances away are:', dis)
+			print('The solved-for root is		', '{:.5f}'.format(root))
+			print('The binary lens solution is	', soln[i], '\n')
+
+		return accepted_solutions
+
+
 	def image_positions(self):
 		"""
 		Calculates the image positions (i.e. checks which solutions pass the
 		check). Returns a list of the positions.
 		"""
 
-		roots = self.get_solutions(x=self.x, y=self.y)
 		image_positions = []
+
+		# Old method
+		roots = self.get_roots(x=self.x, y=self.y)
 		for solution in roots:
 			if self.check_solution(solution=solution):
 				image_positions.append(solution)
+#		print('Old method:', image_positions)
+
+		# New method; Comment next line to use old method.
+#		image_positions = self.get_accepted_solutions(x=self.x, y=self.y)
 		return image_positions
+
+
 
 	def get_magnification(self, x, y):
 		"""Returns the magnification for each configuration."""
 
-		roots = self.get_solutions(x=x, y=y)
+		roots = self.get_roots(x=x, y=y)
 		magn = list(range(5))
 		for (i, z) in enumerate(roots):
 			detJ = (1. - ((self.m - self.dm) / ((z - self.z1)**2) + (self.m +
@@ -364,7 +441,7 @@ class BinaryLens(object):
 				It is given by (xmin, xmax, ymin, ymax).
 
 				xmin, xmax, ymin, ymax (floats):
-					The limits of the grid area when region is 'custom.'
+					The limitget_accepted_solutionss of the grid area when region is 'custom.'
 					The on-axis cusps are given by: (x, y) = {(-1, 0), (1, 0)}
 					The off-axis cusps are given by: (x, y) = {(0, 1), (0, -1)}
 		"""
@@ -421,14 +498,26 @@ class BinaryLens(object):
 	def get_num_images_array(self):
 		"""Fills an array for the number of images through the grid."""
 
+
+
 		self.num_images = np.zeros(self.res**2, dtype=int)
 		for idx in range(self.res**2):
 			x = self.x_array[idx]
 			y = self.y_array[idx]
-			roots = self.get_solutions(x=x, y=y)
+			roots = self.get_roots(x=x, y=y)
 			for solution in roots:
 				if self.check_solution(solution=solution):
 					self.num_images[idx] += 1
+
+		"""
+		self.num_images = np.zeros(self.res**2, dtype=int)
+		for idx in range(self.res**2):
+			x = self.x_array[idx]
+			y = self.y_array[idx]
+			image_pos = self.get_accepted_solutions(x=x, y=y)
+			self.num_images[idx] = len(image_pos)
+
+		"""
 
 	def get_coeff_array(self):
 		"""
@@ -439,8 +528,8 @@ class BinaryLens(object):
 		for idx in range(self.res**2):
 			x = self.x_array[idx]
 			y = self.y_array[idx]
-			roots = self.get_solutions(x=x, y=y)
-			coeffs = self.get_coeff_list(x=x, y=y)
+			roots = self.get_roots(x=x, y=y)
+			coeffs = self.get_coeff_parts(x=x, y=y)
 			for k in range(12):
 				self.coeff_array[k].append(coeffs[k])
 		self.get_coeff_strings()
@@ -685,7 +774,7 @@ class BinaryLens(object):
 		tstat = abs(point_magn - mean_magn) / stderr_magn
 		return tstat
 
-	def get_coeff_list(self, x, y):
+	def get_coeff_parts(self, x, y):
 		"""
 		Returns a list of values corresponding to each coefficient in
 		the binary lens polynomial.
@@ -814,7 +903,7 @@ class BinaryLens(object):
 		im_plot.set_label('Num Images')
 		plt.xlabel('X-position of Source', fontsize=12)
 		plt.ylabel('Y-position of Source', fontsize=12)
-		plt.gcf().set_size_inches(8, 6)
+		plt.gcf().set_size_inches(9, 6)
 		(xmin, xmax) = (min(self.x_array), max(self.x_array))
 		(ymin, ymax) = (min(self.y_array), max(self.y_array))
 		dx = xmax - xmin
@@ -892,7 +981,7 @@ class BinaryLens(object):
 		mag_plot.set_label('Magnification')
 		plt.xlabel('X-position of Source', fontsize=12)
 		plt.ylabel('Y-position of Source', fontsize=12)
-		plt.gcf().set_size_inches(8, 6)
+		plt.gcf().set_size_inches(9, 6)
 
 		if outliers:
 			if cutoff == None:
@@ -969,7 +1058,7 @@ class BinaryLens(object):
 			(x, y, magn) = (self.x_outliers, self.y_outliers,
 					self.magn_outliers)
 			for i in range(len(magn_out)):
-				coeff_temp = self.get_coeff_list(x=x_out[i], y=y_out[i])
+				coeff_temp = self.get_coeff_parts(x=x_out[i], y=y_out[i])
 				for k in range(12):
 					coeff_out[k].append(coeff_temp[k])
 			coeff = coeff_out
@@ -986,7 +1075,7 @@ class BinaryLens(object):
 			mag_plot.set_label('Coefficient value')
 			plt.xlabel('X-position of Source', fontsize=12)
 			plt.ylabel('Y-position of Source', fontsize=12)
-			plt.gcf().set_size_inches(8, 6)
+			plt.gcf().set_size_inches(9, 6)
 
 			if outliers:
 				if cutoff == None:
@@ -1068,7 +1157,7 @@ class BinaryLens(object):
 			(x_out, y_out, magn_out) = (self.x_outliers, self.y_outliers,
 							self.magn_outliers)
 			for i in range(len(magn_out)):
-				coeff_temp = self.get_coeff_list(x=x_out[i], y=y_out[i])
+				coeff_temp = self.get_coeff_parts(x=x_out[i], y=y_out[i])
 				for k in range(12):
 					coeff_out[k].append(coeff_temp[k])
 
@@ -1098,7 +1187,7 @@ class BinaryLens(object):
 			dx = xmax - xmin
 			plt.xlabel(self.coeff_string[i], fontsize=12)
 			plt.ylabel('Magnification', fontsize=12)
-			plt.gcf().set_size_inches(8, 6)
+			plt.gcf().set_size_inches(9, 6)
 			if color_num:
 				mag_plot = plt.colorbar()
 				mag_plot.set_label('Number Images')
@@ -1173,7 +1262,7 @@ class BinaryLens(object):
 			dx = xmax - xmin
 			plt.xlabel(self.coeff_string[i], fontsize=12)
 			plt.ylabel('Num Images', fontsize=12)
-			plt.gcf().set_size_inches(8, 6)
+			plt.gcf().set_size_inches(9, 6)
 			if color_magn:
 				region_plot = plt.colorbar()
 				region_plot.set_label('Magnification')
@@ -1253,7 +1342,7 @@ class BinaryLens(object):
 			ymax = max(self.tstat_array)
 			plt.xlabel(self.coeff_string[i], fontsize=12)
 			plt.ylabel('t-Test Result', fontsize=12)
-			plt.gcf().set_size_inches(8, 6)
+			plt.gcf().set_size_inches(9, 6)
 			plt.xlim(xmin - 0.01*dx, xmax + 0.01*dx)
 			plt.ylim(0, 1.01*ymax)
 			plt.xticks(np.arange(xmin, xmin + 1.2*dx, dx / 4))
@@ -1322,7 +1411,7 @@ class BinaryLens(object):
 		plt.xticks(np.arange(xmin, xmin + 1.2*dx, dx / 4))
 		plt.xlabel('X-position', fontsize=12)
 		plt.ylabel('Y-position', fontsize=12)
-		plt.gcf().set_size_inches(8, 6)
+		plt.gcf().set_size_inches(9, 6)
 		region_plot = plt.colorbar()
 		region_plot.set_label('t-value')
 		if outliers:
@@ -1420,7 +1509,7 @@ class BinaryLens(object):
 		rel_plot.set_label('Magnification Ratio')
 		plt.xlabel('X-position of Source', fontsize=12)
 		plt.ylabel('Y-position of Source', fontsize=12)
-		plt.gcf().set_size_inches(8, 6)
+		plt.gcf().set_size_inches(9, 6)
 		(xmin, xmax) = (min(self.x_array), max(self.x_array))
 		(ymin, ymax) = (min(self.y_array), max(self.y_array))
 		dx = xmax - xmin
@@ -1498,7 +1587,7 @@ class BinaryLens(object):
 					other_BL, ratio_cutoff)
 
 			for i in range(len(rel_magn_out)):
-				coeff_temp = self.get_coeff_list(x=x_out[i], y=y_out[i])
+				coeff_temp = self.get_coeff_parts(x=x_out[i], y=y_out[i])
 				for k in range(12):
 					coeff_out[k].append(coeff_temp[k])
 
@@ -1526,7 +1615,7 @@ class BinaryLens(object):
 			dx = xmax - xmin
 			plt.xlabel(self.coeff_string[i], fontsize=12)
 			plt.ylabel('Relative Magnification', fontsize=12)
-			plt.gcf().set_size_inches(8, 6)
+			plt.gcf().set_size_inches(9, 6)
 			plt.xlim(xmin - 0.05*dx, xmax + 0.05*dx)
 			plt.ylim(0.90*min(rel_magn), 1.10*max(rel_magn))
 			plt.yscale('log')
@@ -1652,7 +1741,7 @@ class BinaryLens(object):
 
 		if print_input:
 			self.print_input()
-		self.get_solutions(x=self.x, y=self.y)
+		self.get_roots(x=self.x, y=self.y)
 		image_pos = self.image_positions()
 		print('Image locations:')
 		for (i, pos) in enumerate(image_pos):
