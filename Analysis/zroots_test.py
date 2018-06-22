@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: Jun 08, 2018
 # BinaryLensPlots.py
-# Last Updated: Jun 15, 2018
+# Last Updated: Jun 22, 2018
 
 import matplotlib.pyplot as plt
 from BinaryLens import BinaryLens as BL
@@ -12,7 +12,7 @@ s = 1.8
 q = 1.e-8
 res = int(100)
 origin = 'plan'
-solver = 'SG12'
+solver = 'zroots'
 tolerance = 0.00007
 
 """

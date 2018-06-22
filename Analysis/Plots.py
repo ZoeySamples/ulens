@@ -1,27 +1,31 @@
 # Zoey Samples
 # Created: May 22, 2018
 # BinaryLensPlots.py
-# Last Updated: Jun 21, 2018
+# Last Updated: Jun 22, 2018
 
 import matplotlib.pyplot as plt
 from BinaryLens import BinaryLens as BL
 import MulensModel as mm
 import numpy as np
 
-
+"""
+Notes: When using the specific derivation for the planet frame, set
+the tolerance to 2e-8. Otherwise, keep the tolerance around 5e-5.
+"""
 
 
 # Input parameters
 s = 1.5
-mass_ratios = [1e-7]
-res = int(600)
+mass_ratios = [1e-10, 1e-14]
+res = int(100)
 solvers =  ['SG12']
 origins = ['plan']
 tolerance = 0.00007
 cutoff = 1.5
 region = 'caustic'
-region_lim = (-.15, .1, 0.9, 1.3)
+region_lim = (-.15, .15, 0.8, 1.3)
 coeff_multiplier = None
+specific_frame_derivation = False
 param = []
 plot = []
 
@@ -67,14 +71,14 @@ for solver in solvers:
 	for origin in origins:
 		for q in mass_ratios:
 			param.append(({'s': s, 'q': q, 'res': res, 'origin': origin,
-							'solver': solver, 'tolerance': tolerance,
-							'coeff_multiplier': coeff_multiplier}))
+					'solver': solver, 'tolerance': tolerance,
+					'specific_frame_derivation': specific_frame_derivation}))
 			plot.append(BL(**param[-1]))
 
 
 plot_types = []
-#plot_types.append('num_images')
-plot_types.append('magn')
+plot_types.append('num_images')
+#plot_types.append('magn')
 #plot_types.append('num_iamges_coeff')
 #plot_types.append('magn_coeff')
 #plot_types.append('coeff')

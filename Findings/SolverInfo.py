@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: Jun 21, 2018
 # SolverInfo.py
-# Last Updated: Jun 21, 2018
+# Last Updated: Jun 22, 2018
 
 import matplotlib.pyplot as plt
 from BinaryLens import BinaryLens as BL
@@ -32,9 +32,10 @@ mass ratios and coordinate frames.
 # Input parameters
 s = 1.5
 mass_ratios = [1e-7, 5e-8, 2e-8]
-res = int(100)
+res = int(80)
 solvers =  ['SG12', 'numpy', 'zroots']
-origins = ['plan', 'caustic', 'geo_cent']
+#origins = ['plan', 'caustic', 'geo_cent']
+origins = ['plan']
 tolerance = 0.00007
 region = 'caustic'
 region_lim = None
@@ -81,21 +82,20 @@ for (i, q) in enumerate(mass_ratios):
 						loc='center')
 	table[i].scale(1, 1.2)
 
+if False:
+	saved = False
+	for i in range(10):
+		name = '../Tables/SolverError{}'.format(i)
+		if Path(name).is_file():
+			continue
+		plt.savefig(name)
+		print(name, 'has been saved')
+		saved = True
+		break
+	if saved == False:
+		print('Error: too many files of same name already exist. File not saved')
 
 plt.show()
-saved = False
-for i in range(10):
-	name = '../Tables/SolverError{}'.format(i)
-	if Path(name).is_file():
-		continue
-	plt.savefig(name)
-	print(name, 'has been saved')
-	saved = True
-	break
-if saved == False:
-	print('Error: too many files of same name already exist. File not saved')
-
-
 
 
 
