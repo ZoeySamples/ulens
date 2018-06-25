@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: Jun 15, 2018
 # Compare.py
-# Last Updated: Jun 21, 2018
+# Last Updated: Jun 25, 2018
 
 import matplotlib.pyplot as plt
 from BinaryLens import BinaryLens as BL
@@ -25,8 +25,8 @@ def initialize():
 					origin = const
 					solver = comp	
 				param[i][j][k] = ({'s': s, 'q': q, 'res': res, 'origin':
-								  origin, 'solver': solver, 'tolerance':
-								  tolerance})
+								  origin, 'solver': solver,
+								  'specific_frame_derivation': True})
 				lens[i][j][k] = (BL(**param[i][j][k]))
 
 def prepare_plot(plot_type, **plot_args):
@@ -60,11 +60,11 @@ def make_plot(lens1, lens2, plot_type, **plot_args):
 
 # Input parameters
 s = 1.5
-mass_ratios = [1e-7]
-res = int(40)
-origins = ['plan', 'geo_cent', 'caustic']
+mass_ratios = [1e-2, 1e-7, 1e-9]
+res = int(100)
+origins = ['plan', 'caustic']
 solvers = ['SG12']
-tolerance = 0.0007
+#tolerance = 0.0007
 region = 'custom'
 region_lim = (-.3, .3, .5, 1.5)
 ratio_cutoff = 4
@@ -86,7 +86,7 @@ lens = [[[None] * len(comp_param) for i in range(len(const_param))]
 
 initialize()
 
-if False:
+if True:
 	prepare_plot(plot_type = 'rel_magn', outliers=False,
 			ratio_cutoff=ratio_cutoff, region=region, region_lim=region_lim,
 			save=False, log_colorbar=True)

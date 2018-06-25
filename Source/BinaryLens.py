@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: June 06, 2018
 # BinaryLens.py
-# Last Updated: June 22, 2018
+# Last Updated: June 25, 2018
 
 import sys
 import os
@@ -129,7 +129,7 @@ class BinaryLens(object):
 				1. Write a dictionary to call BinaryLens with, including 
 					parameters:	{x, y, s, q, origin, solver, tolerance (opt)}.
 				2. Call any of the following functions:
-					image_positions()
+					get_image_positions()
 					print_image_position(print_input)
 					print_magnification(print_input)
 
@@ -153,7 +153,7 @@ class BinaryLens(object):
 		self.res = res
 		self.x = x
 		self.y = y
-		self.tolerance = tolerance
+#		self.tolerance = tolerance
 		self.coeff_multiplier = coeff_multiplier
 		self.specific_frame_derivation = specific_frame_derivation
 		self.get_lensing_body_positions()
@@ -249,7 +249,22 @@ class BinaryLens(object):
 
 			coeff1 = - ((self.dm - self.m)*self.z2*(self.dm*self.z2 + self.m*(self.z2 - 4*self.zeta) - self.z2*self.zeta*(self.z2 - 2*self.zeta_conj)))
 
-			coeff0 = ((self.dm - self.m)**2*self.z2**2*self.zeta) 
+			coeff0 = ((self.dm - self.m)**2*self.z2**2*self.zeta)
+
+		elif (self.specific_frame_derivation and self.origin == 'caustic'):
+			# Specific form of the derived for the planetary caustic frame
+
+			coeff5 = ((self.z1 - self.zeta_conj)*(-self.z2 + self.zeta_conj))
+
+			coeff4 = (self.dm*(-self.z1 + self.z2) + self.m*(self.z1 + self.z2 - 2*self.zeta_conj) + (2*self.z1 + 2*self.z2 + self.zeta)*(self.z1 - self.zeta_conj)*(self.z2 - self.zeta_conj))
+
+			coeff3 = (-(self.m*(self.z1 + self.z2 + 2*self.zeta)*(self.z1 + self.z2 - 2*self.zeta_conj)) - (self.z1**2 + 2*self.z1*(2*self.z2 + self.zeta) + self.z2*(self.z2 + 2*self.zeta))*(self.z1 - self.zeta_conj)*(self.z2 - self.zeta_conj) + self.dm*(self.z1 - self.z2)*(self.z1 + self.z2 + 2*self.zeta_conj))
+
+			coeff2 = (-2*self.m**2*(self.z1 + self.z2 - 2*self.zeta) + 3*self.m*(self.z1 + self.z2)*self.zeta*(self.z1 + self.z2 - 2*self.zeta_conj) + (self.z2**2*self.zeta + self.z1**2*(2*self.z2 + self.zeta) + 2*self.z1*self.z2*(self.z2 + 2*self.zeta))*(self.z1 - self.zeta_conj)*(self.z2 - self.zeta_conj) + self.dm*(self.z1 - self.z2)*(2*self.m + self.z2*self.zeta + self.z1*(-2*self.z2 + self.zeta - 2*self.zeta_conj) - 2*self.z2*self.zeta_conj - 2*self.zeta*self.zeta_conj))
+
+			coeff1 = (-(self.dm**2*(self.z1 - self.z2)**2) + self.m**2*(self.z1**2 + 6*self.z1*self.z2 + self.z2**2 - 4*self.z1*self.zeta - 4*self.z2*self.zeta) + self.m*(self.z1*self.z2*(self.z2 - 4*self.zeta) + self.z1**2*(self.z2 - self.zeta) - self.z2**2*self.zeta)*(self.z1 + self.z2 - 2*self.zeta_conj) - self.z1*self.z2*(2*self.z2*self.zeta + self.z1*(self.z2 + 2*self.zeta))*(self.z1 - self.zeta_conj)*(self.z2 - self.zeta_conj) + self.dm*(self.z1 - self.z2)*(self.z1**2*(self.z2 - self.zeta) - self.zeta*(4*self.m + self.z2*(self.z2 - 2*self.zeta_conj)) + self.z1*(self.z2**2 - 2*self.z2*self.zeta + 2*self.z2*self.zeta_conj + 2*self.zeta*self.zeta_conj)))
+
+			coeff0 = (self.dm**2*(self.z1 - self.z2)**2*self.zeta - self.m**2*(self.z1 + self.z2)*(2*self.z1*self.z2 - self.z1*self.zeta - self.z2*self.zeta) - self.m*self.z1*self.z2*(self.z1*(self.z2 - self.zeta) - self.z2*self.zeta)*(self.z1 + self.z2 - 2*self.zeta_conj) + self.z1**2*self.z2**2*self.zeta*(self.z1 - self.zeta_conj)*(self.z2 - self.zeta_conj) - self.dm*(self.z1 - self.z2)*(2*self.m*(self.z1*(self.z2 - self.zeta) - self.z2*self.zeta) + self.z1*self.z2*(self.z1*self.z2 - self.z1*self.zeta - self.z2*self.zeta + 2*self.zeta*self.zeta_conj)))
 
 		else:
 			# General form of the coefficients
@@ -315,83 +330,63 @@ class BinaryLens(object):
 	def get_accepted_solutions(self, x, y):
 		
 		roots = self.get_roots(x=x, y=y)
-		lensing_body1 = (self.m + self.dm) / np.conjugate(roots - self.z1)
-		lensing_body2 = (self.m - self.dm) / np.conjugate(roots - self.z2)
+		lensing_body1 = (self.m - self.dm) / np.conjugate(roots - self.z1)
+		lensing_body2 = (self.m + self.dm) / np.conjugate(roots - self.z2)
 		solutions = self.zeta + lensing_body1 + lensing_body2
 
-	
-		len1 = [None]*5
-		len2 = [None]*5
-		r = [None]*5
-		soln = [None]*5
-		for k in range(5):
-			len1[k] = ('{:.5f}'.format(abs(lensing_body1[k])))
-			len2[k] = ('{:.5f}'.format(abs(lensing_body2[k])))
-			r[k] = ('{:.4f}'.format(roots[k].real))
-			soln[k] = ('{:.4f}'.format(solutions[k]))
-		"""
-		print('The real parts of the roots are:\n', r)
-		print('The position of body 1 is:', self.z1, '\n')
-		print('Here are the values for terms 2 and 3 in binary lens eqn:')
-		print(len1, '\n', len2, '\n')
-		"""
-
 		accepted_solutions = []
-		distances = []
 		for (i, root) in enumerate(roots):
 			distances_from_root = abs((solutions - root)**2)
 			min_distance_arg = np.argmin(distances_from_root)
 
-
-			dis = []
-			for k in distances_from_root:
-				dis.append('{:.2f}'.format(k))
-
 			if i == min_distance_arg:
 				accepted_solutions.append(root)
-				distances.append(distances_from_root[min_distance_arg])
-				print('Root {}: Accepted'.format(i))
-			else:
-				print('Root {}: Rejected'.format(i))
-
-			print('The distances away are:', dis)
-			print('The solved-for root is		', '{:.5f}'.format(root))
-			print('The binary lens solution is	', soln[i], '\n')
 
 		return accepted_solutions
 
 
-	def image_positions(self):
+	def get_image_positions(self):
 		"""
 		Calculates the image positions (i.e. checks which solutions pass the
 		check). Returns a list of the positions.
 		"""
 
-		image_positions = []
-
 		# Old method
+		"""
 		roots = self.get_roots(x=self.x, y=self.y)
 		for solution in roots:
 			if self.check_solution(solution=solution):
 				image_positions.append(solution)
-#		print('Old method:', image_positions)
+		print('Old method:', image_positions)
+		"""
 
-		# New method; Comment next line to use old method.
-#		image_positions = self.get_accepted_solutions(x=self.x, y=self.y)
+		# New method
+		image_positions = self.get_accepted_solutions(x=self.x, y=self.y)
 		return image_positions
-
 
 
 	def get_magnification(self, x, y):
 		"""Returns the magnification for each configuration."""
 
+
+		magn = 0
+		image_positions = self.get_accepted_solutions(x=x, y=y)
+		for z in image_positions:
+			detJ = (1. - ((self.m - self.dm) / ((z - self.z1)**2) + (self.m +
+					self.dm) / ((z - self.z2)**2)) * ((self.m - self.dm) /
+					((z.conjugate() - self.z1)**2) + (self.m + self.dm) / 
+					((z.conjugate() - self.z2)**2)))
+			magn += np.abs(1./detJ)
+		return magn
+
+		"""
 		roots = self.get_roots(x=x, y=y)
-		magn = list(range(5))
 		for (i, z) in enumerate(roots):
 			detJ = (1. - ((self.m - self.dm) / ((z - self.z1)**2) + (self.m +
 					self.dm) / ((z - self.z2)**2)) * ((self.m - self.dm) /
 					((z.conjugate() - self.z1)**2) + (self.m + self.dm) / 
 					((z.conjugate() - self.z2)**2)))
+
 			if self.check_solution(solution=z):
 				magn[i] = np.abs(1./detJ)
 			else:
@@ -400,6 +395,7 @@ class BinaryLens(object):
 		# This is the sum of the calculated magnitude after removing 
 		# non-physical results.
 		return sum(magn)
+		"""
 
 	def get_size_caustic(self):
 		"""
@@ -498,26 +494,23 @@ class BinaryLens(object):
 	def get_num_images_array(self):
 		"""Fills an array for the number of images through the grid."""
 
-
-
+		"""
 		self.num_images = np.zeros(self.res**2, dtype=int)
 		for idx in range(self.res**2):
 			x = self.x_array[idx]
 			y = self.y_array[idx]
-			roots = self.get_roots(x=x, y=y)
+			image_positions = self.get_roots(x=x, y=y)
 			for solution in roots:
 				if self.check_solution(solution=solution):
 					self.num_images[idx] += 1
-
 		"""
+
 		self.num_images = np.zeros(self.res**2, dtype=int)
 		for idx in range(self.res**2):
 			x = self.x_array[idx]
 			y = self.y_array[idx]
-			image_pos = self.get_accepted_solutions(x=x, y=y)
-			self.num_images[idx] = len(image_pos)
-
-		"""
+			image_positions = self.get_accepted_solutions(x=x, y=y)
+			self.num_images[idx] = len(image_positions)
 
 	def get_coeff_array(self):
 		"""
@@ -848,7 +841,8 @@ class BinaryLens(object):
 ### The following functions make plots for grid data.
 
 	def plot_num_images(self, errors_only=False, print_errors=True,
-			region='caustic', save=False, region_lim=None, **kwargs):
+			region='caustic', save=False, region_lim=None,
+			default_settings=True, **kwargs):
 		"""
 		Creates a plot showing number of images on a grid over the specified
 		region.
@@ -899,24 +893,26 @@ class BinaryLens(object):
 					self.origin_file, self.solver_file)
 
 		plt.scatter(x, y, c=num_images, **kwargs)
-		im_plot = plt.colorbar()
-		im_plot.set_label('Num Images')
-		plt.xlabel('X-position of Source', fontsize=12)
-		plt.ylabel('Y-position of Source', fontsize=12)
-		plt.gcf().set_size_inches(9, 6)
 		(xmin, xmax) = (min(self.x_array), max(self.x_array))
 		(ymin, ymax) = (min(self.y_array), max(self.y_array))
 		dx = xmax - xmin
 		plt.xlim(xmin, xmax)
 		plt.ylim(ymin, ymax)
-		plt.xticks(np.arange(xmin, xmin + 1.2*dx, dx / 4))
-		plt.suptitle('Number of Images', x=0.435)
-		title = ('Frame: {}; Solver: {}; Region: {}\ns={}, q={}'.format(
-				self.origin_title, self.solver_title, region, self.s, self.q))
-		plt.title(title, fontsize=11)
 
-		if save:
-			self.save_png(file_name=file_name)
+		if default_settings:
+			im_plot = plt.colorbar()
+			im_plot.set_label('Num Images')
+			plt.xlabel('X-position of Source', fontsize=12)
+			plt.ylabel('Y-position of Source', fontsize=12)
+			plt.gcf().set_size_inches(9, 6)
+			plt.xticks(np.arange(xmin, xmin + 1.2*dx, dx / 4))
+			plt.suptitle('Number of Images', x=0.435)
+			title = ('Frame: {}; Solver: {}; Region: {}\ns={}, q={}'.format(
+					self.origin_title, self.solver_title, region, self.s, self.q))
+			plt.title(title, fontsize=11)
+
+			if save:
+				self.save_png(file_name=file_name)
 
 	def plot_magnification(self, cutoff=None, log_colorbar=False, 
 			outliers=False, region='caustic', region_lim=None, save=False,
@@ -1742,9 +1738,9 @@ class BinaryLens(object):
 		if print_input:
 			self.print_input()
 		self.get_roots(x=self.x, y=self.y)
-		image_pos = self.image_positions()
+		image_positions = self.get_image_positions()
 		print('Image locations:')
-		for (i, pos) in enumerate(image_pos):
+		for (i, pos) in enumerate(image_positions):
 			print('{:.5f}'.format(pos))
 
 	def print_magnification(self, print_input=True):
