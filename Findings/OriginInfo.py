@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: Jun 21, 2018
 # SolverInfo.py
-# Last Updated: Jun 22, 2018
+# Last Updated: Jun 25, 2018
 
 import matplotlib.pyplot as plt
 from BinaryLens import BinaryLens as BL
@@ -30,27 +30,43 @@ Here is a demonstration:
 
 def demonstration():
 
-	param = [[[None] * len(origins) for i in range(len(solvers))]
-					for j in range(len(mass_ratios))]
-	plot = [[[None] * len(origins) for i in range(len(solvers))]
-					for j in range(len(mass_ratios))]
+	param = [[None] * len(origins) for j in range(len(mass_ratios))]
+	plot = [[None] * len(origins) for j in range(len(mass_ratios))]
+
+	fig, ax = plt.subplots(len(mass_ratios), len(origins))
 
 	for (i, q) in enumerate(mass_ratios):
-		for (j, solver) in enumerate(solvers):
-			for (k, origin) in enumerate(origins):
-				param[i][j][k] = ({'s': s, 'q': q, 'res': res, 'origin': origin,
-						'solver': solver, 'tolerance': tolerance[k],
-						'specific_frame_derivation': specific_frame_derivation})
-				plot[i][j][k] = BL(**param[i][j][k])
-				plot[i][j][k].plot_num_images(errors_only=False, region=region,
-						region_lim=region_lim, save=False, print_errors=True)
-				caustic = mm.Caustics(s=s, q=q)
-				caustic.plot(s=1)
-				plt.suptitle('Number of Images; ' +
-						'Derived for specific frame = {}'.format(
-						specific_frame_derivation), x=0.435)
-				plt.show()
-				# 	FIXME:	Make this into 2 sets of 3x3 subplots.
+		for (j, origin) in enumerate(origins):
+			idx = 1 + j + len(origins)*i
+			param[i][j] = ({'s': s, 'q': q, 'res': res, 'origin': origin,
+					'solver': solver, 'specific_frame_derivation': 
+					specific_frame_derivation})
+			plot[i][j] = BL(**param[i][j])
+
+			kwargs = plot[i][j].check_kwargs()
+			kwargs['cmap'] = 'coolwarm'
+			plot[i][j].get_position_arrays(region=region, region_lim=region_lim)
+			plot[i][j].get_num_images_array()
+			(x, y, num_images) = (plot[i][j].x_array, plot[i][j].y_array,
+								  plot[i][j].num_images)
+
+			ax[i][j] = plt.subplot(len(mass_ratios), len(origins), idx)
+			ax[i][j].scatter(x, y, c=num_images, **kwargs)
+			caustic = mm.Caustics(s=s, q=q)
+			caustic.plot(s=1, color='yellow')
+			(xmin, xmax) = (min(plot[i][j].x_array), max(plot[i][j].x_array))
+			(ymin, ymax) = (min(plot[i][j].y_array), max(plot[i][j].y_array))
+			dx = xmax - xmin
+			ax[i][j].set_xlim(xmin, xmax)
+			ax[i][j].set_ylim(ymin, ymax)
+			ax[i][j].axes.get_xaxis().set_visible(False)
+			ax[i][j].axes.get_yaxis().set_visible(False)
+			ax[i][j].set_title('Mass ratio = {}; origin = {}'.format(q, origin),
+								fontsize=8)
+	plt.tight_layout()
+	plt.suptitle('Number of Images; ' +	'Derived for specific frame = {}'.
+				 format(specific_frame_derivation), x=0.435)
+	plt.gcf().set_size_inches(3*len(mass_ratios), 3*len(origins))
 
 	if False:
 		saved = False
@@ -70,27 +86,17 @@ def demonstration():
 
 # Input parameters
 s = 1.5
-mass_ratios = [1e-6, 1e-8, 1e-10]
-res = int(50)
-solvers =  ['SG12']
+mass_ratios = [1e-6, 1e-9, 1e-12]
 origins = ['plan', 'caustic', 'geo_cent']
-tolerance = [0.00007, 0.00007, 0.00007]
+res = int(20)
+solver =  'SG12'
 region = 'caustic'
 region_lim = None
-specific_frame_derivation = False
 
+specific_frame_derivation = False
 demonstration()
 
-s = 1.5
-mass_ratios = [1e-6, 1e-10, 1e-14]
-res = int(50)
-solvers =  ['SG12']
-origins = ['plan', 'caustic', 'geo_cent']
-tolerance = [2e-8, 0.00007, 0.00007]
-region = 'caustic'
-region_lim = None
 specific_frame_derivation = True
-
 demonstration()
 
 
