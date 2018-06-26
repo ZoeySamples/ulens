@@ -357,18 +357,18 @@ class BinaryLens(object):
 		for solution in roots:
 			if self.check_solution(solution=solution):
 				image_positions.append(solution)
-		print('Old method:', image_positions)
+		print(image_positions)
 		"""
 
 		# New method
 		image_positions = self.get_accepted_solutions(x=self.x, y=self.y)
 		return image_positions
-
+		
 
 	def get_magnification(self, x, y):
 		"""Returns the magnification for each configuration."""
 
-
+		
 		magn = 0
 		image_positions = self.get_accepted_solutions(x=x, y=y)
 		for z in image_positions:
@@ -380,6 +380,7 @@ class BinaryLens(object):
 		return magn
 
 		"""
+		magn = [None]*5
 		roots = self.get_roots(x=x, y=y)
 		for (i, z) in enumerate(roots):
 			detJ = (1. - ((self.m - self.dm) / ((z - self.z1)**2) + (self.m +
@@ -439,7 +440,7 @@ class BinaryLens(object):
 				xmin, xmax, ymin, ymax (floats):
 					The limitget_accepted_solutionss of the grid area when region is 'custom.'
 					The on-axis cusps are given by: (x, y) = {(-1, 0), (1, 0)}
-					The off-axis cusps are given by: (x, y) = {(0, 1), (0, -1)}
+					The off-axis cusps are given by: (x, y) = {(0, -1), (0, 1)}
 		"""
 
 		self.get_size_caustic()
@@ -499,7 +500,7 @@ class BinaryLens(object):
 		for idx in range(self.res**2):
 			x = self.x_array[idx]
 			y = self.y_array[idx]
-			image_positions = self.get_roots(x=x, y=y)
+			roots = self.get_roots(x=x, y=y)
 			for solution in roots:
 				if self.check_solution(solution=solution):
 					self.num_images[idx] += 1
@@ -511,6 +512,7 @@ class BinaryLens(object):
 			y = self.y_array[idx]
 			image_positions = self.get_accepted_solutions(x=x, y=y)
 			self.num_images[idx] = len(image_positions)
+		
 
 	def get_coeff_array(self):
 		"""
@@ -1782,7 +1784,7 @@ class BinaryLens(object):
 
 		if self.origin == 'geo_cent':
 			self.origin_file = 'gcent'
-			self.origin_title = 'Geo Center'
+			self.origin_title = 'Geometric Center'
 			self.origin_phrase = 'geometric center frame'
 		elif self.origin == 'plan':
 			self.origin_file = self.origin
@@ -1790,7 +1792,7 @@ class BinaryLens(object):
 			self.origin_phrase = 'planet frame'
 		elif self.origin == 'com':
 			self.origin_file = self.origin
-			self.origin_title = 'Center Mass'
+			self.origin_title = 'Center-of-Mass'
 			self.origin_phrase = 'center-of-mass frame'
 		elif self.origin == 'star':
 			self.origin_file = self.origin

@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: May 22, 2018
 # BinaryLensPlots.py
-# Last Updated: Jun 25, 2018
+# Last Updated: Jun 26, 2018
 
 import matplotlib.pyplot as plt
 from BinaryLens import BinaryLens as BL
@@ -10,11 +10,12 @@ import numpy as np
 
 # Input parameters
 s = 1.5
-mass_ratios = [1e-6, 1e-10]
+mass_ratios = [1e-15, 5e-16]
+tolerance = 2e-8
 solvers =  ['SG12']
 origins = ['plan']
 
-res = int(10)
+res = int(200)
 region = 'caustic'
 region_lim = (-.15, .15, 0.8, 1.3)
 
@@ -76,7 +77,7 @@ for solver in solvers:
 
 plot_types = []
 plot_types.append('num_images')
-plot_types.append('magn')
+#plot_types.append('magn')
 #plot_types.append('num_iamges_coeff')
 #plot_types.append('magn_coeff')
 #plot_types.append('coeff')

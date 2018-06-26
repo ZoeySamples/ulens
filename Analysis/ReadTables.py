@@ -18,13 +18,13 @@ for i in range(len(file_name)):
 
 for i in range(len(hdul)):
 
-	hdul[i].plot_num_images(errors_only=True, print_errors=True)
+	hdul[i].plot_num_images(errors_only=False, print_errors=True)
 	plt.gcf().set_size_inches(10, 7)
 	plt.show()
-	hdul[i].plot_magnification(cutoff=None, log_colorbar=True,
-							   outliers=False, save = False)
-	plt.gcf().set_size_inches(10, 7)
-	plt.show()
+#	hdul[i].plot_magnification(cutoff=None, log_colorbar=True,
+#							   outliers=False, save = False)
+#	plt.gcf().set_size_inches(10, 7)
+#	plt.show()
 
 
 
