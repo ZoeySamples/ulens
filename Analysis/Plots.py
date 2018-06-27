@@ -9,21 +9,18 @@ import MulensModel as mm
 import numpy as np
 
 # Input parameters
-s = 1.5
-mass_ratios = [1e-15, 5e-16]
-tolerance = 2e-8
+s = 3.0
+mass_ratios = [1e-1]
 solvers =  ['SG12']
 origins = ['plan']
 
-res = int(200)
+res = int(50)
 region = 'caustic'
 region_lim = (-.15, .15, 0.8, 1.3)
 
 cutoff = 1.5
 coeff_multiplier = None
 specific_frame_derivation = True
-#tolerance = ((specific_frame_derivation)*2e-8 +
-#			(not specific_frame_derivation)*5e-5)
 
 param = []
 plot = []
@@ -43,13 +40,13 @@ def make_plot():
 
 			if plot_type == 'magn':
 				p.plot_magnification(outliers=False, region=region,
-						region_lim=region_lim, log_colorbar=True, cutoff=cutoff,
+						region_lim=region_lim, log_colorbar=False, cutoff=cutoff,
 						save=False)
 				caustic.plot(s=1)
 				plt.show()
 
 			if plot_type == 'num_iamges_coeff':
-				p.plot_num_images_coeff(color_magn=True, log_colorbar=True,
+				p.plot_num_images_coeff(color_magn=TPrue, log_colorbar=True,
 						region='caustic', region_lim=None, save=False)
 
 			if plot_type == 'magn_coeff':
@@ -70,14 +67,14 @@ for solver in solvers:
 	for origin in origins:
 		for q in mass_ratios:
 			param.append(({'s': s, 'q': q, 'res': res, 'origin': origin,
-					'solver': solver, 'tolerance': tolerance,
+					'solver': solver,
 					'specific_frame_derivation': specific_frame_derivation}))
 			plot.append(BL(**param[-1]))
 
 
 plot_types = []
-plot_types.append('num_images')
-#plot_types.append('magn')
+#plot_types.append('num_images')
+plot_types.append('magn')
 #plot_types.append('num_iamges_coeff')
 #plot_types.append('magn_coeff')
 #plot_types.append('coeff')

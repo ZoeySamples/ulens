@@ -60,8 +60,8 @@ def make_plot(lens1, lens2, plot_type, **plot_args):
 
 # Input parameters
 s = 1.5
-mass_ratios = [1e-2, 1e-7, 1e-9]
-res = int(100)
+mass_ratios = [1e-2]
+res = int(50)
 origins = ['plan', 'caustic']
 solvers = ['SG12']
 #tolerance = 0.0007
@@ -89,7 +89,7 @@ initialize()
 if True:
 	prepare_plot(plot_type = 'rel_magn', outliers=False,
 			ratio_cutoff=ratio_cutoff, region=region, region_lim=region_lim,
-			save=False, log_colorbar=True)
+			save=False, log_colorbar=False)
 
 if False:
 	prepare_plot(plot_type = 'rel_magn_coeff', outliers=True,
