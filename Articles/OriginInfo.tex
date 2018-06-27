@@ -1,0 +1,72 @@
+\documentclass{article}
+
+\usepackage{graphicx}
+
+\begin{document}
+
+Since the purpose of this project is to find which algorithms and
+methods result in the most reliable calculations for smaller and
+smaller mass ratios, one factor to consider is the way the binary
+lens polynomial is derived. The binary lens equation is given by
+\begin{equation}
+\zeta = z + \frac{m_{1}}{\bar{z_{1}} - \bar{z}} +
+\frac{m_{2}}{\bar{z_{2}} - \bar{z}}
+\end{equation}
+and is the basis of every calculation. This equation can be
+manipulated into a fifth-degree polynomial. Depending on
+which coordinate frame the calculations will be calculated in,
+this equation can be simplified with the appropriate assumptions;
+it can also be left in its general form.
+
+In all cases, the two bodies are assumed to lie on the real axis.
+The coordinate frames that are being considered are: the geometric
+center frame, which assumes the vertical axis lies halfway between
+the star and the planet; the planet frame, which assumes the planet
+lies on the origin; and the planetary caustic frame, which assumes
+the central point of the planetary caustic lies on the origin.
+
+The first test determines which coordinate frames produce the most
+reliable results, using both the general polynomial and a version
+of the polynomial derived for each coordinate frame. The derivations
+were computed by Wolfram Mathematica 7. To test the success of each
+calculation, I simulated a grid of points, centered on the planetary 
+caustic, to represent the position of the source body. At each point,
+I calculated the number of images that should be seen by an observer.
+By standard knowledge, there should be three images when the source's
+coordinates are outside the caustic, and five images when the source's
+coordinates are inside the caustic. \textbf{Figure 1} and 
+\textbf{Figure 2} show the results of this simulation.
+
+\begin{figure}
+	\includegraphics[width=0.9\textwidth]{../Tables/test_SFD_0.png}
+	\caption{Place caption text here.}
+
+	\vspace*{\floatsep}
+
+	\includegraphics[width=0.9\textwidth]{../Tables/test_SFD_1.png}
+	\caption{Place caption text here.}
+\end{figure}
+
+
+
+When using the general form of the polynomial equation, the planet frame
+performs better than the geometric center frame and the caustic frame only
+when the mass ratio approaches $10^{-8}$; at mass ratios greater than $10^{-7}$,
+none of the coordinate frames produce any errors. However, all of the frames
+result in high numbers of errors when the mass ratio drops below something
+of the order $10^{-8}$.
+
+On the other hand, when using the specifically-derived forms of the
+polynomial, we see much different results. The planet frame now produces
+a correct plot of the number of images all the way down to a mass ratio of
+$10^{-15}$; whereas the other frames' performance is slightly worse. The
+hypothesized reason for this is that the form of the polynomial specifically
+derived for the planet frame elimates many instances of terms with the
+mass ratio squared. Because 64-bit floating point numbers can only store
+around 16 digits, many errors tend to accumulate when adding terms of the
+order $10^{0}$ with other terms of the order $10^{-16}$. By eliminating
+nearly every instance of the mass ratio squared, it is possible to keep
+every significant digit throughout the calculation with mass ratios all
+the way down to $10^{-15}$.
+
+\end{document}
