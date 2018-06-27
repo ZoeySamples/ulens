@@ -47,9 +47,17 @@ def demonstration():
 					specific_frame_derivation})
 			plot[i][j] = BL(**param[i][j])
 
+			cmap = plt.cm.Blues
+			cmaplist = [cmap(i) for i in range(cmap.N)]
+			cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
+			bounds = np.linspace(-0.5,5.5,7)
+			norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
+			ticks = np.linspace(0,5,6)
+
 			# Get the data for the plots.
 			kwargs = plot[i][j].check_kwargs()
-			kwargs['cmap'] = 'coolwarm'
+			kwargs['cmap'] = cmap
+			kwargs['norm'] = norm
 			plot[i][j].get_position_arrays(region=region,
 						region_lim=region_lim)
 			plot[i][j].get_num_images_array()
@@ -68,16 +76,18 @@ def demonstration():
 			plt.ylim(ymin, ymax)
 			plt.xticks(np.arange(xmin+0.2*dx, xmax, 0.6*dx))
 			plt.yticks(np.arange(ymin+0.2*dy, ymax, 0.3*dy))
+			ax[i][j].tick_params(axis='x', labelsize=11)
+			ax[i][j].tick_params(axis='y', labelsize=11)
 			ax[i][j].axes.yaxis.set_major_formatter(
 								mtick.FormatStrFormatter('%.1e'))
 			ax[i][j].axes.xaxis.set_major_formatter(
-								mtick.FormatStrFormatter('%.4e'))
-			plt.ylabel('Mass Ratio: {}'.format(plot[i][j].q), fontsize=12)
+								mtick.FormatStrFormatter('%.3e'))
+			plt.ylabel('Mass Ratio: {}'.format(plot[i][j].q), fontsize=14)
 			if (j != 0):
 				ax[i][j].axes.get_yaxis().set_visible(False)
 			if (i == 0):
-				ax[i][j].axes.set_title('{} Frame'.format(
-										plot[i][j].origin_title))
+				ax[i][j].axes.set_title('{}\nFrame'.format(
+						plot[i][j].origin_title), fontsize=14)
 
 	# Get the string for the title.
 	if specific_frame_derivation:
@@ -86,13 +96,14 @@ def demonstration():
 		sfd_str = 'Not '
 
 	# Make final plot adjustments.
-	cbar = fig.add_axes([0.88, 0.15, 0.04, 0.7])
-	num_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'])
-	num_color.set_label('Number of Images', fontsize=12, labelpad=10)
+	cbar = fig.add_axes([0.88, 0.15, 0.03, 0.7])
+	num_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks)
+	num_color.set_label('Number of Images', fontsize=14, labelpad=10)
+	cbar.axes.tick_params(labelsize=11) 
 	plt.subplots_adjust(wspace=0.1, hspace=0.2, top=0.90, right=0.85)
-	plt.suptitle('Number of Images; ' +	'{}Using Calculation for Specific Frame'.
-				 format(sfd_str), x=0.5, y=0.97, fontsize=14)
-	plt.gcf().set_size_inches(2.8*len(mass_ratios), 2.5*len(origins))
+#	plt.suptitle('Number of Images; ' +	'{}Using Calculation for Specific Frame'.
+#				 format(sfd_str), x=0.5, y=0.97, fontsize=14)
+	plt.gcf().set_size_inches(2.8*len(origins), 2.6*len(mass_ratios))
 
 	# Save the plot as a .png file.
 	if save_fig:
@@ -108,12 +119,11 @@ def demonstration():
 		if saved == False:
 			print('Error: too many files of same name already exist. File not saved')
 
-	plt.show()
-
+#	plt.show()
 
 # Here are the input parameters for making the plots.
 s = 1.5
-mass_ratios = [1e-6, 1e-10, 1e-14]
+mass_ratios = [1e-6, 1e-12]
 origins = ['plan', 'caustic', 'geo_cent']
 res = int(200)
 solver =  'SG12'
