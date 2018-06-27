@@ -165,11 +165,26 @@ class BinaryLens(object):
 	def get_mass(self):
 		"""Define m and dm."""
 
+		# This may be a mistake, as it assumes the mass of the star is 1,
+		# but what we really want is that the total mass is 1.
+		"""
 		self.dm = (1. - self.q) / 2.
 		self.m = (1. + self.q) / 2.
+		"""
+		# These are the adjusted values for m and dm, assuming the total
+		# mass is equal to 1.
+		self.m = 1./2.
+		self.dm = (1. - self.q) / (2.*(1. + self.q))
+
 
 	def get_lensing_body_positions(self):
-		"""Define z1 and z2."""
+		"""
+		Define z1 and z2, the positions of the planet and the star, 
+		respectively. These calculations take into account the coordinate
+		frame in which the calculation is to be done, but do not plot these
+		points alongside the plots below, as all plots are converted back
+		into the geometric center frame.
+		"""
 
 		if self.origin == 'geo_cent':
 			self.z1 = 0.5*self.s
@@ -202,7 +217,7 @@ class BinaryLens(object):
 		elif self.origin == 'plan':
 			self.zeta = (x - self.s/2.) + y*1.j
 		elif self.origin == 'com':
-			self.zeta = (x + self.s*self.dm/(2.*self.m)) + y*1.j
+			self.zeta = (x + (self.s/2.)*((1. - self.q)/(1. + self.q))) + y*1.j
 		elif self.origin == 'caustic':
 			self.zeta = (x + 1./(self.s) - self.s/2.) + y*1.j
 		else:
@@ -461,10 +476,10 @@ class BinaryLens(object):
 			region_ymin = 0.55*self.height_caustic
 			region_ymax = 0.8*self.height_caustic
 		if region == 'both':
-			region_xmin = self.xcenter_caustic - 1.1*self.s + 1./self.s
-			region_xmax = self.xcenter_caustic + 0.1*self.s
-			region_ymin = -0.2*self.s
-			region_ymax = 0.2*self.s
+			region_xmin = -0.5*self.s
+			region_xmax = 0.5*self.s
+			region_ymin = -0.5*self.s
+			region_ymax = 0.5*self.s
 		if region == 'custom':
 			(xmin, xmax, ymin, ymax) = (*region_lim,)
 			region_xmin = self.xcenter_caustic + 0.5*xmin*self.width_caustic
@@ -841,6 +856,8 @@ class BinaryLens(object):
 		return kwargs
 
 ### The following functions make plots for grid data.
+### Note: All plots are made in the geometric center frame, regardless
+### of which frame the calculations were done in.
 
 	def plot_num_images(self, errors_only=False, print_errors=True,
 			region='caustic', save=False, region_lim=None,
