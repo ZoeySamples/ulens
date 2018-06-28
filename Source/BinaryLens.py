@@ -105,6 +105,10 @@ class BinaryLens(object):
 				If provided, all polynomial coefficients will be multiplied
 				by this number before the root solver solves the polynomial.
 
+			specific_frame_derivation (bool):
+				If True, the form of the polynomial given by the origin
+				will be used to calculate solutions.
+
 		Global Variables:
 			dm (float):
 				Half the difference of the masses (positive).
@@ -156,8 +160,8 @@ class BinaryLens(object):
 #		self.tolerance = tolerance
 		self.coeff_multiplier = coeff_multiplier
 		self.specific_frame_derivation = specific_frame_derivation
-		self.get_lensing_body_positions()
 		self.get_mass()
+		self.get_lensing_body_positions()
 		self.strings()
 
 ### The following functions assign values to variables pertaining to the class.
