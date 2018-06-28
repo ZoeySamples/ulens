@@ -22,10 +22,6 @@ for i in range(len(x)):
 					 'solver': solver}) 
 	test.append(BL(**param[-1]))
 
-res=100
-param.append(({'s': s[0], 'q': q[0], 'res': res, 'origin': origin,
-				'solver': solver}))
-plotn = (BL(**param[-1]))
 
 for t in test:
 	t.print_image_position(print_input=False)
