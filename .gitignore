@@ -1,0 +1,14 @@
+*.py[cod]
+*.o
+*.so
+*.h
+*-fPIC
+
+complex.c
+laguer.c
+nrutil.c
+zroots.c
+VBBinaryLensingLibrary.cpp
+
+Backups/
+Tables/
