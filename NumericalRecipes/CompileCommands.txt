@@ -1,5 +1,0 @@
-gcc zroots.c -lm -fPIC  -c
-gcc laguer.c -lm -fPIC  -c
-gcc complex.c -lm -fPIC  -c
-gcc nrutil.c -lm -fPIC  -c
-gcc -Wl,-soname,rapper -shared -o zrootsBinaryLens_wrapper.so zrootsBinaryLens_wrapper.c -lm  -fPIC complex.o laguer.o zroots.o nrutil.o
