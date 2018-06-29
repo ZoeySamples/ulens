@@ -3,10 +3,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[         0,          0]
-NotebookDataLength[     52622,       1566]
-NotebookOptionsPosition[     50989,       1505]
-NotebookOutlinePosition[     51352,       1521]
-CellTagsIndexPosition[     51309,       1518]
+NotebookDataLength[     61199,       1748]
+NotebookOptionsPosition[     59181,       1676]
+NotebookOutlinePosition[     59643,       1694]
+CellTagsIndexPosition[     59600,       1691]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -45,7 +45,8 @@ Cell[BoxData[
     RowBox[{"Conjugate", "[", "z2", "]"}]}]]}]], "Output",
  CellChangeTimes->{3.735492874328898*^9, 3.735494459904933*^9, 
   3.735572092768404*^9, 3.735572794790063*^9, 3.736605113243164*^9, 
-  3.7384089760091476`*^9}]
+  3.7384089760091476`*^9, 3.7385177428355713`*^9, 3.738687537878827*^9, 
+  3.738939262076631*^9}]
 }, Open  ]],
 
 Cell["\<\
@@ -69,13 +70,15 @@ Cell[BoxData[
   RowBox[{"-", "dm"}], "+", "m"}]], "Output",
  CellChangeTimes->{3.735492974586566*^9, 3.735494461595365*^9, 
   3.735572097135997*^9, 3.735572796880039*^9, 3.736605129474813*^9, 
-  3.738408977589384*^9}],
+  3.738408977589384*^9, 3.738517743774078*^9, 3.738687538447213*^9, 
+  3.738939262700849*^9}],
 
 Cell[BoxData[
  RowBox[{"dm", "+", "m"}]], "Output",
  CellChangeTimes->{3.735492974586566*^9, 3.735494461595365*^9, 
   3.735572097135997*^9, 3.735572796880039*^9, 3.736605129474813*^9, 
-  3.7384089775923634`*^9}]
+  3.738408977589384*^9, 3.738517743774078*^9, 3.738687538447213*^9, 
+  3.7389392627035418`*^9}]
 }, Open  ]],
 
 Cell["\<\
@@ -141,7 +144,8 @@ Cell[BoxData[
      RowBox[{"Conjugate", "[", "\[Zeta]", "]"}]}]]}], "}"}]], "Output",
  CellChangeTimes->{3.735572800512332*^9, 3.7355728419480753`*^9, 
   3.736605131132717*^9, 3.736605692991395*^9, 3.7366058619906683`*^9, 
-  3.7366060822219963`*^9, 3.738408979151449*^9}]
+  3.7366060822219963`*^9, 3.738408979151449*^9, 3.738517744791521*^9, 
+  3.738687539337792*^9, 3.738939263623234*^9}]
 }, Open  ]],
 
 Cell["\<\
@@ -578,7 +582,8 @@ Cell[BoxData[
  CellChangeTimes->{3.735493846265622*^9, 3.7354940913711233`*^9, 
   3.735494294618972*^9, 3.735573086425877*^9, 3.736605276243404*^9, 
   3.7366053735514193`*^9, 3.7366061457695007`*^9, 3.7366065285700827`*^9, 
-  3.738408981092553*^9}]
+  3.738408981092553*^9, 3.738517746179929*^9, 3.738687540629217*^9, 
+  3.7389392644119577`*^9}]
 }, Open  ]],
 
 Cell["\<\
@@ -589,7 +594,7 @@ Solve this in our first coordinate frame: geometric center; i.e. z1=-z2\
 Cell[CellGroupData[{
 
 Cell[BoxData[
- RowBox[{"pcenter", "=", 
+ RowBox[{"pgeocent", " ", "=", " ", 
   RowBox[{"Collect", "[", 
    RowBox[{
     RowBox[{"Expand", "[", 
@@ -600,7 +605,8 @@ Cell[BoxData[
     "Simplify"}], "]"}]}]], "Input",
  CellChangeTimes->{{3.735494843058948*^9, 3.735494869622747*^9}, 
    3.735496609493581*^9, {3.735573413771482*^9, 3.735573415729583*^9}, {
-   3.735573617267343*^9, 3.735573622993805*^9}}],
+   3.735573617267343*^9, 3.735573622993805*^9}, {3.738517753682992*^9, 
+   3.738517798930662*^9}, {3.738938899992301*^9, 3.73893890485781*^9}}],
 
 Cell[BoxData[
  RowBox[{
@@ -707,7 +713,8 @@ Cell[BoxData[
     ")"}]}]}]], "Output",
  CellChangeTimes->{3.735494870127906*^9, 3.735496615094795*^9, 
   3.735573419858122*^9, 3.735573561775696*^9, 3.735573625425517*^9, 
-  3.73660618430056*^9, 3.7366065308357563`*^9, 3.738408996789053*^9}]
+  3.73660618430056*^9, 3.7366065308357563`*^9, 3.738408996789053*^9, 
+  3.7385177639380007`*^9, 3.73851780011434*^9, 3.738939267110709*^9}]
 }, Open  ]],
 
 Cell["\<\
@@ -720,7 +727,7 @@ Solve this in our second coordinate frame : planet rest frame; i.e.z1 = 0\
 Cell[CellGroupData[{
 
 Cell[BoxData[
- RowBox[{"pbody1", "=", 
+ RowBox[{"pplan", "=", 
   RowBox[{"Collect", "[", 
    RowBox[{
     RowBox[{"Expand", "[", 
@@ -732,7 +739,7 @@ Cell[BoxData[
   3.735496420641116*^9, 3.7354964346983137`*^9}, {3.735496471307518*^9, 
   3.735496479706229*^9}, {3.735573667140028*^9, 3.735573703684353*^9}, {
   3.736606319228417*^9, 3.736606331292313*^9}, {3.736606432684814*^9, 
-  3.736606435868438*^9}}],
+  3.736606435868438*^9}, {3.738938896089468*^9, 3.738938896390668*^9}}],
 
 Cell[BoxData[
  RowBox[{
@@ -856,7 +863,8 @@ Cell[BoxData[
   3.735496183984812*^9, {3.7354962629620047`*^9, 3.735496285257388*^9}, {
    3.735496436730783*^9, 3.735496449212604*^9}, 3.735496482607862*^9, {
    3.735573699317788*^9, 3.73557370502988*^9}, 3.736606188334424*^9, 
-   3.736606533787443*^9, 3.7384089986316843`*^9}]
+   3.736606533787443*^9, 3.7384089986316843`*^9, 3.738687542919911*^9, 
+   3.73893926750362*^9}]
 }, Open  ]],
 
 Cell["\<\
@@ -869,7 +877,7 @@ Solve this in our third coordinate frame : star rest frame; i.e.z2 = 0\
 Cell[CellGroupData[{
 
 Cell[BoxData[
- RowBox[{"pbody2", "=", 
+ RowBox[{"pstar", "=", 
   RowBox[{"Collect", "[", 
    RowBox[{
     RowBox[{"Expand", "[", 
@@ -878,7 +886,8 @@ Cell[BoxData[
        RowBox[{"z2", "\[Rule]", "0"}]}], ",", "z"}], "]"}], ",", "z", ",", 
     "Simplify"}], "]"}]}]], "Input",
  CellChangeTimes->{{3.735496372680637*^9, 3.735496372929619*^9}, {
-  3.735573750428217*^9, 3.735573790161969*^9}}],
+  3.735573750428217*^9, 3.735573790161969*^9}, {3.738938911657453*^9, 
+  3.73893891202267*^9}}],
 
 Cell[BoxData[
  RowBox[{
@@ -996,7 +1005,7 @@ Cell[BoxData[
     ")"}]}]}]], "Output",
  CellChangeTimes->{{3.735573785250729*^9, 3.7355737915564127`*^9}, 
    3.736606189684094*^9, 3.736606241841455*^9, 3.7366065352617826`*^9, 
-   3.738409000054982*^9}]
+   3.738409000054982*^9, 3.738939268981716*^9}]
 }, Open  ]],
 
 Cell["\<\
@@ -1008,7 +1017,7 @@ Solve this in our fourth and final coordinate frame : center of mass; i.e. \
 Cell[CellGroupData[{
 
 Cell[BoxData[
- RowBox[{"pcm", " ", "=", " ", 
+ RowBox[{"pcom", " ", "=", " ", 
   RowBox[{"Collect", "[", 
    RowBox[{
     RowBox[{"Expand", "[", 
@@ -1024,7 +1033,7 @@ Cell[BoxData[
            RowBox[{"m", "+", "dm"}], ")"}]}]}]}]}], ",", "z"}], "]"}], ",", 
     " ", "z", ",", " ", "Simplify"}], "]"}]}]], "Input",
  CellChangeTimes->{{3.736606713527822*^9, 3.736606766108324*^9}, {
-  3.736606842188656*^9, 3.736606857821034*^9}}],
+   3.736606842188656*^9, 3.736606857821034*^9}, 3.738938915516958*^9}],
 
 Cell[BoxData[
  RowBox[{
@@ -1128,11 +1137,7 @@ Cell[BoxData[
        SuperscriptBox[
         RowBox[{"Conjugate", "[", "\[Zeta]", "]"}], "2"]}]}], ")"}]}]}], "+", 
   
-  RowBox[{
-   FractionBox["1", 
-    SuperscriptBox[
-     RowBox[{"(", 
-      RowBox[{"dm", "+", "m"}], ")"}], "2"]], 
+  FractionBox[
    RowBox[{
     SuperscriptBox["z", "4"], " ", 
     RowBox[{"(", 
@@ -1179,8 +1184,10 @@ Cell[BoxData[
            RowBox[{
             RowBox[{"4", " ", "z1"}], "+", "\[Zeta]"}], ")"}]}]}], ")"}], " ", 
        SuperscriptBox[
-        RowBox[{"Conjugate", "[", "\[Zeta]", "]"}], "2"]}]}], ")"}]}]}], "+", 
-  
+        RowBox[{"Conjugate", "[", "\[Zeta]", "]"}], "2"]}]}], ")"}]}], 
+   SuperscriptBox[
+    RowBox[{"(", 
+     RowBox[{"dm", "+", "m"}], ")"}], "2"]], "+", 
   RowBox[{
    FractionBox["1", 
     SuperscriptBox[
@@ -1500,12 +1507,178 @@ Cell[BoxData[
      ")"}]}]}]}]], "Output",
  CellChangeTimes->{{3.736606727273326*^9, 3.736606766716379*^9}, {
    3.736606852363595*^9, 3.736606859057191*^9}, 3.7366071941154127`*^9, 
-   3.738409002071217*^9}]
+   3.738409002071217*^9, 3.738939270325686*^9}]
+}, Open  ]],
+
+Cell["\<\
+For use in Python code, replace the variables names with what they are called \
+in my code.\
+\>", "Text",
+ CellChangeTimes->{{3.738517808909155*^9, 3.73851785417292*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"pythonplan", "=", 
+  RowBox[{"FortranForm", "[", 
+   RowBox[{"Collect", "[", 
+    RowBox[{
+     RowBox[{"Expand", "[", 
+      RowBox[{
+       RowBox[{"pgeneral", "/.", 
+        RowBox[{"{", 
+         RowBox[{
+          RowBox[{"dm", "\[Rule]", "\"\<self.dm\>\""}], ",", " ", 
+          RowBox[{"m", "\[Rule]", "\"\<self.m\>\""}], ",", " ", 
+          RowBox[{"z2", "\[Rule]", "\"\<self.z2\>\""}], ",", " ", 
+          RowBox[{"\[Zeta]", "\[Rule]", "\"\<self.zeta\>\""}], ",", " ", 
+          RowBox[{
+           RowBox[{"Conjugate", "[", "\[Zeta]", "]"}], "\[Rule]", 
+           "\"\<self.zeta_conj\>\""}], ",", 
+          RowBox[{"z1", "\[Rule]", "0"}]}], "}"}]}], ",", "z"}], "]"}], ",", 
+     "z", ",", " ", "Simplify"}], "]"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.738687829453432*^9, 3.7386878564683647`*^9}, {
+  3.73868792412506*^9, 3.7386879255167093`*^9}, {3.7386879970685253`*^9, 
+  3.7386880235867453`*^9}, {3.738938920380486*^9, 3.738938920762052*^9}, {
+  3.7389392714232483`*^9, 3.738939272734256*^9}}],
+
+Cell["\<\
+        (\"self.dm\" - \"self.m\")**2*\"self.z2\"**2*\"self.zeta\" - 
+     -  (\"self.dm\" - \"self.m\")*\"self.z2\"*
+     -   (\"self.dm\"*\"self.z2\" + \"self.m\"*(\"self.z2\" - \
+4*\"self.zeta\") - 
+     -     \"self.z2\"*\"self.zeta\"*(\"self.z2\" - 2*\"self.zeta_conj\"))*z + 
+     -  (-2*\"self.m\"**2*(\"self.z2\" - 2*\"self.zeta\") + 
+     -     3*\"self.m\"*\"self.z2\"*\"self.zeta\"*(\"self.z2\" - \
+2*\"self.zeta_conj\") + 
+     -     \"self.z2\"**2*\"self.zeta\"*\"self.zeta_conj\"*(-\"self.z2\" + \
+\"self.zeta_conj\") + 
+     -     \"self.dm\"*\"self.z2\"*(-2*\"self.m\" - \"self.z2\"*\"self.zeta\" \
++ 
+     -        2*\"self.z2\"*\"self.zeta_conj\" + \
+2*\"self.zeta\"*\"self.zeta_conj\"))*z**2 + 
+     -  (-(\"self.dm\"*\"self.z2\"*(\"self.z2\" + 2*\"self.zeta_conj\")) + 
+     -     (\"self.z2\" + 2*\"self.zeta\")*
+     -      (-(\"self.m\"*(\"self.z2\" - 2*\"self.zeta_conj\")) + 
+     -        \"self.z2\"*(\"self.z2\" - \"self.zeta_conj\")*\"self.zeta_conj\
+\"))*z**3 + 
+     -  (\"self.dm\"*\"self.z2\" + \"self.m\"*(\"self.z2\" - \
+2*\"self.zeta_conj\") - 
+     -     (2*\"self.z2\" + \"self.zeta\")*(\"self.z2\" - \
+\"self.zeta_conj\")*\"self.zeta_conj\")*
+     -   z**4 - \"self.zeta_conj\"*(-\"self.z2\" + \"self.zeta_conj\")*z**5\
+\>", "Output",
+ GeneratedCell->False,
+ CellAutoOverwrite->False,
+ CellChangeTimes->{
+  3.738687927220245*^9, {3.73868800322295*^9, 3.7386880414950447`*^9}, 
+   3.7389392732710238`*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"pythoncaustic", " ", "=", " ", 
+  RowBox[{"FortranForm", "[", 
+   RowBox[{"Collect", "[", 
+    RowBox[{
+     RowBox[{"Expand", "[", 
+      RowBox[{
+       RowBox[{"pgeneral", "/.", 
+        RowBox[{"{", 
+         RowBox[{
+          RowBox[{"dm", "\[Rule]", "\"\<self.dm\>\""}], ",", " ", 
+          RowBox[{"m", "\[Rule]", "\"\<self.m\>\""}], ",", 
+          RowBox[{"z1", "\[Rule]", "\"\<self.z1\>\""}], ",", " ", 
+          RowBox[{"z2", "\[Rule]", "\"\<self.z2\>\""}], ",", " ", 
+          RowBox[{"\[Zeta]", "\[Rule]", "\"\<self.zeta\>\""}], ",", " ", 
+          RowBox[{
+           RowBox[{"Conjugate", "[", "\[Zeta]", "]"}], "\[Rule]", 
+           "\"\<self.zeta_conj\>\""}]}], "}"}]}], ",", "z"}], "]"}], ",", "z",
+      ",", " ", "Simplify"}], "]"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.738938855955297*^9, 3.7389388638333282`*^9}, {
+  3.738938924061268*^9, 3.738938926061738*^9}, {3.738938988128455*^9, 
+  3.7389390483206863`*^9}, {3.738939248152169*^9, 3.738939252830201*^9}, {
+  3.738939491068748*^9, 3.738939501246148*^9}}],
+
+Cell["\<\
+        \"self.dm\"**2*(\"self.z1\" - \"self.z2\")**2*\"self.zeta\" - 
+     -  \"self.m\"**2*(\"self.z1\" + \"self.z2\")*
+     -   (2*\"self.z1\"*\"self.z2\" - \"self.z1\"*\"self.zeta\" - \
+\"self.z2\"*\"self.zeta\") - 
+     -  \"self.m\"*\"self.z1\"*\"self.z2\"*
+     -   (\"self.z1\"*(\"self.z2\" - \"self.zeta\") - \"self.z2\"*\"self.zeta\
+\")*
+     -   (\"self.z1\" + \"self.z2\" - 2*\"self.zeta_conj\") + 
+     -  \"self.z1\"**2*\"self.z2\"**2*\"self.zeta\"*(\"self.z1\" - \
+\"self.zeta_conj\")*
+     -   (\"self.z2\" - \"self.zeta_conj\") - 
+     -  \"self.dm\"*(\"self.z1\" - \"self.z2\")*
+     -   (2*\"self.m\"*(\"self.z1\"*(\"self.z2\" - \"self.zeta\") - \"self.z2\
+\"*\"self.zeta\") + 
+     -     \"self.z1\"*\"self.z2\"*(\"self.z1\"*\"self.z2\" - \
+\"self.z1\"*\"self.zeta\" - 
+     -        \"self.z2\"*\"self.zeta\" + \
+2*\"self.zeta\"*\"self.zeta_conj\")) + 
+     -  (-(\"self.dm\"**2*(\"self.z1\" - \"self.z2\")**2) + 
+     -     \"self.m\"**2*(\"self.z1\"**2 + 6*\"self.z1\"*\"self.z2\" + \
+\"self.z2\"**2 - 
+     -        4*\"self.z1\"*\"self.zeta\" - 4*\"self.z2\"*\"self.zeta\") + 
+     -     \"self.m\"*(\"self.z1\"*\"self.z2\"*(\"self.z2\" - \
+4*\"self.zeta\") + 
+     -        \"self.z1\"**2*(\"self.z2\" - \"self.zeta\") - \
+\"self.z2\"**2*\"self.zeta\")*
+     -      (\"self.z1\" + \"self.z2\" - 2*\"self.zeta_conj\") - 
+     -     \"self.z1\"*\"self.z2\"*(2*\"self.z2\"*\"self.zeta\" + 
+     -        \"self.z1\"*(\"self.z2\" + 2*\"self.zeta\"))*(\"self.z1\" - \
+\"self.zeta_conj\")*
+     -      (\"self.z2\" - \"self.zeta_conj\") + 
+     -     \"self.dm\"*(\"self.z1\" - \"self.z2\")*
+     -      (\"self.z1\"**2*(\"self.z2\" - \"self.zeta\") - 
+     -        \"self.zeta\"*(4*\"self.m\" + \"self.z2\"*(\"self.z2\" - \
+2*\"self.zeta_conj\")) + 
+     -        \"self.z1\"*(\"self.z2\"**2 - 2*\"self.z2\"*\"self.zeta\" + 
+     -           2*\"self.z2\"*\"self.zeta_conj\" + \
+2*\"self.zeta\"*\"self.zeta_conj\")))*z + 
+     -  (-2*\"self.m\"**2*(\"self.z1\" + \"self.z2\" - 2*\"self.zeta\") + 
+     -     3*\"self.m\"*(\"self.z1\" + \"self.z2\")*\"self.zeta\"*
+     -      (\"self.z1\" + \"self.z2\" - 2*\"self.zeta_conj\") + 
+     -     (\"self.z2\"**2*\"self.zeta\" + \"self.z1\"**2*(2*\"self.z2\" + \
+\"self.zeta\") + 
+     -        2*\"self.z1\"*\"self.z2\"*(\"self.z2\" + 2*\"self.zeta\"))*
+     -      (\"self.z1\" - \"self.zeta_conj\")*(\"self.z2\" - \
+\"self.zeta_conj\") + 
+     -     \"self.dm\"*(\"self.z1\" - \"self.z2\")*
+     -      (2*\"self.m\" + \"self.z2\"*\"self.zeta\" + 
+     -        \"self.z1\"*(-2*\"self.z2\" + \"self.zeta\" - \
+2*\"self.zeta_conj\") - 
+     -        2*\"self.z2\"*\"self.zeta_conj\" - \
+2*\"self.zeta\"*\"self.zeta_conj\"))*z**2 + 
+     -  (-(\"self.m\"*(\"self.z1\" + \"self.z2\" + 2*\"self.zeta\")*
+     -        (\"self.z1\" + \"self.z2\" - 2*\"self.zeta_conj\")) - 
+     -     (\"self.z1\"**2 + 2*\"self.z1\"*(2*\"self.z2\" + \"self.zeta\") + 
+     -        \"self.z2\"*(\"self.z2\" + 2*\"self.zeta\"))*(\"self.z1\" - \
+\"self.zeta_conj\")*
+     -      (\"self.z2\" - \"self.zeta_conj\") + 
+     -     \"self.dm\"*(\"self.z1\" - \"self.z2\")*(\"self.z1\" + \"self.z2\" \
++ 2*\"self.zeta_conj\"))*
+     -   z**3 + (\"self.dm\"*(-\"self.z1\" + \"self.z2\") + 
+     -     \"self.m\"*(\"self.z1\" + \"self.z2\" - 2*\"self.zeta_conj\") + 
+     -     (2*\"self.z1\" + 2*\"self.z2\" + \"self.zeta\")*(\"self.z1\" - \
+\"self.zeta_conj\")*
+     -      (\"self.z2\" - \"self.zeta_conj\"))*z**4 + 
+     -  (\"self.z1\" - \"self.zeta_conj\")*(-\"self.z2\" + \
+\"self.zeta_conj\")*z**5\
+\>", "Output",
+ CellChangeTimes->{{3.7389392573993187`*^9, 3.738939278975494*^9}, 
+   3.73893950662239*^9}]
 }, Open  ]]
 },
-WindowSize->{839, 970},
-WindowMargins->{{Automatic, 0}, {Automatic, 25}},
+WindowSize->{795, 970},
+WindowMargins->{{0, Automatic}, {Automatic, 25}},
 CellLabelAutoDelete->True,
+Magnification:>FEPrivate`If[
+  FEPrivate`Equal[FEPrivate`$VersionNumber, 6.], 1.5, 1.5 Inherited],
 FrontEndVersion->"7.0 for Linux x86 (64-bit) (November 11, 2008)",
 StyleDefinitions->"Default.nb"
 ]
@@ -1520,46 +1693,55 @@ CellTagsIndex->{}
 *)
 (*NotebookFileOutline
 Notebook[{
-Cell[400, 13, 146, 2, 31, "Text"],
+Cell[400, 13, 146, 2, 44, "Text"],
 Cell[CellGroupData[{
-Cell[571, 19, 429, 12, 32, "Input"],
-Cell[1003, 33, 508, 14, 56, "Output"]
+Cell[571, 19, 429, 12, 77, "Input"],
+Cell[1003, 33, 579, 15, 75, "Output"]
 }, Open  ]],
-Cell[1526, 50, 222, 5, 31, "Text"],
+Cell[1597, 51, 222, 5, 72, "Text"],
 Cell[CellGroupData[{
-Cell[1773, 59, 218, 5, 55, "Input"],
-Cell[1994, 66, 227, 5, 31, "Output"],
-Cell[2224, 73, 211, 4, 31, "Output"]
+Cell[1844, 60, 218, 5, 77, "Input"],
+Cell[2065, 67, 296, 6, 45, "Output"],
+Cell[2364, 75, 280, 5, 45, "Output"]
 }, Open  ]],
-Cell[2450, 80, 580, 9, 71, "Text"],
+Cell[2659, 83, 580, 9, 127, "Text"],
 Cell[CellGroupData[{
-Cell[3055, 93, 684, 16, 55, "Input"],
-Cell[3742, 111, 1026, 32, 66, "Output"]
+Cell[3264, 96, 684, 16, 107, "Input"],
+Cell[3951, 114, 1095, 33, 159, "Output"]
 }, Open  ]],
-Cell[4783, 146, 462, 8, 71, "Text"],
+Cell[5061, 150, 462, 8, 127, "Text"],
 Cell[CellGroupData[{
-Cell[5270, 158, 1480, 40, 175, "Input"],
-Cell[6753, 200, 13361, 380, 372, "Output"]
+Cell[5548, 162, 1480, 40, 304, "Input"],
+Cell[7031, 204, 13432, 381, 926, "Output"]
 }, Open  ]],
-Cell[20129, 583, 165, 3, 31, "Text"],
+Cell[20478, 588, 165, 3, 44, "Text"],
 Cell[CellGroupData[{
-Cell[20319, 590, 484, 12, 32, "Input"],
-Cell[20806, 604, 3649, 105, 112, "Output"]
+Cell[20668, 595, 590, 13, 77, "Input"],
+Cell[21261, 610, 3719, 106, 305, "Output"]
 }, Open  ]],
-Cell[24470, 712, 315, 5, 31, "Text"],
+Cell[24995, 719, 315, 5, 44, "Text"],
 Cell[CellGroupData[{
-Cell[24810, 721, 579, 13, 32, "Input"],
-Cell[25392, 736, 4026, 122, 152, "Output"]
+Cell[25335, 728, 624, 13, 46, "Input"],
+Cell[25962, 743, 4073, 123, 301, "Output"]
 }, Open  ]],
-Cell[29433, 861, 258, 5, 31, "Text"],
+Cell[30050, 869, 258, 5, 44, "Text"],
 Cell[CellGroupData[{
-Cell[29716, 870, 380, 10, 32, "Input"],
-Cell[30099, 882, 3811, 116, 152, "Output"]
+Cell[30333, 878, 427, 11, 46, "Input"],
+Cell[30763, 891, 3833, 116, 301, "Output"]
 }, Open  ]],
-Cell[33925, 1001, 194, 4, 31, "Text"],
+Cell[34611, 1010, 194, 4, 72, "Text"],
 Cell[CellGroupData[{
-Cell[34144, 1009, 605, 17, 32, "Input"],
-Cell[34752, 1028, 16221, 474, 579, "Output"]
+Cell[34830, 1018, 629, 17, 107, "Input"],
+Cell[35462, 1037, 16218, 472, 1209, "Output"]
+}, Open  ]],
+Cell[51695, 1512, 180, 4, 72, "Text"],
+Cell[CellGroupData[{
+Cell[51900, 1520, 1042, 22, 227, "Input"],
+Cell[52945, 1544, 1453, 30, 413, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[54435, 1579, 1064, 22, 197, "Input"],
+Cell[55502, 1603, 3663, 70, 1172, "Output"]
 }, Open  ]]
 }
 ]

@@ -1,0 +1,103 @@
+(* Content-type: application/mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 7.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       145,          7]
+NotebookDataLength[      3187,         94]
+NotebookOptionsPosition[      2766,         76]
+NotebookOutlinePosition[      3203,         93]
+CellTagsIndexPosition[      3160,         90]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell[BoxData[
+ RowBox[{"Solns", " ", "=", " ", 
+  RowBox[{"Solve", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"qPS", "==", " ", 
+      RowBox[{"(", 
+       RowBox[{"mPlan", " ", "/", " ", "mStar"}], " ", ")"}]}], "&&", 
+     RowBox[{"qMP", " ", "\[Equal]", 
+      RowBox[{"(", 
+       RowBox[{"mMoon", " ", "/", " ", "mPlan"}], " ", ")"}]}], "&&", " ", 
+     RowBox[{"mTot", "==", " ", 
+      RowBox[{"(", 
+       RowBox[{"mStar", " ", "+", " ", "mPlan", " ", "+", " ", "mMoon"}], 
+       ")"}]}], "&&", 
+     RowBox[{"mTot", "\[Equal]", "1"}]}], ",", " ", 
+    RowBox[{"{", 
+     RowBox[{"mStar", ",", " ", "mPlan", ",", " ", "mMoon"}], "}"}]}], 
+   "]"}]}]], "Input",
+ CellChangeTimes->{{3.739117551524576*^9, 3.7391175521543207`*^9}, {
+   3.7391175869869213`*^9, 3.739117614314948*^9}, {3.73911765170821*^9, 
+   3.7391176653079653`*^9}, {3.739117976416109*^9, 3.739118006139963*^9}, {
+   3.739118267264163*^9, 3.739118305469407*^9}, {3.739118355009061*^9, 
+   3.739118411341066*^9}, 3.73911844271702*^9, {3.739118522590125*^9, 
+   3.739118535823021*^9}, {3.739118799619196*^9, 3.7391188049577007`*^9}, {
+   3.739118844400084*^9, 3.739118857984557*^9}, {3.739118893907786*^9, 
+   3.7391188968831863`*^9}, {3.7391301625738907`*^9, 3.739130176572859*^9}, {
+   3.7391306333559933`*^9, 3.739130642700178*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"mMoon", "\[Rule]", 
+     FractionBox[
+      RowBox[{"qMP", " ", "qPS"}], 
+      RowBox[{"1", "+", "qPS", "+", 
+       RowBox[{"qMP", " ", "qPS"}]}]]}], ",", 
+    RowBox[{"mStar", "\[Rule]", 
+     FractionBox["1", 
+      RowBox[{"1", "+", "qPS", "+", 
+       RowBox[{"qMP", " ", "qPS"}]}]]}], ",", 
+    RowBox[{"mPlan", "\[Rule]", 
+     FractionBox["qPS", 
+      RowBox[{"1", "+", "qPS", "+", 
+       RowBox[{"qMP", " ", "qPS"}]}]]}]}], "}"}], "}"}]], "Output",
+ CellChangeTimes->{
+  3.739118537388291*^9, {3.7391185850036783`*^9, 3.739118601204088*^9}, {
+   3.739118669235937*^9, 3.7391186836602583`*^9}, {3.7391187808361073`*^9, 
+   3.7391188084938602`*^9}, 3.739118858803959*^9, 3.739118898007387*^9, 
+   3.73913017007101*^9, {3.7391306386589727`*^9, 3.739130643654828*^9}, 
+   3.739188903664562*^9}]
+}, Open  ]]
+},
+WindowSize->{795, 970},
+WindowMargins->{{0, Automatic}, {Automatic, 25}},
+Magnification:>FEPrivate`If[
+  FEPrivate`Equal[FEPrivate`$VersionNumber, 6.], 1.25, 1.25 Inherited],
+FrontEndVersion->"7.0 for Linux x86 (64-bit) (November 11, 2008)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[567, 22, 1308, 27, 114, "Input"],
+Cell[1878, 51, 872, 22, 101, "Output"]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
