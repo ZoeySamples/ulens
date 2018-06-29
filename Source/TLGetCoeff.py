@@ -368,5 +368,3 @@ def get_coefficients(calc, zeta, mM, mP, mS, zM, zP, zS):
 						   coeff4, coeff3, coeff2, coeff1, coeff0])
 	return coeff_array
 
-
-

@@ -15,9 +15,10 @@ import MulensModel as mm
 from astropy.io import fits
 
 MODULE_PATH = os.path.abspath(__file__)
-for i in range(3):
+for i in range(2):
 	MODULE_PATH = os.path.dirname(MODULE_PATH)
-PATH = os.path.join(MODULE_PATH, 'MulensModel-master', 'source', 'VBBL',
+MODULE_PATH = os.path.join(MODULE_PATH, 'Solvers')
+PATH = os.path.join(MODULE_PATH, 'VBBL',
 		"VBBinaryLensingLibrary_wrapper.so")
 
 # Here we attempt to access the Skowron & Gould 2012 root finder
@@ -32,10 +33,8 @@ else:
 		shape=(10,))
 	_vbbl_SG12_5 = vbbl.VBBL_SG12_5
 
-MODULE_PATH = os.path.abspath(__file__)
-for i in range(2):
-	MODULE_PATH = os.path.dirname(MODULE_PATH)
-PATH = os.path.join(MODULE_PATH, 'NumericalRecipes', "zrootsBinaryLens_wrapper.so")
+PATH = os.path.join(MODULE_PATH, 'NumericalRecipes',
+					'zrootsBinaryLens_wrapper.so')
 
 # Here we attempt to access the Numerical Recipes zroots solver
 try:

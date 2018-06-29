@@ -14,9 +14,10 @@ import TLGetCoeff as getc
 
 
 MODULE_PATH = os.path.abspath(__file__)
-for i in range(3):
+for i in range(2):
 	MODULE_PATH = os.path.dirname(MODULE_PATH)
-PATH = os.path.join(MODULE_PATH, 'MulensModel-master', 'source', 'VBBL',
+MODULE_PATH = os.path.join(MODULE_PATH, 'Solvers')
+PATH = os.path.join(MODULE_PATH, 'VBBL',
 		"VBBinaryLensingLibrary_wrapper.so")
 
 # Here we attempt to access the Skowron & Gould 2012 root finder
@@ -26,25 +27,25 @@ except OSError as error:
 	msg = "Something went wrong with VBBL wrapping ({:})\n\n" + repr(error)
 	print(msg.format(PATH))
 else:
-	vbbl.VBBL_SG12_5.argtypes = 12 * [ctypes.c_double]
-	vbbl.VBBL_SG12_5.restype = np.ctypeslib.ndpointer(dtype=ctypes.c_double, 
-		shape=(10,))
-	_vbbl_SG12_5 = vbbl.VBBL_SG12_5
+	vbbl.VBBL_SG12_10.argtypes = 22 * [ctypes.c_double]
+	vbbl.VBBL_SG12_10.restype = np.ctypeslib.ndpointer(dtype=ctypes.c_double, 
+		shape=(20,))
+	_vbbl_SG12_10 = vbbl.VBBL_SG12_10
 
-PATH = os.path.join(MODULE_PATH, 'zroots_codes', "zrootsBinaryLens_wrapper.so")
+PATH = os.path.join(MODULE_PATH, 'NumericalRecipes',
+					'zrootsBinaryLens_wrapper.so')
 
-# Here we attempt to access the zroots root finder
+# Here we attempt to access the Numerical Recipes zroots solver
 try:
 	zroots = ctypes.cdll.LoadLibrary(PATH)
 except OSError as error:
 	msg = "Something went wrong with zroots wrapping ({:})\n\n" + repr(error)
 	print(msg.format(PATH))
 else:
-	zroots.zroots_5.argtypes = 12 * [ctypes.c_double]
-	zroots.zroots_5.restype = np.self.z2ctypeslib.ndpointer(dtype=ctypes.c_double, 
-		shape=(10,))
-	_zroots_5 = zroots.zroots_5
-
+	zroots.zroots_10.argtypes = 22 * [ctypes.c_double]
+	zroots.zroots_10.restype = np.ctypeslib.ndpointer(dtype=ctypes.c_double, 
+		shape=(20,))
+	_zroots_10 = zroots.zroots_10
 
 class TripleLens(object):
 
@@ -225,7 +226,17 @@ class TripleLens(object):
 
 		coefficients = self.get_coefficients(x=x, y=y)
 
-		# Return the roots of the polynomial via the given root finder
+			# Return the roots of the polynomial via the given root finder
+		if self.solver == 'SG12':
+			rev_list = coefficients[::-1]
+			out = _vbbl_SG12_10(*(rev_list.real.tolist() + rev_list.imag.tolist()))
+			roots = [out[i] + out[i+10] * 1.j for i in range(10)]
+			return np.array(roots)
+		elif self.solver == 'zroots':
+			rev_list = coefficients[::-1]
+			out = _zroots_10(*(rev_list.real.tolist() + rev_list.imag.tolist()))
+			roots = [out[i] + out[i+10] * 1.j for i in range(10)]
+			return np.array(roots)
 		if self.solver == 'numpy':
 			roots = np.roots(coefficients).tolist()
 			return np.array(roots)
