@@ -7,9 +7,9 @@ from TripleLens import TripleLens as TL
 import MulensModel as mm
 import matplotlib.pyplot as plt
 
-solver = 'zroots'
-origin = 'plan'
-specific_frame_derivation = True
+solver = 'SG12'
+origin = 'moon'
+specific_frame_derivation = False
 
 x = [0.0, 1.3219, 1.0799, 1.2489]
 y = [0.0, -0.0771, 0.0985, 0.0209]
@@ -29,7 +29,7 @@ for i in range(len(x)):
 	test.append(TL(**param[-1]))
 
 for t in test:
-	t.print_image_position(print_input=False)
-#	t.print_magnification(print_input=False)
+#	t.print_image_position(print_input=False)
+	t.print_magnification(print_input=False)
 	print('_'*40)
 

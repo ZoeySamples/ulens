@@ -11,16 +11,16 @@ import numpy as np
 # Input parameters
 sPS = 1.5
 sMP = 0.8
-qPS = 1e-7
-qMP = 1e-4
-solvers =  ['zroots']
+qPS = 1e-8
+qMP = 5e-2
+solvers =  ['SG12']
 origins = ['moon']
-phi = 45
+phi = 130
 
 res = int(40)
 sample_res = 5
 region = 'caustic'
-region_lim = (-5, 1.5, -3, 5)
+region_lim = (0, 1.2, 0, 1.2)
 
 cutoff = 1.5
 specific_frame_derivation = True
