@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import MulensModel as mm
 from astropy.io import fits
+import BLGetCoeff as getc
 
 MODULE_PATH = os.path.abspath(__file__)
 for i in range(2):
@@ -299,7 +300,16 @@ class BinaryLens(object):
 
 			coeff0 = (-2.*(self.m**2)*(self.z1**2)*self.z2 - 2.*(self.m**2)*self.z1*(self.z2**2) - self.m*(self.z1**3)*(self.z2**2) - self.m*(self.z1**2)*(self.z2**3) + (self.m**2)*(self.z1**2)*self.zeta + (self.dm**2)*((self.z1 - self.z2)**2)*self.zeta + 2.*(self.m**2)*self.z1*self.z2*self.zeta + self.m*(self.z1**3)*self.z2*self.zeta + (self.m**2)*(self.z2**2)*self.zeta + (self.zeta_conj**2)*(self.z1**2)*(self.z2**2)*self.zeta + 2.*self.m*(self.z1**2)*(self.z2**2)*self.zeta + self.m*self.z1*(self.z2**3)*self.zeta + (self.z1**3)*(self.z2**3)*self.zeta - self.dm*(self.z1 - self.z2)*(2.*self.m + self.z1*self.z2)*(self.z1*(self.z2 - self.zeta) - self.z2*self.zeta) - self.zeta_conj*self.z1*self.z2*((2.*self.dm*(self.z1 - self.z2) + self.z1*self.z2*(self.z1 + self.z2))*self.zeta + self.m*(-2.*self.z1*self.z2 + 2.*self.z1*self.zeta + 2.*self.z2*self.zeta)))
 
-		coefficients = np.array([coeff5, coeff4, coeff3, coeff2, coeff1, coeff0])
+#		coefficients = np.array([coeff5, coeff4, coeff3, coeff2, coeff1, coeff0])
+
+		if self.specific_frame_derivation:
+			calc = self.origin
+		else:
+			calc = 'general'
+
+		coefficients = getc.get_coefficients(calc=calc, zeta=self.zeta,
+								z1=self.z1, z2=self.z2, m=self.m, dm=self.dm)
+
 		return coefficients
 
 	def get_roots(self, x, y):
@@ -327,7 +337,7 @@ class BinaryLens(object):
 
 
 	# Old method for calculating image positions; somewhat reliable
-	# When adapting to new method, re-work every spot that calls this function
+	# This method is not implemented anywhere in the code.
 	def check_solution(self, solution):
 		"""
 		Check if the determined solution is consistent with the binary 
@@ -397,6 +407,7 @@ class BinaryLens(object):
 			magn += np.abs(1./detJ)
 		return magn
 
+		# This obtains the magnification using the tolerance method.
 		"""
 		magn = [None]*5
 		roots = self.get_roots(x=x, y=y)
@@ -436,6 +447,11 @@ class BinaryLens(object):
 			region (string):
 				The area on which the grid will be calculated.
 				Accepted values:
+
+				'both'
+					An extremely zoomed-out view of the whole binary system,
+					ranging from beyond the positions of both bodies. This
+					is not good for analyzing data in detail.
 
 				'caustic'
 					The zoomed-out view showing the full planetary caustic.
