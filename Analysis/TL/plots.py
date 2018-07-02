@@ -9,15 +9,15 @@ import MulensModel as mm
 import numpy as np
 
 # Input parameters
-sPS = 1.5
-sMP = 0.8
-qPS = 1e-8
-qMP = 5e-2
+s1 = 1.5
+s2 = 0.8
+q1 = 1e-8
+q2 = 5e-2
 solvers =  ['SG12']
-origins = ['moon']
+origins = ['body3']
 phi = 130
 
-res = int(40)
+res = int(60)
 sample_res = 5
 region = 'caustic'
 region_lim = (0, 1.2, 0, 1.2)
@@ -76,8 +76,8 @@ def make_plot():
 
 for solver in solvers:
 	for origin in origins:
-		param.append({'sMP': sMP, 'sPS': sPS, 'phi': phi, 'qMP': qMP,
-					'qPS': qPS, 'res': res, 'origin': origin,
+		param.append({'s2': s2, 's1': s1, 'phi': phi, 'q2': q2,
+					'q1': q1, 'res': res, 'origin': origin,
 					'solver': solver, 'specific_frame_derivation': 
 					specific_frame_derivation})
 		plot.append(TL(**param[-1]))

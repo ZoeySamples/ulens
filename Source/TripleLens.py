@@ -37,6 +37,7 @@ PATH = os.path.join(MODULE_PATH, 'NumericalRecipes',
 
 # Here we attempt to access the Numerical Recipes zroots solver
 try:
+
 	zroots = ctypes.cdll.LoadLibrary(PATH)
 except OSError as error:
 	msg = "Something went wrong with zroots wrapping ({:})\n\n" + repr(error)
@@ -58,47 +59,93 @@ class TripleLens(object):
 
 		Required:
 
-			qPS (float):
-				The mass ratio of the planet to the star.
+			system (string):
+				The types of bodies in the triple system. Options are:
 
-			qMP (float):
-				The mass ratio of the moon to the planet.
+					'SPM' - A system with a star, a planet, and a moon.
+							{z1,m1}: star; {z2,m2}: plan; {z3,m3}: moon
+							phi is the angle formed by the points z1,z2,z3
+					'SPP' - A system with a star and 2 planets
+							{z1,m1}: star, {z2,m2}: plan1, {z3,m3}: plan2
+					'SSP' - A system with 2 stars and a planet
+							{z1,m1}: star1, {z2,m2}: star2, {z3,m3}: plan
 
-			sPS (float):
-				The separation between the planet and the star in units
-				of the Einstein radius of the whole system.
+				*Definitions of each m and z variable are given below.
+				*The letters of the string should be ordered from highest
+				 mass to lowest mass.
 
-			sMP (float):
-				The separation between the moon and the planet in units
-				of the Einstein radius of the planet-moon system.
+			q1 (float):
+				If system is 'SPM': The mass ratio of the planet to the star.
+				If system is 'SPP': The mass ratio of planet1 to the star.
+				If system is 'SSP': The mass ratio of star2 to star1.
+
+			q2 (float):
+				If system is 'SPM': The mass ratio of the moon to the planet.
+				If system is 'SPP': The mass ratio of planet2 to the star.
+				If system is 'SSP': The mass ratio of the planet to star1.
+
+			s1 (float):
+				If system is 'SPM': The separation of the planet to the star
+						in units of the whole system's Einstein radius.
+				If system is 'SPP': The separation of planet1 to the star
+						in units of the whole system's Einstein radius.
+				If system is 'SSP': The separation of star1 to star2
+						in units of the whole system's Einstein radius.
+
+				*A positive separation means body2 is in the positive
+				 x-direction from body1. A negative separation means body2
+				 is in the negative x-direction from body1. Both bodies 
+				 lie on the same horizontal axis.
+
+			s2 (float):
+				If system is 'SPM': The separation of the moon to the planet
+						in units of the planet-moon Einstein radius.
+				If system is 'SPP': The separation of planet2 to the star
+						in units of the whole system's Einstein radius.
+				If system is 'SSP': The separation of the planet to star1
+						in units of the whole system's Einstein radius.
+
+				*This separation should always be positive, as the angle,
+				 phi, determines the direction of separation.
 
 			phi (float):
-				The angle formed by the star-planet-moon.
+				If system is 'SPM': The angle formed by star-planet-moon.
+				If system is 'SPP': The angle planet2 makes with the
+						horizontal axis passing through the star and planet1.
+				If system is 'SSP': The angle the planet makes with the
+						horizontal axis passing through star1 and star2.
+
+				*phi is given in degrees in all cases.
 
 			origin (string):
 				The coordinate frame in which calculations are carried out.
 				Options are:
-					'geo_cent'	- the geometric center frame
-					'star'		- the star's (or larger body's) frame
-					'plan'		- the planet's (or smaller body's) frame
-					'com'		- the center-of-mass frame
-					'caustic'	- the planetary caustic frame
+					'geo_cent' - the central point between body1 and body2
+					'body2'    - 2nd most massive body's frame
+					'body3'    - the least massive body's frame
 
 			solver (string):
 				Determines which root finder to use to solve the polynomial.
 				Options are:
-					'numpy'		- Uses np.roots method
-					'SG12'		- Uses Skowron & Gould 2012 method
-					'zroots'	- Uses zroots laguerre method
+					'numpy'  - Uses np.roots method
+					'SG12'   - Uses Skowron & Gould 2012 method
+					'zroots' - Uses zroots laguerre method
+
+			*q1 and q2 should be less than 1, so that star2 is less massive
+			 than star1, or planet2 is less massive than planet1.
+
+			*For s1 and s2, the separation can be positive or negative,
+			 depending on the scenario.
+
 
 		Optional:
 			x (float):
-				The x-position of the source. Required if user is not plotting
-				a grid with BinaryLens class.
+				The x-position of the source for a single test point in units
+				of the total system's Einstein radius.
 
 			y (float):
-				The y-position of the source. Required if user is not plotting
-				a grid with BinaryLens class.
+				The y-position of the source for a single test point in units
+				of the total system's Einstein radius.
 
 			res (float):
 				The resolution of the grid (i.e. number of points on each side). 
@@ -109,39 +156,49 @@ class TripleLens(object):
 				will be used to calculate solutions.
 
 		Global Variables:
-			m_star (float):
-				The mass of the star as a fraction of the whole system's
+			m1 (float):
+				The mass of the largest body (the star in SPM or SPP system,
+				or star1 in SSP system)	as a fraction of the whole system's
 				mass.
 
-			m_plan (float):
-				The mass of the planet as a fraction of the whole
-				system's mass.
+			m2 (float):
+				The mass of 2nd largest body (the planet in SPM system,
+				planet1 in SPP system, or star2 in SSP system),	as a fraction
+				of the whole system's mass.
 
-			m_moon (float):
-				The mass of the moon as a fraction of the whole system's
-				mass.
+			m3 (float):
+				The mass of the least massive body (the moon in SPM system,
+				planet2 in SPP system, or the planet in SSP system) as a
+				fraction of the whole system's mass.
 
-			z_star (complex):
-				The star's position.
+			z1 (complex):
+				The position of the most massive body (the star in SPM or
+				SPP system, or star1 in SSP system) in units of the total
+				system's Einstein radius.
 
-			z_plan (complex):
-				The planet's position.
+			z2 (complex):
+				The position of the 2nd most massive body (the planet in SPM
+				system, planet1 in SPP system, or star2 in SSP system) in
+				units of the total system's Einstein radius.
 
-			z_moon (complex):
-				The moon's position.
+			z3 (complex):
+				The position of the least massive body (the moon in SPM
+				system, planet2 in SPP system, or the planet in SSP system)
+				in units of the total system's Einstein radius.
 	"""
 
 
-	def __init__(self, qMP, qPS, sMP, sPS, phi, origin, solver, x=None,
+	def __init__(self, q2, q1, s2, s1, phi, origin, solver, system=None, x=None,
 				 y=None, res=None, specific_frame_derivation=True):
 
-		self.qMP = qMP
-		self.qPS = qPS
-		self.sMP = sMP
-		self.sPS = sPS
+		self.q2 = q2
+		self.q1 = q1
+		self.s2 = s2
+		self.s1 = s1
 		self.phi = phi
 		self.origin = origin
 		self.solver = solver
+		self.system = system
 		self.res = res
 		self.x = x
 		self.y = y
@@ -151,39 +208,48 @@ class TripleLens(object):
 		self.get_lensing_body_positions()
 		self.strings()
 
+		if (self.q1 > 1.) or (self.q2 > 1.):
+			raise ValueError('q1 and q2 are not allowed to be greater than 1.')
+
+		if self.s2 < 0.:
+			raise ValueError('s2 is not allowed to be negative.')
+
+#		if (self.system != 'SPM') and (self.system != 'SPP') and (self.system != 'SSP'):
+#			raise ValueError('Unknown value for string variable, system.')
+
 ### The following functions assign values to variables pertaining to the class.
 
 	def get_mass(self):
 
-		denominator = 1. + self.qPS + self.qMP*self.qPS
-		self.m_star = 1. / denominator
-		self.m_plan = self.qPS / denominator
-		self.m_moon = self.qMP*self.qPS / denominator
+		denominator = 1. + self.q1 + self.q2*self.q1
+		self.m1 = 1. / denominator
+		self.m2 = self.q1 / denominator
+		self.m3 = self.q2*self.q1 / denominator
 
 		# Convert the separation between the moon and planet into units
 		# of the total system's Einstein radius
-		self.sMP *= np.sqrt((self.m_moon + self.m_plan))
+		self.s2 *= np.sqrt((self.m3 + self.m2))
 
 	def get_lensing_body_positions(self):
 
 		self.phi *= math.pi / 180
-		self.displacementMP = self.sMP*(math.cos(math.pi - self.phi) +
+		self.displacementMP = self.s2*(math.cos(math.pi - self.phi) +
 									1.j*math.sin(math.pi - self.phi))
 
 		if self.origin == 'geo_cent':
-			self.z_star = -0.5*self.sPS + 0j
-			self.z_plan = 0.5*self.sPS + 0j
-			self.z_moon = self.z_plan + self.displacementMP
+			self.z1 = -0.5*self.s1 + 0j
+			self.z2 = 0.5*self.s1 + 0j
+			self.z3 = self.z2 + self.displacementMP
 
-		elif self.origin == 'plan':
-			self.z_star = -self.sPS + 0j
-			self.z_plan = 0j
-			self.z_moon = self.displacementMP
+		elif self.origin == 'body2':
+			self.z1 = -self.s1 + 0j
+			self.z2 = 0j
+			self.z3 = self.displacementMP
 
-		elif self.origin == 'moon':
-			self.z_star = -self.sPS - self.displacementMP
-			self.z_plan = -self.displacementMP
-			self.z_moon = 0j
+		elif self.origin == 'body3':
+			self.z1 = -self.s1 - self.displacementMP
+			self.z2 = -self.displacementMP
+			self.z3 = 0j
 
 		else:
 			raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
@@ -194,11 +260,11 @@ class TripleLens(object):
 		if self.origin == 'geo_cent':
 			zeta = x + y*1.j
 
-		elif self.origin == 'plan':
-			zeta = (x - self.sPS/2.) + y*1.j
+		elif self.origin == 'body2':
+			zeta = (x - self.s1/2.) + y*1.j
 
-		elif self.origin == 'moon':
-			zeta = (x - self.sPS/2.) + y*1.j - self.displacementMP
+		elif self.origin == 'body3':
+			zeta = (x - self.s1/2.) + y*1.j - self.displacementMP
 
 		else:
 			raise ValueError('Unknown coordinate system: {:}'.format(origin))
@@ -215,9 +281,9 @@ class TripleLens(object):
 		else:
 			calc = 'general'
 
-		coeff = getc.get_coefficients(calc=calc, zeta=zeta, mM=self.m_moon,
-				mP=self.m_plan, mS=self.m_star, zM=self.z_moon,
-				zP=self.z_plan, zS=self.z_star)
+		coeff = getc.get_coefficients(calc=calc, zeta=zeta, m3=self.m3,
+				m2=self.m2, m1=self.m1, z3=self.z3,
+				z2=self.z2, z1=self.z1)
 
 		return coeff
 
@@ -247,9 +313,9 @@ class TripleLens(object):
 		
 		zeta = self.get_source_position(x=x, y=y)
 		roots = self.get_roots(x=x, y=y)
-		star_term = self.m_star / np.conj(roots - self.z_star)
-		plan_term = self.m_plan / np.conj(roots - self.z_plan)
-		moon_term = self.m_moon / np.conj(roots - self.z_moon)
+		star_term = self.m1 / np.conj(roots - self.z1)
+		plan_term = self.m2 / np.conj(roots - self.z2)
+		moon_term = self.m3 / np.conj(roots - self.z3)
 		solutions = zeta + star_term + plan_term + moon_term
 
 		accepted_solutions = []
@@ -269,9 +335,9 @@ class TripleLens(object):
 		image_positions = self.get_accepted_solutions(x=x, y=y)
 		for z in image_positions:
 			z_conj = np.conj(z)
-			partial_conj = ((self.m_star / (self.z_star - z)**2) + 
-							(self.m_plan / (self.z_plan - z)**2) +
-							(self.m_moon / (self.z_moon - z)**2))
+			partial_conj = ((self.m1 / (self.z1 - z)**2) + 
+							(self.m2 / (self.z2 - z)**2) +
+							(self.m3 / (self.z3 - z)**2))
 			
 			partial = np.conj(partial_conj)
 			detJ = (1. - partial*partial_conj)
@@ -284,11 +350,11 @@ class TripleLens(object):
 		planetary caustic. Estimated as a binary lens.
 		"""
 
-		self.width_caustic = 4.*np.sqrt(self.qPS)*(
-					1. + 1./(2.*(self.sPS**2))) / (self.sPS**2)
-		self.height_caustic = 4.*np.sqrt(self.qPS)*(
-					1. - 1./(2.*(self.sPS**2))) / (self.sPS**2)
-		self.xcenter_caustic = 0.5*self.sPS - 1.0/self.sPS
+		self.width_caustic = 4.*np.sqrt(self.q1)*(
+					1. + 1./(2.*(self.s1**2))) / (self.s1**2)
+		self.height_caustic = 4.*np.sqrt(self.q1)*(
+					1. - 1./(2.*(self.s1**2))) / (self.s1**2)
+		self.xcenter_caustic = 0.5*self.s1 - 1.0/self.s1
 
 ### The following functions are used for assigning data into grids.
 
@@ -321,8 +387,8 @@ class TripleLens(object):
 
 				xmin, xmax, ymin, ymax (floats):
 					The limitget_accepted_solutionss of the grid area when region is 'custom.'
-					The on-axis cusps are given by: (x, y) = {(-1, 0), (1, 0)}
-					The off-axis cusps are given by: (x, y) = {(0, -1), (0, 1)}
+					The on-axis cus1 are given by: (x, y) = {(-1, 0), (1, 0)}
+					The off-axis cus1 are given by: (x, y) = {(0, -1), (0, 1)}
 		"""
 
 		self.get_size_caustic()
@@ -343,10 +409,10 @@ class TripleLens(object):
 			region_ymin = 0.55*self.height_caustic
 			region_ymax = 0.8*self.height_caustic
 		if region == 'both':
-			region_xmin = -0.5*self.sPS
-			region_xmax = 0.5*self.sPS
-			region_ymin = -0.5*self.sPS
-			region_ymax = 0.5*self.sPS
+			region_xmin = -0.5*self.s1
+			region_xmax = 0.5*self.s1
+			region_ymin = -0.5*self.s1
+			region_ymax = 0.5*self.s1
 		if region == 'custom':
 			(xmin, xmax, ymin, ymax) = (*region_lim,)
 			region_xmin = self.xcenter_caustic + 0.5*xmin*self.width_caustic
@@ -1646,14 +1712,14 @@ class TripleLens(object):
 			self.origin_file = 'gcent'
 			self.origin_title = 'Geometric Center'
 			self.origin_phrase = 'geometric center frame'
-		elif self.origin == 'plan':
-			self.origin_file = self.origin
-			self.origin_title = 'Planet'
-			self.origin_phrase = 'planet frame'
-		elif self.origin == 'moon':
-			self.origin_file = self.origin
-			self.origin_title = 'Moon'
-			self.origin_phrase = 'moon frame'
+		elif self.origin == 'body2':
+			self.origin_file = 'b2'
+			self.origin_title = 'Body2'
+			self.origin_phrase = 'body2 frame'
+		elif self.origin == 'body3':
+			self.origin_file = 'b3'
+			self.origin_title = 'Body3'
+			self.origin_phrase = 'body3 frame'
 		else:
 			raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
 
