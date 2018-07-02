@@ -1,10 +1,11 @@
 # Zoey Samples
 # Created: Jun 21, 2018
-# SolverInfo.py
-# Last Updated: Jun 26, 2018
+# OriginInfo.py
+# Last Updated: Jul 2, 2018
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
+import matplotlib.colors as colors
 import matplotlib
 import numpy as np
 from BinaryLens import BinaryLens as BL
@@ -31,7 +32,7 @@ is actually worse for the geometric center frame.
 Here is a demonstration:
 """
 
-def demonstration():
+def num_images_demo():
 
 	param = [[None] * len(origins) for j in range(len(mass_ratios))]
 	plot = [[None] * len(origins) for j in range(len(mass_ratios))]
@@ -89,27 +90,19 @@ def demonstration():
 				ax[i][j].axes.set_title('{}\nFrame'.format(
 						plot[i][j].origin_title), fontsize=14)
 
-	# Get the string for the title.
-	if specific_frame_derivation:
-		sfd_str = ''
-	else:
-		sfd_str = 'Not '
-
 	# Make final plot adjustments.
 	cbar = fig.add_axes([0.88, 0.15, 0.03, 0.7])
 	num_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks)
 	num_color.set_label('Number of Images', fontsize=14, labelpad=10)
 	cbar.axes.tick_params(labelsize=11) 
 	plt.subplots_adjust(wspace=0.1, hspace=0.2, top=0.90, right=0.85)
-#	plt.suptitle('Number of Images; ' +	'{}Using Calculation for Specific Frame'.
-#				 format(sfd_str), x=0.5, y=0.97, fontsize=14)
 	plt.gcf().set_size_inches(2.8*len(origins), 2.6*len(mass_ratios))
 
 	# Save the plot as a .png file.
 	if save_fig:
 		saved = False
 		for i in range(10):
-			name = '../Tables/test_SFD_{}.png'.format(i)
+			name = '../Tables/images_SFD_{}.png'.format(i)
 			if Path(name).is_file():
 				continue
 			plt.savefig(name)
@@ -119,7 +112,92 @@ def demonstration():
 		if saved == False:
 			print('Error: too many files of same name already exist. File not saved')
 
-#	plt.show()
+	if show_fig:
+		plt.show()
+
+def magnification_demo():
+
+	param = [[None] * len(origins) for j in range(len(mass_ratios))]
+	plot = [[None] * len(origins) for j in range(len(mass_ratios))]
+	fig, ax = plt.subplots(len(mass_ratios), len(origins))
+
+	for (i, q) in enumerate(mass_ratios):
+		for (j, origin) in enumerate(origins):
+			idx = 1 + j + len(origins)*i
+
+			# Initialize each binary lens system with the BinaryLens class.
+			param[i][j] = ({'s': s, 'q': q, 'res': res, 'origin': origin,
+					'solver': solver, 'specific_frame_derivation': 
+					specific_frame_derivation})
+			plot[i][j] = BL(**param[i][j])
+
+			# Get the data for the plots.
+
+			cmap = plt.cm.YlOrRd
+			cmaplist = [cmap(i) for i in range(cmap.N)]
+			cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
+			ticks = np.array([1,10,100])
+
+			kwargs = plot[i][j].check_kwargs()
+			kwargs['cmap'] = cmap
+			kwargs['norm'] = colors.LogNorm()
+			plot[i][j].get_position_arrays(region=region,
+						region_lim=region_lim)
+			plot[i][j].get_magnification_array()
+			(x, y, magnification) = (plot[i][j].x_array, plot[i][j].y_array,
+						plot[i][j].magn_array)
+
+
+			# Create and adjust the plots appropriately.
+			ax[i][j] = plt.subplot(len(mass_ratios), len(origins), idx)
+			sc = ax[i][j].scatter(x, y, c=magnification, vmin=1, vmax=100, **kwargs)
+			caustic = mm.Caustics(s=s, q=q)
+			caustic.plot(s=0.5, color='blue')
+			(xmin, xmax) = (min(plot[i][j].x_array), max(plot[i][j].x_array))
+			(ymin, ymax) = (min(plot[i][j].y_array), max(plot[i][j].y_array))
+			(dx, dy) = (xmax-xmin, ymax-ymin)
+			plt.xlim(xmin, xmax)
+			plt.ylim(ymin, ymax)
+			plt.xticks(np.arange(xmin+0.2*dx, xmax, 0.6*dx))
+			plt.yticks(np.arange(ymin+0.2*dy, ymax, 0.3*dy))
+			ax[i][j].tick_params(axis='x', labelsize=11)
+			ax[i][j].tick_params(axis='y', labelsize=11)
+			ax[i][j].axes.yaxis.set_major_formatter(
+								mtick.FormatStrFormatter('%.1e'))
+			ax[i][j].axes.xaxis.set_major_formatter(
+								mtick.FormatStrFormatter('%.3e'))
+			plt.ylabel('Mass Ratio: {}'.format(plot[i][j].q), fontsize=14)
+			if (j != 0):
+				ax[i][j].axes.get_yaxis().set_visible(False)
+			if (i == 0):
+				ax[i][j].axes.set_title('{}\nFrame'.format(
+						plot[i][j].origin_title), fontsize=14)
+
+	# Make final plot adjustments.
+	cbar = fig.add_axes([0.88, 0.15, 0.03, 0.7])
+	num_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks)
+	num_color.set_label('Magnification', fontsize=14, labelpad=10)
+	cbar.axes.tick_params(labelsize=11) 
+	plt.subplots_adjust(wspace=0.1, hspace=0.2, top=0.90, right=0.85)
+	plt.gcf().set_size_inches(2.8*len(origins), 2.6*len(mass_ratios))
+
+	# Save the plot as a .png file.
+	if save_fig:
+		saved = False
+		for i in range(10):
+			name = '../Tables/magn_SFD_{}.png'.format(i)
+			if Path(name).is_file():
+				continue
+			plt.savefig(name)
+			print(name, 'has been saved')
+			saved = True
+			break
+		if saved == False:
+			print('Error: too many files of same name already exist. File not saved')
+
+	if show_fig:
+		plt.show()
+
 
 # Here are the input parameters for making the plots.
 s = 1.5
@@ -130,12 +208,15 @@ solver =  'SG12'
 region = 'caustic'
 region_lim = None
 save_fig = True
+show_fig = False
 
 specific_frame_derivation = False
-demonstration()
+num_images_demo()
+magnification_demo()
 
 specific_frame_derivation = True
-demonstration()
+num_images_demo()
+magnification_demo()
 
 
 
