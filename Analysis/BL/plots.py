@@ -9,12 +9,12 @@ import MulensModel as mm
 import numpy as np
 
 # Input parameters
-s = 3.0
-mass_ratios = [1e-12]
-solvers =  ['SG12', 'zroots']
+s = 1.6
+mass_ratios = [3.8e-16]
+solvers =  ['SG12']
 origins = ['plan']
 
-res = int(30)
+res = int(100)
 sample_res = 5
 region = 'caustic'
 region_lim = (-.15, .15, 0.8, 1.3)
