@@ -119,9 +119,6 @@ class BinaryLens(object):
 			zeta (complex):
 				The source's position in complex space.
 
-			zeta_conj (complex):
-				The complex conjugate of the source's position.
-
 			z1 (float):
 				The planet's position (on the real axis by definition).
 
@@ -149,7 +146,7 @@ class BinaryLens(object):
 
 	def __init__(self, s, q, origin, solver, x=None, y=None, res=None,
 				 tolerance=0.0001, coeff_multiplier=None,
-				 specific_frame_derivation=False):
+				 specific_frame_derivation=True, plot_frame='caustic'):
 		self.s = s
 		self.q = q
 		self.origin = origin
@@ -160,6 +157,7 @@ class BinaryLens(object):
 #		self.tolerance = tolerance
 		self.coeff_multiplier = coeff_multiplier
 		self.specific_frame_derivation = specific_frame_derivation
+		self.plot_frame = plot_frame
 		self.get_mass()
 		self.get_lensing_body_positions()
 		self.strings()
@@ -212,21 +210,38 @@ class BinaryLens(object):
 		self.z2_conj = self.z2.conjugate()
 
 	def get_source_position(self, x, y):
-		"""Define zeta and zeta_conj."""
+		"""Define zeta."""
 
-		if self.origin == 'geo_cent':
-			self.zeta = x + y*1.j
-		elif self.origin == 'star':
-			self.zeta = (x + self.s/2.) + y*1.j
-		elif self.origin == 'plan':
-			self.zeta = (x - self.s/2.) + y*1.j
-		elif self.origin == 'com':
-			self.zeta = (x + (self.s/2.)*((1. - self.q)/(1. + self.q))) + y*1.j
-		elif self.origin == 'caustic':
-			self.zeta = (x + 1./(self.s) - self.s/2.) + y*1.j
+		if self.plot_frame == 'geo_cent':
+			if self.origin == 'geo_cent':
+				self.zeta = x + y*1.j
+			elif self.origin == 'star':
+				self.zeta = (x + self.s/2.) + y*1.j
+			elif self.origin == 'plan':
+				self.zeta = (x - self.s/2.) + y*1.j
+			elif self.origin == 'com':
+				self.zeta = (x + (self.s/2.)*((1. - self.q)/(1. + self.q))) + y*1.j
+			elif self.origin == 'caustic':
+				self.zeta = (x + 1./(self.s) - self.s/2.) + y*1.j
+			else:
+				raise ValueError('Unknown coordinate system: {:}'.format(origin))
+
+		elif self.plot_frame == 'caustic':
+			if self.origin == 'geo_cent':
+				self.zeta = (x + self.s/2. - 1./self.s) + y*1.j
+			elif self.origin == 'star':
+				self.zeta = (x - 1./self.s + self.s) + y*1.j
+			elif self.origin == 'plan':
+				self.zeta = (x - 1./self.s) + y*1.j
+			elif self.origin == 'com':
+				self.zeta = (x + (self.s/2.)*((1. - self.q)/(1. + self.q)) + self.s/2. - 1./self.s) + y*1.j
+			elif self.origin == 'caustic':
+				self.zeta = x + y*1.j
+			else:
+				raise ValueError('Unknown coordinate system: {:}'.format(origin))
+
 		else:
-			raise ValueError('Unknown coordinate system: {:}'.format(origin))
-		self.zeta_conj = self.zeta.conjugate()
+			raise ValueError('Unknown value for plot_frame')
 
 ### The following functions calculate physical values for further analysis.
 
@@ -236,71 +251,6 @@ class BinaryLens(object):
 		self.get_source_position(x=x, y=y)
 
 		# Assign the values of the coefficients of the polynomial.
-		# Be aware that these expressions are very long and messy. They trail
-		# off the screen when text wrapping is "off," and look non-indented
-		# when text wrapping is "on."
-
-		if (self.specific_frame_derivation and self.origin == 'geo_cent'):
-			# Specific form of the derived for the geometric center frame
-
-			coeff5 = (self.z1**2 - self.zeta_conj**2)
-
-			coeff4 = (-(self.z1*(2*self.dm + self.z1*self.zeta)) - 2*self.m*self.zeta_conj + self.zeta*self.zeta_conj**2)
-
-			coeff3 = (-2*self.z1**4 + 4*(self.dm*self.z1 + self.m*self.zeta)*self.zeta_conj + 2*self.z1**2*self.zeta_conj**2)
-
-			coeff2 = (4*self.dm*self.z1*(self.m + self.z1**2) + 2*(2*self.m**2 + self.z1**4)*self.zeta - 4*self.dm*self.z1*self.zeta*self.zeta_conj - 2*self.z1**2*self.zeta*self.zeta_conj**2)
-
-			coeff1 = self.z1*(-4*self.dm**2*self.z1 - 4*self.m**2*self.z1 + self.z1**5 - 8*self.dm*self.m*self.zeta - 4*self.z1*(self.dm*self.z1 + self.m*self.zeta)*self.zeta_conj - self.z1**3*self.zeta_conj**2)
-
-			coeff0 = self.z1**2*(4*self.dm*self.m*self.z1 - 2*self.dm*self.z1**3 + 4*self.dm**2*self.zeta - self.z1**4*self.zeta + 2*self.z1*(self.m*self.z1 + 2*self.dm*self.zeta)*self.zeta_conj + self.z1**2*self.zeta*self.zeta_conj**2)
-
-		elif (self.specific_frame_derivation and self.origin == 'plan'):
-			# Specific form of the derived for the planet frame
-
-			coeff5 = - (self.zeta_conj*(-self.z2 + self.zeta_conj))
-
-			coeff4 = (self.dm*self.z2 + self.m*(self.z2 - 2*self.zeta_conj) - (2*self.z2 + self.zeta)*(self.z2 - self.zeta_conj)*self.zeta_conj)
-
-			coeff3 = (-(self.dm*self.z2*(self.z2 + 2*self.zeta_conj)) + (self.z2 + 2*self.zeta)*(-(self.m*(self.z2 - 2*self.zeta_conj)) + self.z2*(self.z2 - self.zeta_conj)*self.zeta_conj))
-
-			coeff2 = (-2*self.m**2*(self.z2 - 2*self.zeta) + 3*self.m*self.z2*self.zeta*(self.z2 - 2*self.zeta_conj) + self.z2**2*self.zeta*self.zeta_conj*(-self.z2 + self.zeta_conj) + self.dm*self.z2*(-2*self.m - self.z2*self.zeta + 2*self.z2*self.zeta_conj + 2*self.zeta*self.zeta_conj))
-
-			coeff1 = - ((self.dm - self.m)*self.z2*(self.dm*self.z2 + self.m*(self.z2 - 4*self.zeta) - self.z2*self.zeta*(self.z2 - 2*self.zeta_conj)))
-
-			coeff0 = ((self.dm - self.m)**2*self.z2**2*self.zeta)
-
-		elif (self.specific_frame_derivation and self.origin == 'caustic'):
-			# Specific form of the derived for the planetary caustic frame
-
-			coeff5 = ((self.z1 - self.zeta_conj)*(-self.z2 + self.zeta_conj))
-
-			coeff4 = (self.dm*(-self.z1 + self.z2) + self.m*(self.z1 + self.z2 - 2*self.zeta_conj) + (2*self.z1 + 2*self.z2 + self.zeta)*(self.z1 - self.zeta_conj)*(self.z2 - self.zeta_conj))
-
-			coeff3 = (-(self.m*(self.z1 + self.z2 + 2*self.zeta)*(self.z1 + self.z2 - 2*self.zeta_conj)) - (self.z1**2 + 2*self.z1*(2*self.z2 + self.zeta) + self.z2*(self.z2 + 2*self.zeta))*(self.z1 - self.zeta_conj)*(self.z2 - self.zeta_conj) + self.dm*(self.z1 - self.z2)*(self.z1 + self.z2 + 2*self.zeta_conj))
-
-			coeff2 = (-2*self.m**2*(self.z1 + self.z2 - 2*self.zeta) + 3*self.m*(self.z1 + self.z2)*self.zeta*(self.z1 + self.z2 - 2*self.zeta_conj) + (self.z2**2*self.zeta + self.z1**2*(2*self.z2 + self.zeta) + 2*self.z1*self.z2*(self.z2 + 2*self.zeta))*(self.z1 - self.zeta_conj)*(self.z2 - self.zeta_conj) + self.dm*(self.z1 - self.z2)*(2*self.m + self.z2*self.zeta + self.z1*(-2*self.z2 + self.zeta - 2*self.zeta_conj) - 2*self.z2*self.zeta_conj - 2*self.zeta*self.zeta_conj))
-
-			coeff1 = (-(self.dm**2*(self.z1 - self.z2)**2) + self.m**2*(self.z1**2 + 6*self.z1*self.z2 + self.z2**2 - 4*self.z1*self.zeta - 4*self.z2*self.zeta) + self.m*(self.z1*self.z2*(self.z2 - 4*self.zeta) + self.z1**2*(self.z2 - self.zeta) - self.z2**2*self.zeta)*(self.z1 + self.z2 - 2*self.zeta_conj) - self.z1*self.z2*(2*self.z2*self.zeta + self.z1*(self.z2 + 2*self.zeta))*(self.z1 - self.zeta_conj)*(self.z2 - self.zeta_conj) + self.dm*(self.z1 - self.z2)*(self.z1**2*(self.z2 - self.zeta) - self.zeta*(4*self.m + self.z2*(self.z2 - 2*self.zeta_conj)) + self.z1*(self.z2**2 - 2*self.z2*self.zeta + 2*self.z2*self.zeta_conj + 2*self.zeta*self.zeta_conj)))
-
-			coeff0 = (self.dm**2*(self.z1 - self.z2)**2*self.zeta - self.m**2*(self.z1 + self.z2)*(2*self.z1*self.z2 - self.z1*self.zeta - self.z2*self.zeta) - self.m*self.z1*self.z2*(self.z1*(self.z2 - self.zeta) - self.z2*self.zeta)*(self.z1 + self.z2 - 2*self.zeta_conj) + self.z1**2*self.z2**2*self.zeta*(self.z1 - self.zeta_conj)*(self.z2 - self.zeta_conj) - self.dm*(self.z1 - self.z2)*(2*self.m*(self.z1*(self.z2 - self.zeta) - self.z2*self.zeta) + self.z1*self.z2*(self.z1*self.z2 - self.z1*self.zeta - self.z2*self.zeta + 2*self.zeta*self.zeta_conj)))
-
-		else:
-			# General form of the coefficients
-		
-			coeff5 = (-self.zeta_conj + self.z1)*(self.zeta_conj- self.z2)
-
-			coeff4 = (self.m*self.z1 + self.m*self.z2 + 2.*(self.z1**2)*self.z2 + 2.*self.z1*(self.z2**2) + self.dm*(-self.z1 + self.z2) + self.z1*self.z2*self.zeta + (self.zeta_conj**2)*(2.*self.z1 + 2.*self.z2 + self.zeta) - self.zeta_conj*(2.*self.m + (self.z1 + self.z2)*(2.*self.z1 + 2.*self.z2 + self.zeta)))
-
-			coeff3 = (self.dm*(self.z1**2) - self.m*(self.z1**2) - 2.*self.m*self.z1*self.z2 - (self.z1**3)*self.z2 - self.dm*(self.z2**2) - self.m*(self.z2**2) - 4.*(self.z1**2)*(self.z2**2) - self.z1*(self.z2**3) - 2.*self.m*self.z1*self.zeta - 2.*self.m*self.z2*self.zeta - 2.*(self.z1**2)*self.z2*self.zeta - 2.*self.z1*(self.z2**2)*self.zeta - (self.zeta_conj**2)*((self.z1**2) + 2.*self.z1*(2.*self.z2 + self.zeta) + self.z2*(self.z2 + 2.*self.zeta)) + self.zeta_conj*(2.*self.dm*(self.z1 - self.z2) + 2.*self.m*(self.z1 + self.z2 + 2.*self.zeta) + (self.z1 + self.z2)*((self.z1**2) + 4.*self.z1*self.z2 + (self.z2**2) + 2.*self.z1*self.zeta + 2.*self.z2*self.zeta)))
-
-			coeff2 = (-2.*(self.m**2)*(self.z1 + self.z2 - 2.*self.zeta) - 3.*self.m*(2.*self.zeta_conj - self.z1 - self.z2)*(self.z1 + self.z2)*self.zeta + self.dm*(self.z1 - self.z2)*(2.*self.m - 2.*self.z1*self.z2 + self.z1*self.zeta + self.z2*self.zeta - 2.*self.zeta_conj*(self.z1 + self.z2 + self.zeta)) + (self.zeta_conj - self.z1)*(self.zeta_conj - self.z2)*((self.z2**2)*self.zeta + (self.z1**2)*(2.*self.z2 + self.zeta) + 2.*self.z1*self.z2*(self.z2 + 2.*self.zeta)))
-
-			coeff1 = ((-self.dm**2)*((self.z1 - self.z2)**2) + (self.m**2)*((self.z1**2) + 6.*self.z1*self.z2 + (self.z2**2) - 4.*self.z1*self.zeta - 4.*self.z2*self.zeta) - self.m*(2.*self.zeta_conj - self.z1 - self.z2)*(self.z1*self.z2*(self.z2 - 4.*self.zeta) + (self.z1**2)*(self.z2 - self.zeta) - (self.z2**2)*self.zeta) - (self.zeta_conj - self.z1)*self.z1*(self.zeta_conj - self.z2)*self.z2*(2.*self.z2*self.zeta + self.z1*(self.z2 + 2.*self.zeta)) + self.dm*(self.z1 - self.z2)*(self.z1*self.z2*(self.z2 - 2.*self.zeta) + (self.z1**2)*(self.z2 - self.zeta) - (4.*self.m + (self.z2**2))*self.zeta + 2.*self.zeta_conj*(self.z2*self.zeta + self.z1*(self.z2 + self.zeta))))
-
-			coeff0 = (-2.*(self.m**2)*(self.z1**2)*self.z2 - 2.*(self.m**2)*self.z1*(self.z2**2) - self.m*(self.z1**3)*(self.z2**2) - self.m*(self.z1**2)*(self.z2**3) + (self.m**2)*(self.z1**2)*self.zeta + (self.dm**2)*((self.z1 - self.z2)**2)*self.zeta + 2.*(self.m**2)*self.z1*self.z2*self.zeta + self.m*(self.z1**3)*self.z2*self.zeta + (self.m**2)*(self.z2**2)*self.zeta + (self.zeta_conj**2)*(self.z1**2)*(self.z2**2)*self.zeta + 2.*self.m*(self.z1**2)*(self.z2**2)*self.zeta + self.m*self.z1*(self.z2**3)*self.zeta + (self.z1**3)*(self.z2**3)*self.zeta - self.dm*(self.z1 - self.z2)*(2.*self.m + self.z1*self.z2)*(self.z1*(self.z2 - self.zeta) - self.z2*self.zeta) - self.zeta_conj*self.z1*self.z2*((2.*self.dm*(self.z1 - self.z2) + self.z1*self.z2*(self.z1 + self.z2))*self.zeta + self.m*(-2.*self.z1*self.z2 + 2.*self.z1*self.zeta + 2.*self.z2*self.zeta)))
-
-#		coefficients = np.array([coeff5, coeff4, coeff3, coeff2, coeff1, coeff0])
 
 		if self.specific_frame_derivation:
 			calc = self.origin
@@ -435,7 +385,13 @@ class BinaryLens(object):
 
 		self.width_caustic = 4.*np.sqrt(self.q)*(1. + 1./(2.*(self.s**2))) / (self.s**2)
 		self.height_caustic = 4.*np.sqrt(self.q)*(1. - 1./(2.*(self.s**2))) / (self.s**2)
-		self.xcenter_caustic = 0.5*self.s - 1.0/self.s
+
+		if self.plot_frame == 'geo_cent':
+			self.xcenter_caustic = 0.5*self.s - 1.0/self.s
+		elif self.plot_frame == 'caustic':
+			self.xcenter_caustic = 0.
+		else:
+			raise ValueError('Unknown value for plot_frame.')
 
 ### The following functions are used for assigning data into grids.
 

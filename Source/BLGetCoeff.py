@@ -6,6 +6,10 @@ def get_coefficients(calc, zeta, z1, z2, m, dm):
 
 	zeta_conj = np.conj(zeta)
 
+	# Be aware that these expressions are very long and messy. They trail
+	# off the screen when text wrapping is "off," and look non-indented
+	# when text wrapping is "on."
+
 	if (calc == 'geo_cent'):
 		# Specific form of the derived for the geometric center frame
 
@@ -101,7 +105,7 @@ def get_coefficients(calc, zeta, z1, z2, m, dm):
 		coeff0 = (-2.*(m**2)*(z1**2)*z2 - 2.*(m**2)*z1*(z2**2) - m*(z1**3)*(z2**2) - m*(z1**2)*(z2**3) + (m**2)*(z1**2)*zeta + (dm**2)*((z1 - z2)**2)*zeta + 2.*(m**2)*z1*z2*zeta + m*(z1**3)*z2*zeta + (m**2)*(z2**2)*zeta + (zeta_conj**2)*(z1**2)*(z2**2)*zeta + 2.*m*(z1**2)*(z2**2)*zeta + m*z1*(z2**3)*zeta + (z1**3)*(z2**3)*zeta - dm*(z1 - z2)*(2.*m + z1*z2)*(z1*(z2 - zeta) - z2*zeta) - zeta_conj*z1*z2*((2.*dm*(z1 - z2) + z1*z2*(z1 + z2))*zeta + m*(-2.*z1*z2 + 2.*z1*zeta + 2.*z2*zeta)))
 
 	else:
-		raise ValueError('Not able to retreive coefficients for {} case'.
+		raise ValueError('Not able to retreive coefficients derived for {} case'.
 							 format(calc))
 
 	coefficients = np.array([coeff5, coeff4, coeff3, coeff2, coeff1, coeff0])

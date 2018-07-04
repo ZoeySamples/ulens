@@ -15,7 +15,7 @@ q1 = 1e-8
 q2 = 5e-2
 solvers =  ['SG12']
 origins = ['body3']
-phi = 130
+phi = 30
 
 res = int(60)
 sample_res = 5

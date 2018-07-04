@@ -9,14 +9,15 @@ import MulensModel as mm
 import numpy as np
 
 # Input parameters
-s = 1.6
-mass_ratios = [3.8e-16]
+s = 2.0
+mass_ratios = [1e-12]
 solvers =  ['SG12']
 origins = ['plan']
 
-res = int(100)
+res = int(40)
 sample_res = 5
 region = 'caustic'
+plot_frame = 'caustic'
 region_lim = (-.15, .15, 0.8, 1.3)
 
 cutoff = 1.5
@@ -35,18 +36,18 @@ def make_plot():
 			if plot_type == 'num_images':
 				p.plot_num_images(errors_only=False, region=region,
 						region_lim=region_lim, save=False, print_errors=True)
-				caustic.plot(s=1)
+				caustic.plot(s=1, color='yellow')
 				plt.show()
 
 			if plot_type == 'magn':
 				p.plot_magnification(outliers=False, region=region,
-						region_lim=region_lim, log_colorbar=False, cutoff=cutoff,
+						region_lim=region_lim, log_colorbar=True, cutoff=cutoff,
 						save=False)
 				caustic.plot(s=1)
 				plt.show()
 
 			if plot_type == 'num_iamges_coeff':
-				p.plot_num_images_coeff(color_magn=TPrue, log_colorbar=True,
+				p.plot_num_images_coeff(color_magn=True, log_colorbar=True,
 						region='caustic', region_lim=None, save=False)
 
 			if plot_type == 'magn_coeff':
@@ -75,7 +76,7 @@ for solver in solvers:
 	for origin in origins:
 		for q in mass_ratios:
 			param.append(({'s': s, 'q': q, 'res': res, 'origin': origin,
-					'solver': solver,
+					'solver': solver, 'plot_frame': plot_frame,
 					'specific_frame_derivation': specific_frame_derivation}))
 			plot.append(BL(**param[-1]))
 
