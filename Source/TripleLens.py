@@ -226,9 +226,10 @@ class TripleLens(object):
 		self.m2 = self.q1 / denominator
 		self.m3 = self.q2*self.q1 / denominator
 
-		# Convert the separation between the moon and planet into units
-		# of the total system's Einstein radius
-		self.s2 *= np.sqrt((self.m3 + self.m2))
+		if self.system == 'SPM':
+			# Convert the separation between the moon and planet into units
+			# of the total system's Einstein radius
+			self.s2 *= np.sqrt((self.m3 + self.m2))
 
 	def get_lensing_body_positions(self):
 
