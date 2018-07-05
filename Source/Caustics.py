@@ -15,6 +15,8 @@ class Caustics(object):
 
 
 		self.plot_frame = plot_frame
+		if not isinstance(lens, BL) and not isinstance(lens, TL):
+			raise TypeError('wrong type of lens: {:}'.format(type(lens)))
 		self.lens = lens
 
 		if isinstance(self.lens, BL):
@@ -32,7 +34,7 @@ class Caustics(object):
 		elif isinstance(self.lens, TL):
 			self.lens_type = 'TL'
 			self.s1 = self.lens.s1
-			self.s2 = self.lens.s2
+			self.s2 = self.lens.s2_actual
 			self.q1 = self.lens.q1
 			self.q2 = self.lens.q2
 			self.phi = self.lens.phi
@@ -46,38 +48,65 @@ class Caustics(object):
 		self.m2 = self.q1 / denominator
 		self.m3 = self.q2*self.q1 / denominator
 
-		if self.lens.system == 'SPM':
-			# Convert the separation between the moon and planet into units
-			# of the total system's Einstein radius
-			self.s2 *= np.sqrt((self.m3 + self.m2))
-
 	def get_TL_lensing_body_positions(self):
 
-		print(self.phi)
-
 		if self.lens.system == 'SPM':
-			self.displacementMP = self.s2*(math.cos(math.pi - self.phi) +
+			self.displacement23 = self.s2*(math.cos(math.pi - self.phi) +
 										1.j*math.sin(math.pi - self.phi))
 
 			if self.plot_frame == 'geo_cent':
 				self.z1 = -0.5*self.s1 + 0j
 				self.z2 = 0.5*self.s1 + 0j
-				self.z3 = self.z2 + self.displacementMP
+				self.z3 = self.z2 + self.displacement23
 
 			elif self.plot_frame == 'body2':
 				self.z1 = -self.s1 + 0j
 				self.z2 = 0j
-				self.z3 = self.displacementMP
+				self.z3 = self.displacement23
 
 			elif self.plot_frame == 'body3':
-				self.z1 = -self.s1 - self.displacementMP
-				self.z2 = -self.displacementMP
+				self.z1 = -self.s1 - self.displacement23
+				self.z2 = -self.displacement23
 				self.z3 = 0j
 
 			elif self.plot_frame == 'caustic':
 				self.z1 = -self.s1 + 1./self.s1
 				self.z2 = 1./self.s1
-				self.z3 = self.z2 + self.displacementMP
+				self.z3 = self.z2 + self.displacement23
+
+			else:
+				raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
+
+		elif (self.lens.system == 'SPP') or (self.lens.system == 'SSP'):
+			self.displacement13 = self.s2*(math.cos(self.phi) +
+									   1.j*math.sin(self.phi))
+
+			if self.plot_frame == 'geo_cent':
+				self.z1 = -0.5*self.s1 + 0j
+				self.z2 = 0.5*self.s1 + 0j
+				self.z3 = self.z1 + self.displacement13
+
+			elif self.plot_frame == 'body2':
+				self.z1 = -self.s1 + 0j
+				self.z2 = 0j
+				self.z3 = self.z1 + self.displacement13
+
+			elif self.plot_frame == 'body3':
+				self.z1 = -self.s1 - self.displacement23
+				self.z2 = -self.displacement23
+				self.z3 = 0j
+
+			elif self.plot_frame == 'caustic':
+				self.z1 = -self.s1 + 1./self.s1
+				self.z2 = 1./self.s1
+				self.z3 = self.z1 + self.displacement13
+
+			else:
+				raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
+
+		else:
+			raise ValueError('Unknown plot frame: {:}'.format(self.plot_frame))
+
 
 		"""
 		self.lens_type = lens_type

@@ -9,16 +9,17 @@ import MulensModel as mm
 import numpy as np
 
 # Input parameters
-s = 2.0
-mass_ratios = [1e-12]
+s = 0.9
+mass_ratios = [1e-7]
 solvers =  ['SG12']
 origins = ['plan']
 
-res = int(40)
+plot_frame = 'caustic'
+
+res = int(120)
 sample_res = 5
 region = 'caustic'
-plot_frame = 'caustic'
-region_lim = (-.15, .15, 0.8, 1.3)
+region_lim = (-3, 3, -3, 3)
 
 cutoff = 1.5
 specific_frame_derivation = True

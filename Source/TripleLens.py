@@ -195,7 +195,7 @@ class TripleLens(object):
 		self.q1 = q1
 		self.s2 = s2
 		self.s1 = s1
-		self.phi = phi
+		self.phi = phi*(math.pi / 180.)
 		self.origin = origin
 		self.solver = solver
 		self.system = system
@@ -209,13 +209,13 @@ class TripleLens(object):
 		self.strings()
 
 		if (self.q1 > 1.) or (self.q2 > 1.):
-			raise ValueError('q1 and q2 are not allowed to be greater than 1.')
+			raise ValueError('q1 and q2 cannot be greater than 1.')
 
 		if self.s2 < 0.:
-			raise ValueError('s2 is not allowed to be negative.')
+			raise ValueError('s2 cannot be negative.')
 
-#		if (self.system != 'SPM') and (self.system != 'SPP') and (self.system != 'SSP'):
-#			raise ValueError('Unknown value for string variable, system.')
+		if (self.system != 'SPM') and (self.system != 'SPP') and (self.system != 'SSP'):
+			raise ValueError('Unknown value for string variable, system.')
 
 ### The following functions assign values to variables pertaining to the class.
 
@@ -229,49 +229,90 @@ class TripleLens(object):
 		if self.system == 'SPM':
 			# Convert the separation between the moon and planet into units
 			# of the total system's Einstein radius
-			self.s2 *= np.sqrt((self.m3 + self.m2))
+			self.s2_actual = self.s2*(np.sqrt(self.m3 + self.m2))
+		else:
+			self.s2_actual = self.s2
 
 	def get_lensing_body_positions(self):
 
-		self.phi *= math.pi / 180
-		self.displacementMP = self.s2*(math.cos(math.pi - self.phi) +
-									1.j*math.sin(math.pi - self.phi))
+		if self.system == 'SPM':
+			self.displacement23 = self.s2_actual*(math.cos(math.pi - self.phi) +
+											  1.j*math.sin(math.pi - self.phi))
 
-		if self.origin == 'geo_cent':
-			self.z1 = -0.5*self.s1 + 0j
-			self.z2 = 0.5*self.s1 + 0j
-			self.z3 = self.z2 + self.displacementMP
+			if self.origin == 'geo_cent':
+				self.z1 = -0.5*self.s1 + 0j
+				self.z2 = 0.5*self.s1 + 0j
+				self.z3 = self.z2 + self.displacement23
+			elif self.origin == 'body2':
+				self.z1 = -self.s1 + 0j
+				self.z2 = 0j
+				self.z3 = self.displacement23
+			elif self.origin == 'body3':
+				self.z1 = -self.s1 - self.displacement23
+				self.z2 = -self.displacement23
+				self.z3 = 0j
+			elif self.origin == 'caustic':
+				self.z1 = -self.s1 + 1./self.s1
+				self.z2 = 1./self.s1
+				self.z3 = self.z2 + self.displacement23
+			else:
+				raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
 
-		elif self.origin == 'body2':
-			self.z1 = -self.s1 + 0j
-			self.z2 = 0j
-			self.z3 = self.displacementMP
+		elif (self.system == 'SPP') or (self.system == 'SSP'):
+			self.displacement13 = self.s2_actual*(math.cos(self.phi) +
+											  1.j*math.sin(self.phi))
 
-		elif self.origin == 'body3':
-			self.z1 = -self.s1 - self.displacementMP
-			self.z2 = -self.displacementMP
-			self.z3 = 0j
-
-		else:
-			raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
-
+			if self.origin == 'geo_cent':
+				self.z1 = -0.5*self.s1 + 0j
+				self.z2 = 0.5*self.s1 + 0j
+				self.z3 = self.z1 + self.displacement13
+			elif self.origin == 'body2':
+				self.z1 = -self.s1 + 0j
+				self.z2 = 0j
+				self.z3 = self.z1 + self.displacement13
+			elif self.origin == 'body3':
+				self.z1 = -self.displacement13
+				self.z2 = self.z1 + self.s1
+				self.z3 = 0j
+			elif self.origin == 'caustic':
+				self.z1 = -self.s1 + 1./self.s1
+				self.z2 = 1./self.s1
+				self.z3 = self.z1 + self.displacement13
+			else:
+				raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
 
 	def get_source_position(self, x, y):
 
-		if self.origin == 'geo_cent':
-			zeta = x + y*1.j
+		if self.plot_frame == 'geo_cent':
+			if self.origin == 'geo_cent':
+				zeta = x + y*1.j
+			elif self.origin == 'body2':
+				zeta = (x - self.s1/2.) + y*1.j
+			elif self.origin == 'body3':
+				if self.system == 'SPM':
+					zeta = (x - self.s1/2.) + y*1.j - self.displacement23
+				elif (self.system == 'SPP') or (self.system == 'SSP'):
+					zeta = (x + self.s1/2.) + y*1.j - self.displacement13
+			else:
+				raise ValueError('Unknown coordinate system: {:}'.format(origin))
 
-		elif self.origin == 'body2':
-			zeta = (x - self.s1/2.) + y*1.j
-
-		elif self.origin == 'body3':
-			zeta = (x - self.s1/2.) + y*1.j - self.displacementMP
-
-		else:
-			raise ValueError('Unknown coordinate system: {:}'.format(origin))
+		elif self.plot_frame == 'caustic':
+			if self.origin == 'geo_cent':
+				zeta = (x + self.s1/2. - 1./self.s1) + y*1.j
+			elif self.origin == 'plan':
+				zeta = (x - 1./self.s1) + y*1.j
+			elif self.origin == 'body3':
+				if self.lens.system == 'SPM':
+					zeta = (x - 1./self.s1) + y*1.j - self.displacement23
+				elif (self.system == 'SPP') or (self.system == 'SSP'):
+					zeta = (x + 1./self.s1) + y*1.j - self.displacement13
+			if np.abs(self.s1) < 1.0:
+				zeta += (2*np.sqrt(self.q1) / (self.s1*np.sqrt(1.+self.s1**2)) -
+							 (0.5*np.sqrt(self.q1)*(self.s1)**3))*1.j
+			else:
+				raise ValueError('Unknown coordinate system: {:}'.format(origin))
 
 		return zeta
-
 
 	def get_coefficients(self, x, y):
 		"""Returns the coefficients for the polynomial equation."""

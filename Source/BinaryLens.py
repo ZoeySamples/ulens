@@ -239,6 +239,9 @@ class BinaryLens(object):
 				self.zeta = x + y*1.j
 			else:
 				raise ValueError('Unknown coordinate system: {:}'.format(origin))
+			if np.abs(self.s) < 1.0:
+				self.zeta += (2*np.sqrt(self.q) / (self.s*np.sqrt(1.+self.s**2)) -
+							 (0.5*np.sqrt(self.q)*(self.s)**3))*1.j
 
 		else:
 			raise ValueError('Unknown value for plot_frame')
@@ -383,13 +386,23 @@ class BinaryLens(object):
 		caustic.
 		"""
 
-		self.width_caustic = 4.*np.sqrt(self.q)*(1. + 1./(2.*(self.s**2))) / (self.s**2)
-		self.height_caustic = 4.*np.sqrt(self.q)*(1. - 1./(2.*(self.s**2))) / (self.s**2)
+		if self.s >= 1.0:
+			self.width_caustic = 4.*np.sqrt(self.q)*(1. + 1./(2.*(self.s**2))) / (self.s**2)
+			self.height_caustic = 4.*np.sqrt(self.q)*(1. - 1./(2.*(self.s**2))) / (self.s**2)
+		else:
+			self.width_caustic = (3*np.sqrt(3) / 4.)*np.sqrt(self.q)*self.s**3
+			self.height_caustic = np.sqrt(self.q)*(self.s)**3
 
 		if self.plot_frame == 'geo_cent':
 			self.xcenter_caustic = 0.5*self.s - 1.0/self.s
+			if self.s >= 1.0:
+				self.ycenter_caustic = 0.
+			else:
+				self.ycenter_caustic = 2*np.sqrt(self.q) / (self.s*np.sqrt(
+									1.+self.s**2)) - 0.5*self.height_caustic
 		elif self.plot_frame == 'caustic':
 			self.xcenter_caustic = 0.
+			self.ycenter_caustic = 0.
 		else:
 			raise ValueError('Unknown value for plot_frame.')
 
@@ -438,18 +451,18 @@ class BinaryLens(object):
 		if region == 'caustic':
 			region_xmin = self.xcenter_caustic - 0.8*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.8*self.width_caustic
-			region_ymin = -0.8*self.height_caustic
-			region_ymax = 0.8*self.height_caustic
+			region_ymin = -0.8*self.height_caustic + self.ycenter_caustic
+			region_ymax = 0.8*self.height_caustic + self.ycenter_caustic
 		if region == 'onax_cusp':
 			region_xmin = self.xcenter_caustic + 0.55*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.8*self.width_caustic
-			region_ymin = -0.10*self.height_caustic
-			region_ymax = 0.10*self.height_caustic
+			region_ymin = -0.10*self.height_caustic + self.ycenter_caustic
+			region_ymax = 0.10*self.height_caustic + self.ycenter_caustic
 		if region == 'offax_cusp':
 			region_xmin = self.xcenter_caustic - 0.10*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.10*self.width_caustic
-			region_ymin = 0.55*self.height_caustic
-			region_ymax = 0.8*self.height_caustic
+			region_ymin = 0.55*self.height_caustic + self.ycenter_caustic
+			region_ymax = 0.8*self.height_caustic + self.ycenter_caustic
 		if region == 'both':
 			region_xmin = -0.5*self.s
 			region_xmax = 0.5*self.s
@@ -459,8 +472,8 @@ class BinaryLens(object):
 			(xmin, xmax, ymin, ymax) = (*region_lim,)
 			region_xmin = self.xcenter_caustic + 0.5*xmin*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.5*xmax*self.width_caustic
-			region_ymin = 0.5*ymin*self.height_caustic
-			region_ymax = 0.5*ymax*self.height_caustic
+			region_ymin = 0.5*ymin*self.height_caustic + self.ycenter_caustic
+			region_ymax = 0.5*ymax*self.height_caustic + self.ycenter_caustic
 
 		x_grid = np.linspace(region_xmin, region_xmax, self.res)
 		y_grid = np.linspace(region_ymin, region_ymax, self.res)
