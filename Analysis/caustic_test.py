@@ -13,20 +13,20 @@ solver = 'SG12'
 originBL = 'star'
 originTL = 'body3'
 
-s=1.5
+s=0.5
 q=1e-3
 
-s1=1.5
-s2=1.8
+s1=0.5
+s2=0.5
 q1=1e-3
 q2=1e-7
-phi=180
+phi=90
 
 param = ({'s': s, 'q': q, 'origin': originBL, 'solver': solver}) 
 test_BLlens = BL(**param)
 
 param = ({'s1': s1, 's2': s2, 'q1': q1,  'q2': q2, 'phi': phi,
-		'origin': originTL, 'solver': solver, 'system': 'SPM'}) 
+		'origin': originTL, 'solver': solver, 'system': 'SPP'}) 
 test_TLlens = TL(**param)
 
 causparam = ({'lens': test_BLlens})
@@ -39,7 +39,6 @@ test_TLcaustic = Caus(**causparam)
 #plt.show()
 
 test_TLcaustic.plot_caustic(s=1)
-print(test_TLcaustic.displacementMP)
 plt.scatter(test_TLcaustic.z1.real, test_TLcaustic.z1.imag, color='red', s=50)
 plt.scatter(test_TLcaustic.z2.real, test_TLcaustic.z2.imag, color='red', s=10)
 plt.scatter(test_TLcaustic.z3.real, test_TLcaustic.z3.imag, color='red', s=3)
