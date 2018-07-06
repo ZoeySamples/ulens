@@ -7,8 +7,10 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import matplotlib.colors as colors
 import matplotlib
+import pandas as pd
 import numpy as np
 from BinaryLens import BinaryLens as BL
+from Caustics import Caustics as caus
 import MulensModel as mm
 from pathlib import Path
 
@@ -43,9 +45,8 @@ def num_images_demo():
 			idx = 1 + j + len(origins)*i
 
 			# Initialize each binary lens system with the BinaryLens class.
-			param[i][j] = ({'s': s, 'q': q, 'res': res, 'origin': origin,
-					'solver': solver, 'specific_frame_derivation': 
-					specific_frame_derivation})
+			param[i][j] = ({'s': s[j], 'q': q, 'res': res, 'origin': origin,
+					'solver': solver, 'SFD': SFD})
 			plot[i][j] = BL(**param[i][j])
 
 			cmap = plt.cm.Blues
@@ -59,7 +60,7 @@ def num_images_demo():
 			kwargs = plot[i][j].check_kwargs()
 			kwargs['cmap'] = cmap
 			kwargs['norm'] = norm
-			plot[i][j].get_position_arrays(region=region,
+			plot[i][j].get_position_arrays(region=region[j],
 						region_lim=region_lim)
 			plot[i][j].get_num_images_array()
 			(x, y, num_images) = (plot[i][j].x_array, plot[i][j].y_array,
@@ -68,8 +69,8 @@ def num_images_demo():
 			# Create and adjust the plots appropriately.
 			ax[i][j] = plt.subplot(len(mass_ratios), len(origins), idx)
 			sc = ax[i][j].scatter(x, y, c=num_images, vmin=0, vmax=5, **kwargs)
-			caustic = mm.Caustics(s=s, q=q)
-			caustic.plot(s=0.5, color='yellow')
+			caustic = caus(lens=plot[i][j])
+			caustic.plot_caustic(s=1, color='yellow')
 			(xmin, xmax) = (min(plot[i][j].x_array), max(plot[i][j].x_array))
 			(ymin, ymax) = (min(plot[i][j].y_array), max(plot[i][j].y_array))
 			(dx, dy) = (xmax-xmin, ymax-ymin)
@@ -77,26 +78,33 @@ def num_images_demo():
 			plt.ylim(ymin, ymax)
 			plt.xticks(np.arange(xmin+0.2*dx, xmax, 0.6*dx))
 			plt.yticks(np.arange(ymin+0.2*dy, ymax, 0.3*dy))
-			ax[i][j].tick_params(axis='x', labelsize=11)
-			ax[i][j].tick_params(axis='y', labelsize=11)
+			ax[i][j].tick_params(axis='x', labelsize=8+len(origins))
+			ax[i][j].tick_params(axis='y', labelsize=8+len(origins))
 			ax[i][j].axes.yaxis.set_major_formatter(
 								mtick.FormatStrFormatter('%.1e'))
 			ax[i][j].axes.xaxis.set_major_formatter(
-								mtick.FormatStrFormatter('%.3e'))
-			plt.ylabel('Mass Ratio: {}'.format(plot[i][j].q), fontsize=14)
-			if (j != 0):
-				ax[i][j].axes.get_yaxis().set_visible(False)
+								mtick.FormatStrFormatter('%.2e'))
+#			plt.ylabel('Mass Ratio: {}'.format(plot[i][j].q), fontsize=14)
+#			if (j != 0):
+#				ax[i][j].axes.get_yaxis().set_visible(False)
 			if (i == 0):
-				ax[i][j].axes.set_title('{}\nFrame'.format(
-						plot[i][j].origin_title), fontsize=14)
+				ax[i][j].axes.set_title('{} Frame\ns={}'.format(
+						plot[i][j].origin_title, s[j]), fontsize=12+len(origins))
 
-	# Make final plot adjustments.
-	cbar = fig.add_axes([0.88, 0.15, 0.03, 0.7])
-	num_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks)
-	num_color.set_label('Number of Images', fontsize=14, labelpad=10)
-	cbar.axes.tick_params(labelsize=11) 
-	plt.subplots_adjust(wspace=0.1, hspace=0.2, top=0.90, right=0.85)
-	plt.gcf().set_size_inches(2.8*len(origins), 2.6*len(mass_ratios))
+	# Add an axis for the color bar.
+	cbar = fig.add_axes([0.20, 0.09, 0.60, 0.04])
+	num_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks, orientation='horizontal')
+	num_color.set_label('Number of Images', fontsize=12+len(origins), labelpad=1)
+	cbar.axes.tick_params(labelsize=8+len(origins))
+
+#	fig.text(0.50, 0.18, 'X-Position Source', ha='center', va='center', 12+len(origins))
+#	fig.text(0.03, 0.54, 'Y-Position Source', ha='center', va='center', 12+len(origins), rotation='vertical')
+#	fig.text(0.93, 0.93, 'Mass\nRatio', ha='center', va='center', 12+len(origins))
+	for (i, q) in enumerate(mass_ratios):
+		fig.text(0.93, 0.90 - .33/len(mass_ratios) - .79*i/len(mass_ratios), 'q={}'.format(q), ha='center', va='center', fontsize=12+len(origins))
+
+	plt.subplots_adjust(wspace=0.5, hspace=0.15, top=0.90, bottom=0.19, left=0.12, right=0.88)
+	plt.gcf().set_size_inches(3.0*len(origins)+1.0, 2.5*len(mass_ratios)+1.5)
 
 	# Save the plot as a .png file.
 	if save_fig:
@@ -126,9 +134,9 @@ def magnification_demo():
 			idx = 1 + j + len(origins)*i
 
 			# Initialize each binary lens system with the BinaryLens class.
-			param[i][j] = ({'s': s, 'q': q, 'res': res, 'origin': origin,
-					'solver': solver, 'specific_frame_derivation': 
-					specific_frame_derivation})
+			param[i][j] = ({'s': s[j], 'q': q, 'res': res, 'origin': origin,
+					'solver': solver, 'SFD': 
+					SFD})
 			plot[i][j] = BL(**param[i][j])
 
 			# Get the data for the plots.
@@ -141,18 +149,17 @@ def magnification_demo():
 			kwargs = plot[i][j].check_kwargs()
 			kwargs['cmap'] = cmap
 			kwargs['norm'] = colors.LogNorm()
-			plot[i][j].get_position_arrays(region=region,
+			plot[i][j].get_position_arrays(region=region[j],
 						region_lim=region_lim)
 			plot[i][j].get_magnification_array()
 			(x, y, magnification) = (plot[i][j].x_array, plot[i][j].y_array,
 						plot[i][j].magn_array)
 
-
 			# Create and adjust the plots appropriately.
 			ax[i][j] = plt.subplot(len(mass_ratios), len(origins), idx)
 			sc = ax[i][j].scatter(x, y, c=magnification, vmin=1, vmax=100, **kwargs)
-			caustic = mm.Caustics(s=s, q=q)
-			caustic.plot(s=0.5, color='blue')
+			caustic = caus(lens=plot[i][j])
+			caustic.plot_caustic(s=1, color='blue')
 			(xmin, xmax) = (min(plot[i][j].x_array), max(plot[i][j].x_array))
 			(ymin, ymax) = (min(plot[i][j].y_array), max(plot[i][j].y_array))
 			(dx, dy) = (xmax-xmin, ymax-ymin)
@@ -160,26 +167,33 @@ def magnification_demo():
 			plt.ylim(ymin, ymax)
 			plt.xticks(np.arange(xmin+0.2*dx, xmax, 0.6*dx))
 			plt.yticks(np.arange(ymin+0.2*dy, ymax, 0.3*dy))
-			ax[i][j].tick_params(axis='x', labelsize=11)
-			ax[i][j].tick_params(axis='y', labelsize=11)
+			ax[i][j].tick_params(axis='x', labelsize=8+len(origins))
+			ax[i][j].tick_params(axis='y', labelsize=8+len(origins))
 			ax[i][j].axes.yaxis.set_major_formatter(
 								mtick.FormatStrFormatter('%.1e'))
 			ax[i][j].axes.xaxis.set_major_formatter(
 								mtick.FormatStrFormatter('%.3e'))
-			plt.ylabel('Mass Ratio: {}'.format(plot[i][j].q), fontsize=14)
-			if (j != 0):
-				ax[i][j].axes.get_yaxis().set_visible(False)
+#			plt.ylabel('Mass Ratio: {}'.format(plot[i][j].q), 12+len(origins))
+#			if (j != 0):
+#				ax[i][j].axes.get_yaxis().set_visible(False)
 			if (i == 0):
-				ax[i][j].axes.set_title('{}\nFrame'.format(
-						plot[i][j].origin_title), fontsize=14)
+				ax[i][j].axes.set_title('{} Frame\ns={}'.format(
+						plot[i][j].origin_title, s[j]), fontsize=12+len(origins))
 
-	# Make final plot adjustments.
-	cbar = fig.add_axes([0.88, 0.15, 0.03, 0.7])
-	num_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks)
-	num_color.set_label('Magnification', fontsize=14, labelpad=10)
-	cbar.axes.tick_params(labelsize=11) 
-	plt.subplots_adjust(wspace=0.1, hspace=0.2, top=0.90, right=0.85)
-	plt.gcf().set_size_inches(2.8*len(origins), 2.6*len(mass_ratios))
+	# Add an axis for the color bar.
+	cbar = fig.add_axes([0.20, 0.09, 0.60, 0.04])
+	magn_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks, orientation='horizontal')
+	magn_color.set_label('Magnification', fontsize=12+len(origins), labelpad=1)
+	cbar.axes.tick_params(labelsize=8+len(origins))
+
+#	fig.text(0.50, 0.18, 'X-Position Source', ha='center', va='center', 12+len(origins))
+#	fig.text(0.03, 0.54, 'Y-Position Source', ha='center', va='center', 12+len(origins), rotation='vertical')
+#	fig.text(0.93, 0.93, 'Mass\nRatio', ha='center', va='center', 12+len(origins))
+	for (i, q) in enumerate(mass_ratios):
+		fig.text(0.93, 0.90 - .33/len(mass_ratios) - .79*i/len(mass_ratios), 'q={}'.format(q), ha='center', va='center', fontsize=12+len(origins))
+
+	plt.subplots_adjust(wspace=0.5, hspace=0.15, top=0.90, bottom=0.19, left=0.12, right=0.88)
+	plt.gcf().set_size_inches(3.0*len(origins)+1.0, 2.5*len(mass_ratios)+1.5)
 
 	# Save the plot as a .png file.
 	if save_fig:
@@ -200,21 +214,22 @@ def magnification_demo():
 
 
 # Here are the input parameters for making the plots.
-s = 1.5
-mass_ratios = [1e-6, 1e-12]
-origins = ['plan', 'caustic', 'geo_cent']
-res = int(200)
-solver =  'SG12'
-region = 'caustic'
-region_lim = None
-save_fig = True
-show_fig = False
+s = [0.5, 1.5, 1.5, 1.5]
 
-specific_frame_derivation = False
+mass_ratios = [1e-6, 1e-12]
+origins = ['plan', 'plan', 'caustic', 'geo_cent']
+res = int(40)
+solver =  'SG12'
+region = ['caustic', 'caustic', 'caustic', 'caustic']
+region_lim = [-.5, .5, 0.0, 2]
+save_fig = False
+show_fig = True
+
+SFD = False
 num_images_demo()
 magnification_demo()
 
-specific_frame_derivation = True
+SFD = True
 num_images_demo()
 magnification_demo()
 
