@@ -11,25 +11,32 @@ from TripleLens import TripleLens as TL
 
 class Caustics(object):
 
-	def __init__(self, lens, lens_type=None, plot_frame='caustic'):
+	def __init__(self, lens, lens_type=None):
 
-
-		self.plot_frame = plot_frame
 		if not isinstance(lens, BL) and not isinstance(lens, TL):
 			raise TypeError('wrong type of lens: {:}'.format(type(lens)))
 		self.lens = lens
+		self.plot_frame = self.lens.plot_frame
 
 		if isinstance(self.lens, BL):
 			self.lens_type = 'BL'
 			self.s = self.lens.s
 			self.q = self.lens.q
 			(self.m, self.dm) = (self.lens.m, self.lens.dm)
-			if self.plot_frame == 'caustic':
-				self.z1 = 1./self.s
-				self.z2 = -self.s + 1./self.s
-			elif self.plot_frame == 'geo_cent':
+			if self.plot_frame == 'geo_cent':
 				self.z1 = 0.5*self.s
 				self.z2 = -0.5*self.s
+
+			elif self.plot_frame == 'caustic':
+				self.z1 = 1./self.s
+				self.z2 = -self.s + 1./self.s
+				# If the caustics are bifurcated, shift the coordinate system
+				# to the center of the upper twin.
+				if np.abs(self.s) < 1.0:
+					caustic_height = (2*np.sqrt(self.q) / (self.s*np.sqrt(1.+self.s**2)) -
+								 (0.5*np.sqrt(self.q)*(self.s)**3))*1.j
+					self.z1 += caustic_height
+					self.z2 += caustic_height
 
 		elif isinstance(self.lens, TL):
 			self.lens_type = 'TL'
@@ -38,86 +45,46 @@ class Caustics(object):
 			self.q1 = self.lens.q1
 			self.q2 = self.lens.q2
 			self.phi = self.lens.phi
-			self.get_TL_mass()
+
+			denominator = 1. + self.q1 + self.q2*self.q1
+			self.m1 = 1. / denominator
+			self.m2 = self.q1 / denominator
+			self.m3 = self.q2*self.q1 / denominator
 			self.get_TL_lensing_body_positions()
-
-	def get_TL_mass(self):
-
-		denominator = 1. + self.q1 + self.q2*self.q1
-		self.m1 = 1. / denominator
-		self.m2 = self.q1 / denominator
-		self.m3 = self.q2*self.q1 / denominator
 
 	def get_TL_lensing_body_positions(self):
 
 		if self.lens.system == 'SPM':
 			self.displacement23 = self.s2*(math.cos(math.pi - self.phi) +
-										1.j*math.sin(math.pi - self.phi))
+									   1.j*math.sin(math.pi - self.phi))
 
-			if self.plot_frame == 'geo_cent':
-				self.z1 = -0.5*self.s1 + 0j
-				self.z2 = 0.5*self.s1 + 0j
-				self.z3 = self.z2 + self.displacement23
+			self.z1 = -0.5*self.s1 + 0j
+			self.z2 = 0.5*self.s1 + 0j
+			self.z3 = self.z2 + self.displacement23
 
-			elif self.plot_frame == 'body2':
-				self.z1 = -self.s1 + 0j
-				self.z2 = 0j
-				self.z3 = self.displacement23
-
-			elif self.plot_frame == 'body3':
-				self.z1 = -self.s1 - self.displacement23
-				self.z2 = -self.displacement23
-				self.z3 = 0j
-
-			elif self.plot_frame == 'caustic':
-				self.z1 = -self.s1 + 1./self.s1
-				self.z2 = 1./self.s1
-				self.z3 = self.z2 + self.displacement23
-
-			else:
-				raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
+			if self.plot_frame == 'caustic':
+				self.lens.get_size_caustic()
+				(s, q, phi) = self.lens.get_caustic_param()
+				(xshift, yshift) = self.lens.get_shift(s, q, phi)
+				self.z1 -= xshift + 1j*yshift
+				self.z2 -= xshift + 1j*yshift
+				self.z3 -= xshift + 1j*yshift
 
 		elif (self.lens.system == 'SPP') or (self.lens.system == 'SSP'):
 			self.displacement13 = self.s2*(math.cos(self.phi) +
 									   1.j*math.sin(self.phi))
 
-			if self.plot_frame == 'geo_cent':
-				self.z1 = -0.5*self.s1 + 0j
-				self.z2 = 0.5*self.s1 + 0j
-				self.z3 = self.z1 + self.displacement13
+			self.z1 = -0.5*self.s1 + 0j
+			self.z2 = 0.5*self.s1 + 0j
+			self.z3 = self.z1 + self.displacement13
 
-			elif self.plot_frame == 'body2':
-				self.z1 = -self.s1 + 0j
-				self.z2 = 0j
-				self.z3 = self.z1 + self.displacement13
-
-			elif self.plot_frame == 'body3':
-				self.z1 = -self.s1 - self.displacement23
-				self.z2 = -self.displacement23
-				self.z3 = 0j
-
-			elif self.plot_frame == 'caustic':
-				self.z1 = -self.s1 + 1./self.s1
-				self.z2 = 1./self.s1
-				self.z3 = self.z1 + self.displacement13
-
-			else:
-				raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
-
-		else:
-			raise ValueError('Unknown plot frame: {:}'.format(self.plot_frame))
-
-
-		"""
-		self.lens_type = lens_type
-		if lens_type == 'BL':
-			param = ({'s': s, 'q': q, 'origin': plot_frame, 'solver': 'numpy'})
-			self.lens = BL(**param)
-			(z1, z2, m, dm) = (self.lens.z1, self.lens.z2, self.lens.m, self.lens.dm)
-		if lens_type == 'TL':
-			param = ({'s1': s1, 's2': s2, 'q1': q1,  'q2': q2, 'phi': phi, 'origin': originTL, 'solver': solver}) 
-			test_TLlens = TL(**param)
-		"""
+			if self.plot_frame == 'caustic':
+				self.lens.get_size_caustic()
+				(s, q, phi) = self.lens.get_caustic_param()
+				(xshift, yshift) = self.lens.get_shift(s, q, phi)
+				self.z1 -= xshift + 1j*yshift
+				self.z2 -= xshift + 1j*yshift
+				self.z3 -= xshift + 1j*yshift
 
 	def plot_caustic(self, points=5000, **kwargs):
 
@@ -202,13 +169,16 @@ class Caustics(object):
 		if self.lens_type == 'BL':
 			(m, dm, z1, z2) = (self.m, self.dm, self.z1, self.z2)
 			(z1_conj, z2_conj) = (np.conj(z1), np.conj(z2))
-			caustic_point = z + (m - dm) / (z1_conj - z_conj) + (m + dm) / (z2_conj - z_conj)
+			caustic_point = (z + (m - dm) / (z1_conj - z_conj) +
+								 (m + dm) / (z2_conj - z_conj))
 			return caustic_point
 		elif self.lens_type == 'TL':
 			(z1, z2, z3, m1, m2, m3) = (self.z1, self.z2, self.z3,
 										self.m1, self.m2, self.m3)
 			(z1_conj, z2_conj, z3_conj) = (np.conj(z1), np.conj(z2), np.conj(z3))
-			caustic_point = z + m1 / (z1_conj - z_conj) + m2 / (z2_conj - z_conj) + m3 / (z3_conj - z_conj)
+			caustic_point = (z + m1 / (z1_conj - z_conj) +
+								 m2 / (z2_conj - z_conj) +
+								 m3 / (z3_conj - z_conj))
 			return caustic_point
 
 	class CriticalCurve(object):

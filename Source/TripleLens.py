@@ -5,11 +5,14 @@
 
 import sys
 import os
+from pathlib import Path
 import ctypes
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import MulensModel as mm
+from astropy.io import fits
 import TLGetCoeff as getc
 
 
@@ -37,7 +40,6 @@ PATH = os.path.join(MODULE_PATH, 'NumericalRecipes',
 
 # Here we attempt to access the Numerical Recipes zroots solver
 try:
-
 	zroots = ctypes.cdll.LoadLibrary(PATH)
 except OSError as error:
 	msg = "Something went wrong with zroots wrapping ({:})\n\n" + repr(error)
@@ -110,12 +112,17 @@ class TripleLens(object):
 
 			phi (float):
 				If system is 'SPM': The angle formed by star-planet-moon.
-				If system is 'SPP': The angle planet2 makes with the
-						horizontal axis passing through the star and planet1.
-				If system is 'SSP': The angle the planet makes with the
-						horizontal axis passing through star1 and star2.
+				If system is 'SPP': The angle formed by planet1-star-planet2;
+						in other words, the angle planet2 makes with the
+						horizontal axis passing through the star and planet1,
+						centered on the star.
+				If system is 'SSP': The angle formed by star2-star1-planet;
+						in other words, the angle the planet makes with the
+						horizontal axis passing through star1 and star2,
+						centered on star1.
 
-				*phi is given in degrees in all cases.
+				*phi is given in degrees in all cases, and converted to
+				 radians in this source code.
 
 			origin (string):
 				The coordinate frame in which calculations are carried out.
@@ -134,8 +141,8 @@ class TripleLens(object):
 			*q1 and q2 should be less than 1, so that star2 is less massive
 			 than star1, or planet2 is less massive than planet1.
 
-			*For s1 and s2, the separation can be positive or negative,
-			 depending on the scenario.
+			*For s1, the separation can be positive or negative, depending
+			 on the scenario. s2 is a scalar distance, so it must be positive.
 
 
 		Optional:
@@ -151,9 +158,10 @@ class TripleLens(object):
 				The resolution of the grid (i.e. number of points on each side). 
 				Required if user is plotting a grid with TripleLens class.
 
-			specific_frame_derivation (bool):
-				If True, the form of the polynomial given by the origin
-				will be used to calculate solutions.
+			SFD (bool):
+				Initialization for "specific frame derivation." If True, the
+				form of the polynomial given by the origin will be used to
+				calculate solutions.
 
 		Global Variables:
 			m1 (float):
@@ -189,7 +197,8 @@ class TripleLens(object):
 
 
 	def __init__(self, q2, q1, s2, s1, phi, origin, solver, system=None, x=None,
-				 y=None, res=None, specific_frame_derivation=True):
+				 y=None, res=None, SFD=True, region='caustic2a', region_lim=None, 
+				 plot_frame='caustic'):
 
 		self.q2 = q2
 		self.q1 = q1
@@ -203,7 +212,10 @@ class TripleLens(object):
 		self.x = x
 		self.y = y
 		self.roots = None
-		self.specific_frame_derivation = specific_frame_derivation
+		self.region = region
+		self.region_lim = region_lim
+		self.SFD = SFD
+		self.plot_frame = plot_frame
 		self.get_mass()
 		self.get_lensing_body_positions()
 		self.strings()
@@ -283,34 +295,24 @@ class TripleLens(object):
 
 	def get_source_position(self, x, y):
 
-		if self.plot_frame == 'geo_cent':
-			if self.origin == 'geo_cent':
-				zeta = x + y*1.j
-			elif self.origin == 'body2':
-				zeta = (x - self.s1/2.) + y*1.j
-			elif self.origin == 'body3':
-				if self.system == 'SPM':
-					zeta = (x - self.s1/2.) + y*1.j - self.displacement23
-				elif (self.system == 'SPP') or (self.system == 'SSP'):
-					zeta = (x + self.s1/2.) + y*1.j - self.displacement13
-			else:
-				raise ValueError('Unknown coordinate system: {:}'.format(origin))
+		self.get_size_caustic()
 
-		elif self.plot_frame == 'caustic':
-			if self.origin == 'geo_cent':
-				zeta = (x + self.s1/2. - 1./self.s1) + y*1.j
-			elif self.origin == 'plan':
-				zeta = (x - 1./self.s1) + y*1.j
-			elif self.origin == 'body3':
-				if self.lens.system == 'SPM':
-					zeta = (x - 1./self.s1) + y*1.j - self.displacement23
-				elif (self.system == 'SPP') or (self.system == 'SSP'):
-					zeta = (x + 1./self.s1) + y*1.j - self.displacement13
-			if np.abs(self.s1) < 1.0:
-				zeta += (2*np.sqrt(self.q1) / (self.s1*np.sqrt(1.+self.s1**2)) -
-							 (0.5*np.sqrt(self.q1)*(self.s1)**3))*1.j
-			else:
-				raise ValueError('Unknown coordinate system: {:}'.format(origin))
+		if self.origin == 'geo_cent':
+			zeta = x + y*1.j
+		elif self.origin == 'body2':
+			zeta = (x - self.s1/2.) + y*1.j
+		elif self.origin == 'body3':
+			if self.system == 'SPM':
+				zeta = (x - self.s1/2.) + y*1.j - self.displacement23
+			elif (self.system == 'SPP') or (self.system == 'SSP'):
+				zeta = (x + self.s1/2.) + y*1.j - self.displacement13
+		else:
+			raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
+
+		if self.plot_frame == 'caustic':
+			(s, q, phi) = self.get_caustic_param()
+			(xshift, yshift) = self.get_shift(s, q, phi)
+			zeta += xshift + 1j*yshift
 
 		return zeta
 
@@ -318,7 +320,7 @@ class TripleLens(object):
 		"""Returns the coefficients for the polynomial equation."""
 
 		zeta = self.get_source_position(x=x, y=y)
-		if self.specific_frame_derivation:
+		if self.SFD:
 			calc = self.origin
 		else:
 			calc = 'general'
@@ -392,15 +394,75 @@ class TripleLens(object):
 		planetary caustic. Estimated as a binary lens.
 		"""
 
-		self.width_caustic = 4.*np.sqrt(self.q1)*(
-					1. + 1./(2.*(self.s1**2))) / (self.s1**2)
-		self.height_caustic = 4.*np.sqrt(self.q1)*(
-					1. - 1./(2.*(self.s1**2))) / (self.s1**2)
-		self.xcenter_caustic = 0.5*self.s1 - 1.0/self.s1
+		(s, q, phi) = self.get_caustic_param()
+
+		if np.abs(s) >= 1.0:
+			self.width_caustic = 4.*np.sqrt(q)*(1. + 1./(2.*(s**2))) / (s**2)
+			self.height_caustic = 4.*np.sqrt(q)*(1. - 1./(2.*(s**2))) / (s**2)
+		else:
+			self.width_caustic = (3*np.sqrt(3) / 4.)*np.sqrt(q)*s**3
+			self.height_caustic = np.sqrt(q)*s**3
+
+	def get_center_caustic(self):
+
+		(s, q, phi) = self.get_caustic_param()
+
+		if self.plot_frame == 'geo_cent':
+			(xshift, yshift) = self.get_shift(s, q, phi)
+			self.xcenter_caustic = xshift
+			self.ycenter_caustic = yshift
+
+		elif self.plot_frame == 'caustic':
+			self.xcenter_caustic = 0.
+			self.ycenter_caustic = 0.
+		else:
+			raise ValueError('Unknown value for plot_frame.')
+
+	def get_caustic_param(self):
+
+		if '2' in self.region:
+			s = (self.z2 - self.z1).real
+			q = self.m2 / self.m1
+			phi = 0
+		elif '3' in self.region:
+			s = (self.z3 - self.z1).real
+			q = self.m3 / self.m1
+			if (self.system == 'SPP') or (self.system == 'SSP'):
+				phi = self.phi
+			elif self.system == 'SPM':
+				d12 = np.abs(self.z2 - self.z1)
+				d13 = np.abs(self.z3 - self.z1)
+				d23 = np.abs(self.z3 - self.z2)
+				phi = math.acos((d12**2 - d23**2 + d13**2) / (2*d12*d13))
+		else:
+			raise ValueError('Specify which caustic you want to center on\n',
+					'by including a 2 or a 3 on the string variable, region.')
+
+		return (s, q, phi)
+
+	def get_shift(self, s, q, phi):
+
+		xshift = (0.5*s - 1.0/s)*math.cos(phi)
+		yshift = (0.5*s - 1.0/s)*math.sin(phi)
+		if s < 1.0:
+			self.height_center_twin = (2*np.sqrt(q) / (s*np.sqrt(1.+s**2)) -
+								  0.5*self.height_caustic)
+			if self.region[-1] == 'a':
+				xshift -= self.height_center_twin*math.sin(phi)
+				yshift += self.height_center_twin*math.cos(phi)
+			elif self.region[-1] == 'b':
+				xshift += self.height_center_twin*math.sin(phi)
+				yshift -= self.height_center_twin*math.cos(phi)
+			else:
+				raise ValueError('Specify whether you want to focus on the',
+						'top caustic or bottom caustic by including a or b',
+						'in string variable, region.')
+
+		return (xshift, yshift)
 
 ### The following functions are used for assigning data into grids.
 
-	def get_position_arrays(self, region, region_lim=None):
+	def get_position_arrays(self):
 		"""
 		Fills arrays for the x- and y-position to prepare grid plots.
 
@@ -434,33 +496,39 @@ class TripleLens(object):
 		"""
 
 		self.get_size_caustic()
+		self.get_center_caustic()
 
-		if region == 'caustic':
+#		if region == 'caustic'
+		if 'caustic' in self.region:
 			region_xmin = self.xcenter_caustic - 0.8*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.8*self.width_caustic
-			region_ymin = -0.8*self.height_caustic
-			region_ymax = 0.8*self.height_caustic
-		if region == 'onax_cusp':
+			region_ymin = -0.8*self.height_caustic + self.ycenter_caustic
+			region_ymax = 0.8*self.height_caustic + self.ycenter_caustic
+#		if region == 'onax_cusp':
+		if 'onax_cusp' in self.region:
 			region_xmin = self.xcenter_caustic + 0.55*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.8*self.width_caustic
-			region_ymin = -0.10*self.height_caustic
-			region_ymax = 0.10*self.height_caustic
-		if region == 'offax_cusp':
+			region_ymin = -0.10*self.height_caustic + self.ycenter_caustic
+			region_ymax = 0.10*self.height_caustic + self.ycenter_caustic
+#		if region == 'offax_cusp':
+		if 'offax_cusp' in self.region:
 			region_xmin = self.xcenter_caustic - 0.10*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.10*self.width_caustic
-			region_ymin = 0.55*self.height_caustic
-			region_ymax = 0.8*self.height_caustic
-		if region == 'both':
-			region_xmin = -0.5*self.s1
-			region_xmax = 0.5*self.s1
-			region_ymin = -0.5*self.s1
-			region_ymax = 0.5*self.s1
-		if region == 'custom':
-			(xmin, xmax, ymin, ymax) = (*region_lim,)
+			region_ymin = 0.55*self.height_caustic + self.ycenter_caustic
+			region_ymax = 0.8*self.height_caustic + self.ycenter_caustic
+#		if region == 'both':
+		if 'both' in self.region:
+			region_xmin = -0.5*self.s
+			region_xmax = 0.5*self.s
+			region_ymin = -0.5*self.s
+			region_ymax = 0.5*self.s
+#		if region == 'custom':
+		if 'custom' in self.region:
+			(xmin, xmax, ymin, ymax) = (*self.region_lim,)
 			region_xmin = self.xcenter_caustic + 0.5*xmin*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.5*xmax*self.width_caustic
-			region_ymin = 0.5*ymin*self.height_caustic
-			region_ymax = 0.5*ymax*self.height_caustic
+			region_ymin = 0.5*ymin*self.height_caustic + self.ycenter_caustic
+			region_ymax = 0.5*ymax*self.height_caustic + self.ycenter_caustic
 
 		x_grid = np.linspace(region_xmin, region_xmax, self.res)
 		y_grid = np.linspace(region_ymin, region_ymax, self.res)
@@ -481,6 +549,23 @@ class TripleLens(object):
 			x = self.x_array[idx]
 			y = self.y_array[idx]
 			self.magn_array[idx] = self.get_magnification(x=x, y=y)
+
+	def get_image_positions_array(self):
+		self.image_positions_x_array = [[None] for i in (range(self.res))]
+		self.image_positions_y_array = [[None] for i in (range(self.res))]
+		self.x_array = np.linspace(self.xcenter_caustic - 10*self.width_caustic,
+						self.xcenter_caustic + 10*self.width_caustic, self.res)
+		self.y_array = np.linspace(self.ycenter_caustic - 0.01*self.height_caustic,
+						self.ycenter_caustic + 0.01*self.height_caustic, self.res)
+		for i in range(8):
+			for idx in range(self.res):
+				try:
+					pos = self.get_accepted_solutions(
+							x=self.x_array[idx], y=self.y_array[idx])[i]
+					self.image_positions_x_array[i].append(pos.real)
+					self.image_positions_y_array[i].append(pos.imag)
+				except:
+					continue
 
 	def get_num_images_array(self):
 		"""Fills an array for the number of images through the grid."""
@@ -657,7 +742,7 @@ class TripleLens(object):
 									'before calling get_tstat_outliers()')
 
 	def get_tstat_plot_data(self, cutoff=None, outliers=False,
-			region='caustic', region_lim=None, sample_res=5):
+			sample_res=5):
 		"""
 		Optional parameters:
 
@@ -687,7 +772,7 @@ class TripleLens(object):
 				grid size is 5x5.
 		"""
 
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_coeff_array()
 		self.get_tstat_array(sample_res = sample_res)
 
@@ -836,9 +921,19 @@ class TripleLens(object):
 ### Note: All plots are made in the geometric center frame, regardless
 ### of which frame the calculations were done in.
 
+	def plot_image_positions(self, **kwargs):
+
+		# Get data for plotting
+		kwargs = self.check_kwargs(**kwargs)
+		kwargs['cmap'] = 'coolwarm'
+		self.get_position_arrays()
+		self.get_image_positions_array()
+		for i in range(8):
+			plt.scatter(self.image_positions_x_array[i],
+					self.image_positions_y_array[i], color='blue', **kwargs)
+
 	def plot_num_images(self, errors_only=False, print_errors=True,
-			region='caustic', save=False, region_lim=None,
-			default_settings=True, **kwargs):
+			save=False,	default_settings=True, **kwargs):
 		"""
 		Creates a plot showing number of images on a grid over the specified
 		region.
@@ -873,7 +968,7 @@ class TripleLens(object):
 		# Get data for plotting
 		kwargs = self.check_kwargs(**kwargs)
 		kwargs['cmap'] = 'coolwarm'
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_num_images_array()
 
 #		if print_errors:
@@ -904,14 +999,14 @@ class TripleLens(object):
 			plt.xticks(np.arange(xmin, xmin + 1.2*dx, dx / 4))
 			plt.suptitle('Number of Images', x=0.435)
 			title = ('Frame: {}; Solver: {}; Region: {}'.format(
-					self.origin_title, self.solver_title, region))
+					self.origin_title, self.solver_title, self.region))
 			plt.title(title, fontsize=11)
 
 			if save:
 				self.save_png(file_name=file_name)
 
 	def plot_magnification(self, cutoff=None, log_colorbar=False, 
-			outliers=False, region='caustic', region_lim=None, save=False,
+			outliers=False, save=False,
 			**kwargs):
 		"""
 		Creates a plot showing the magnification on a grid over the specified
@@ -951,7 +1046,7 @@ class TripleLens(object):
 
 		# Get data for plotting
 		kwargs = self.check_kwargs(log_colorbar, **kwargs)
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_magnification_array()
 
 		# Assign plotting variables data according to whether we include
@@ -980,7 +1075,7 @@ class TripleLens(object):
 				cutoff = int(min(magn))
 			plt.suptitle('High Magnification', x=0.435)
 			title = ('Frame: {}; Solver: {}; Region: {}\n'.format(
-					self.origin_title, self.solver_title, region) + 
+					self.origin_title, self.solver_title, self.region) + 
 					'M>{:.0f}'.format(cutoff))
 			plt.title(title, fontsize=11)
 			file_name = ('../Tables/HighMagn_{}_{}.png'.format(
@@ -988,7 +1083,7 @@ class TripleLens(object):
 		else:
 			plt.suptitle('Magnification', x=0.435)
 			title = ('Frame: {}; Solver: {}; Region: {}\n'.format(
-					self.origin_title, self.solver_title, region))
+					self.origin_title, self.solver_title, self.region))
 			plt.title(title, fontsize=11)
 			file_name = ('../Tables/Magn_{}_{}.png'.format(self.solver_file,
 					self.origin_file))
@@ -997,8 +1092,7 @@ class TripleLens(object):
 			self.save_png(file_name=file_name)
 
 	def plot_coefficients(self, cutoff=None, log_colorbar=False,
-			outliers=False, region='caustic', region_lim=None, save=False,
-			**kwargs):
+			outliers=False, save=False, **kwargs):
 		"""
 		Creates a plot showing the magnification on a grid over the specified
 		region.
@@ -1037,7 +1131,7 @@ class TripleLens(object):
 
 		# Get data for plotting
 		kwargs = self.check_kwargs(log_colorbar, **kwargs)
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_magnification_array()
 		self.get_coeff_array()
 		(x, y, magn, coeff) = (self.x_array, self.y_array, self.magn_array,
@@ -1073,7 +1167,7 @@ class TripleLens(object):
 				plt.suptitle('{} vs. Position (Only Outliers)'.format(self.coeff_string[i]),
 							 x=0.435)
 				title = ('Frame: {}; Solver: {}; Region: {}\n'.format(
-						self.origin_title, self.solver_title, region) + 
+						self.origin_title, self.solver_title, self.region) + 
 						's={}, q={}, M>{:.0f}'.format(self.s, self.q, 
 						cutoff))
 				plt.title(title, fontsize=11)
@@ -1083,7 +1177,7 @@ class TripleLens(object):
 				plt.suptitle('{} vs. Position'.format(self.coeff_string[i]),
 							 x=0.435)
 				title = ('Frame: {}; Solver: {}; Region: {}\n'.format(
-						self.origin_title, self.solver_title, region) + 
+						self.origin_title, self.solver_title, self.region) + 
 						's={}, q={}'.format(self.s, self.q))
 				plt.title(title, fontsize=11)
 				file_name = ('../Tables/Magn_{}_{}.png'.format(self.solver_file,
@@ -1093,7 +1187,7 @@ class TripleLens(object):
 			plt.show()
 
 	def plot_magn_coeff(self, color_num=False, cutoff=None, outliers=False,
-				region='caustic', region_lim=None, save=False, **kwargs):
+				save=False, **kwargs):
 		"""
 		Creates a plot showing the magnification on a grid over the specified
 		region.
@@ -1134,7 +1228,7 @@ class TripleLens(object):
 		if 's' not in kwargs:
 			kwargs['s'] = 8
 		kwargs = self.check_kwargs(**kwargs)
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_magnification_array()
 		self.get_num_images_array()
 		self.get_coeff_array()
@@ -1189,14 +1283,14 @@ class TripleLens(object):
 						 x=(0.515 - 0.08*color_num))
 			title = ('{} Solver, {} Frame\n'.format(self.solver_title,
 					self.origin_title)) + ('Region: {}, s={}, q={}'.format(
-					region, self.s, self.q))
+					self.region, self.s, self.q))
 			plt.title(title, fontsize=11)
 			if save:
 				self.save_png(file_name=file_name)
 			plt.show()
 
 	def plot_num_images_coeff(self, color_magn=False, log_colorbar=False, 
-				region='caustic', region_lim=None, save=False, **kwargs):
+				save=False, **kwargs):
 		"""
 		Creates a plot showing the magnification on a grid over the specified
 		region.
@@ -1232,7 +1326,7 @@ class TripleLens(object):
 		if 's' not in kwargs:
 			kwargs['s'] = 8
 		kwargs = self.check_kwargs(log_colorbar=log_colorbar, **kwargs)
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_magnification_array()
 		self.get_num_images_array()
 		self.get_coeff_array()
@@ -1263,14 +1357,14 @@ class TripleLens(object):
 						 x = (0.515 - 0.08*color_magn))
 			title = ('{} Solver, {} Frame\n'.format(self.solver_title,
 					self.origin_title)) + ('Region: {}, s={}, q={}'.format(
-					region, self.s, self.q))
+					self.region, self.s, self.q))
 			plt.title(title, fontsize=11)
 			if save:
 				self.save_png(file_name=file_name)
 			plt.show()
 
-	def plot_coeff_tstat(self, cutoff=None, outliers=False,	region='caustic',
-						region_lim=None, sample_res=5, save=False, **kwargs):
+	def plot_coeff_tstat(self, cutoff=None, outliers=False,	sample_res=5,
+						 save=False, **kwargs):
 		"""
 		Creates a plot showing the t-stat vs. coefficient value for each of 
 		the 12 coefficients.
@@ -1316,8 +1410,7 @@ class TripleLens(object):
 			kwargs['s'] = 5
 		kwargs = self.check_kwargs(**kwargs)
 		(x, y, magn, tstat) = self.get_tstat_plot_data(cutoff=cutoff,
-				outliers=outliers, region=region, region_lim=region_lim,
-				sample_res=sample_res)
+				outliers=outliers, sample_res=sample_res)
 		if cutoff==None:
 			cutoff = int(min(magn))
 
@@ -1339,7 +1432,7 @@ class TripleLens(object):
 			plt.suptitle('t-Test Result vs. {}'.format(self.coeff_string[i]),
 						  x=0.515)
 			title = ('{} Solver, {} Frame\nRegion: {}, M>{}, s={}, q={}'.
-					format(self.solver_title, self.origin_title, region,
+					format(self.solver_title, self.origin_title, self.region,
 					cutoff, self.s, self.q))
 			plt.title(title, fontsize=11)
 			if save:
@@ -1347,8 +1440,7 @@ class TripleLens(object):
 			plt.show()
 
 	def plot_position_tstat(self, cutoff=None, outliers=False,
-			region='caustic', region_lim=None, sample_res=5, save=False,
-			**kwargs):
+			sample_res=5, save=False, **kwargs):
 		"""
 		Creates a plot showing the t-stat vs. position in the specified region.
 
@@ -1387,8 +1479,7 @@ class TripleLens(object):
 
 		kwargs = self.check_kwargs(**kwargs)
 		(x, y, magn, tstat) = self.get_tstat_plot_data(cutoff=cutoff,
-				outliers=outliers, region=region, region_lim=region_lim,
-				sample_res=sample_res)
+				outliers=outliers, sample_res=sample_res)
 		if cutoff==None:
 			cutoff = int(min(magn))
 
@@ -1407,13 +1498,13 @@ class TripleLens(object):
 		if outliers:
 			plt.suptitle('t-test Score vs. Position (Outliers Only)', x=0.435)
 			title('{} Solver; {} Frame\nRegion: {}, M>{:.0f}, s={}, q={}'.
-					format(self.solver_title, self.origin_title, region,
+					format(self.solver_title, self.origin_title, self.region,
 					cutoff, self.s, self.q))
 			plt.title(title, fontsize=11)
 		else:
 			plt.suptitle('t-test Score vs. Position', x=0.435)
 			title = ('{} Solver; {} Frame\nRegion: {}, s={}, q={}'.
-					format(self.solver_title, self.origin_title, region,
+					format(self.solver_title, self.origin_title, self.region,
 					self.s, self.q))
 			plt.title(title, fontsize=11)
 		caustic = mm.Caustics(s=self.s, q=self.q)
@@ -1423,8 +1514,7 @@ class TripleLens(object):
 	# The folowing functions require 2 instances of the class to plot
 
 	def plot_rel_magnification(self, other_BL, log_colorbar=False,
-			outliers=False, ratio_cutoff=None, region='caustic',
-			region_lim=None, save=False, **kwargs):
+			outliers=False, ratio_cutoff=None, save=False, **kwargs):
 		"""
 		Creates a plot showing the relative magnification of two instances
 		of the class on a grid over the specified region.
@@ -1470,9 +1560,9 @@ class TripleLens(object):
 		# Get data for plotting
 		kwargs = self.check_kwargs(log_colorbar, **kwargs)
 		kwargs['s'] *= 0.8
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_magnification_array()
-		other_BL.get_position_arrays(region=region, region_lim=region_lim)
+		other_BL.get_position_arrays()
 		other_BL.get_magnification_array()
 
 		# Assign the appropriate data, based on whether we want to include all
@@ -1510,14 +1600,14 @@ class TripleLens(object):
 		title = ('({} Solver, {} Frame) / ({} Solver, {} Frame)\n'.format(
 				self.solver_title, self.origin_title, other_BL.solver_title,
 				other_BL.origin_title)) + ('Region: {}, s={}, q={}'.format(
-				region, self.s, self.q))
+				self.region, self.s, self.q))
 		plt.title(title, fontsize=11)
 							
 		if save:
 			self.save_png(file_name=file_name)
 
 	def plot_rel_magn_coeff(self, other_BL, outliers=True, ratio_cutoff=None,
-				region='caustic', region_lim=None, save=False, **kwargs):
+				save=False, **kwargs):
 		"""
 		Creates a plot showing the relative magnification of two instances
 		of the class vs. the coefficient value on a grid over the specified
@@ -1563,10 +1653,10 @@ class TripleLens(object):
 		if 's' not in kwargs:
 			kwargs['s'] = 8
 		kwargs = self.check_kwargs(**kwargs)
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_magnification_array()
 		self.get_coeff_array()
-		other_BL.get_position_arrays(region=region, region_lim=region_lim)
+		other_BL.get_position_arrays()
 		other_BL.get_magnification_array()
 
 		rel_magn = self.magn_array / other_BL.magn_array
@@ -1615,7 +1705,7 @@ class TripleLens(object):
 			title = ('({} Solver, {} Frame) / ({} Solver, {} Frame)\n'.format(
 					self.solver_title, self.origin_title, other_BL.solver_title,
 					other_BL.origin_title)) + ('Region: {}, s={}, q={}'.format(
-					region, self.s, self.q))
+					self.region, self.s, self.q))
 			plt.title(title, fontsize=11)
 			if save:
 				self.save_png(file_name=file_name)
@@ -1623,7 +1713,7 @@ class TripleLens(object):
 
 ### The following functions save the relevant data to a .png or .fits file
 
-	def write_to_fits(self, region='caustic', region_lim=None):
+	def write_to_fits(self):
 		"""
 		Writes grid data (x, y, magnification, number of images) at each
 		point to a .fits table. Useful for comparing results between
@@ -1640,7 +1730,7 @@ class TripleLens(object):
 				'get_position_arrays' to see what the limits correspond to.				
 		"""
 
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_magnification_array()
 		self.get_num_images_array()
 		col = []

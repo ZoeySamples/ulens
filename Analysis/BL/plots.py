@@ -5,24 +5,25 @@
 
 import matplotlib.pyplot as plt
 from BinaryLens import BinaryLens as BL
+from Caustics import Caustics as caus
 import MulensModel as mm
 import numpy as np
 
 # Input parameters
 s = 0.9
-mass_ratios = [1e-7]
+mass_ratios = [1e-4]
 solvers =  ['SG12']
 origins = ['plan']
 
 plot_frame = 'caustic'
 
-res = int(120)
+res = int(150)
 sample_res = 5
 region = 'caustic'
-region_lim = (-3, 3, -3, 3)
+region_lim = (-8, 8, -20, 20)
 
 cutoff = 1.5
-specific_frame_derivation = True
+SFD = True
 
 param = []
 plot = []
@@ -32,19 +33,19 @@ def make_plot():
 	for p in plot:
 		for plot_type in plot_types:
 
-			caustic = mm.Caustics(s=s, q=p.q)
+			caustic = caus(lens=p)
 
 			if plot_type == 'num_images':
 				p.plot_num_images(errors_only=False, region=region,
 						region_lim=region_lim, save=False, print_errors=True)
-				caustic.plot(s=1, color='yellow')
+				caustic.plot_caustic(s=1, color='yellow')
 				plt.show()
 
 			if plot_type == 'magn':
 				p.plot_magnification(outliers=False, region=region,
 						region_lim=region_lim, log_colorbar=True, cutoff=cutoff,
 						save=False)
-				caustic.plot(s=1)
+				caustic.plot_caustic(s=1, color='blue')
 				plt.show()
 
 			if plot_type == 'num_iamges_coeff':
@@ -78,7 +79,7 @@ for solver in solvers:
 		for q in mass_ratios:
 			param.append(({'s': s, 'q': q, 'res': res, 'origin': origin,
 					'solver': solver, 'plot_frame': plot_frame,
-					'specific_frame_derivation': specific_frame_derivation}))
+					'SFD': SFD}))
 			plot.append(BL(**param[-1]))
 
 
@@ -93,5 +94,17 @@ plot_types.append('num_images')
 #plot_types.append('position_tstat')
 
 make_plot()
+
+"""
+causticMM = mm.Caustics(s=s, q=plot[0].q)
+causticUL = caus(lens=plot[0])
+causticUL.plot_caustic(s=1, color='yellow')
+causticMM.plot(s=1, color='red')
+plt.show()
+"""
+
 print('\n')
+
+
+
 

@@ -15,6 +15,7 @@ import MulensModel as mm
 from astropy.io import fits
 import BLGetCoeff as getc
 
+
 MODULE_PATH = os.path.abspath(__file__)
 for i in range(2):
 	MODULE_PATH = os.path.dirname(MODULE_PATH)
@@ -105,9 +106,10 @@ class BinaryLens(object):
 				If provided, all polynomial coefficients will be multiplied
 				by this number before the root solver solves the polynomial.
 
-			specific_frame_derivation (bool):
-				If True, the form of the polynomial given by the origin
-				will be used to calculate solutions.
+			SFD (bool):
+				Initialization for "specific frame derivation." If True, the
+				form of the polynomial given by the origin will be used to
+				calculate solutions.
 
 		Global Variables:
 			dm (float):
@@ -146,7 +148,7 @@ class BinaryLens(object):
 
 	def __init__(self, s, q, origin, solver, x=None, y=None, res=None,
 				 tolerance=0.0001, coeff_multiplier=None,
-				 specific_frame_derivation=True, plot_frame='caustic'):
+				 SFD=True, plot_frame='caustic'):
 		self.s = s
 		self.q = q
 		self.origin = origin
@@ -156,7 +158,7 @@ class BinaryLens(object):
 		self.y = y
 #		self.tolerance = tolerance
 		self.coeff_multiplier = coeff_multiplier
-		self.specific_frame_derivation = specific_frame_derivation
+		self.SFD = SFD
 		self.plot_frame = plot_frame
 		self.get_mass()
 		self.get_lensing_body_positions()
@@ -255,7 +257,7 @@ class BinaryLens(object):
 
 		# Assign the values of the coefficients of the polynomial.
 
-		if self.specific_frame_derivation:
+		if self.SFD:
 			calc = self.origin
 		else:
 			calc = 'general'
@@ -280,6 +282,7 @@ class BinaryLens(object):
 			roots = [out[i] + out[i+5] * 1.j for i in range(5)]
 			return np.array(roots)
 		elif self.solver == 'zroots':
+
 			rev_list = coefficients[::-1]
 			out = _zroots_5(*(rev_list.real.tolist() + rev_list.imag.tolist()))
 			roots = [out[i] + out[i+5] * 1.j for i in range(5)]
@@ -394,7 +397,7 @@ class BinaryLens(object):
 			self.height_caustic = np.sqrt(self.q)*(self.s)**3
 
 		if self.plot_frame == 'geo_cent':
-			self.xcenter_caustic = 0.5*self.s - 1.0/self.s
+			self.xcenter_caustic = 0.5*self.s - (1.0/self.s)
 			if self.s >= 1.0:
 				self.ycenter_caustic = 0.
 			else:

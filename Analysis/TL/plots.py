@@ -5,25 +5,29 @@
 
 import matplotlib.pyplot as plt
 from TripleLens import TripleLens as TL
+from Caustics import Caustics as caus
 import MulensModel as mm
 import numpy as np
 
+
 # Input parameters
-s1 = 1.5
-s2 = 0.8
-q1 = 1e-8
-q2 = 5e-2
+system = 'SPM'
+plot_frame = 'geo_cent'
+s1 = 1.3
+s2 = 0.6
+q1=1e-4
+q2=1e-1
 solvers =  ['SG12']
 origins = ['body3']
-phi = 30
+phi = 0
 
-res = int(60)
+res = int(120)
 sample_res = 5
-region = 'caustic'
-region_lim = (0, 1.2, 0, 1.2)
+region = 'caustic3a'
+region_lim = (5, 10, 0, 5)
 
 cutoff = 1.5
-specific_frame_derivation = True
+SFD = True
 
 param = []
 plot = []
@@ -33,22 +37,28 @@ def make_plot():
 	for p in plot:
 		for plot_type in plot_types:
 
-#			caustic = mm.Caustics(s=sPS, q=p.qPS)
+			caustic = caus(lens=p)
 
 			if plot_type == 'num_images':
-				p.plot_num_images(errors_only=False, region=region,
-						region_lim=region_lim, save=False, print_errors=True)
-#				caustic.plot(s=1)
+				p.plot_num_images(errors_only=False, save=False, print_errors=True)
+				caustic.plot_caustic(s=0.2, color='yellow')
 				plt.show()
 
 			if plot_type == 'magn':
-				p.plot_magnification(outliers=False, region=region,
-						region_lim=region_lim, log_colorbar=False, cutoff=cutoff,
+				p.plot_magnification(outliers=False, log_colorbar=True, cutoff=cutoff,
 						save=False)
-#				caustic.plot(s=1)
+#				caustic.plot_caustic(s=0.5, color='red')
 				plt.show()
 
-			if plot_type == 'num_iamges_coeff':
+			if plot_type == 'image_pos':
+				p.plot_image_positions()
+				caustic = caus(lens=plot[0])
+				caustic.calculate()
+				(x, y) = (caustic.critical_curve.x, caustic.critical_curve.y)
+				plt.scatter(x, y, s=1, color='red')
+				plt.show()
+
+			if plot_type == 'num_images_coeff':
 				p.plot_num_images_coeff(color_magn=TPrue, log_colorbar=True,
 						region='caustic', region_lim=None, save=False)
 
@@ -78,13 +88,15 @@ for solver in solvers:
 	for origin in origins:
 		param.append({'s2': s2, 's1': s1, 'phi': phi, 'q2': q2,
 					'q1': q1, 'res': res, 'origin': origin,
-					'solver': solver, 'specific_frame_derivation': 
-					specific_frame_derivation})
+					'region': region, 'region_lim': region_lim,
+					'solver': solver, 'SFD': SFD, 'system': system,
+					'plot_frame': plot_frame})
 		plot.append(TL(**param[-1]))
 
 plot_types = []
-plot_types.append('num_images')
+#plot_types.append('num_images')
 #plot_types.append('magn')
+#plot_types.append('image_pos')
 #plot_types.append('num_iamges_coeff')
 #plot_types.append('magn_coeff')
 #plot_types.append('coeff')
@@ -94,4 +106,3 @@ plot_types.append('num_images')
 
 make_plot()
 print('\n')
-
