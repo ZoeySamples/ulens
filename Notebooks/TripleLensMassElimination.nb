@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       145,          7]
-NotebookDataLength[      3187,         94]
-NotebookOptionsPosition[      2766,         76]
-NotebookOutlinePosition[      3203,         93]
-CellTagsIndexPosition[      3160,         90]
+NotebookDataLength[      3198,         94]
+NotebookOptionsPosition[      2779,         76]
+NotebookOutlinePosition[      3216,         93]
+CellTagsIndexPosition[      3173,         90]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -25,19 +25,18 @@ Cell[BoxData[
   RowBox[{"Solve", "[", 
    RowBox[{
     RowBox[{
-     RowBox[{"qPS", "==", " ", 
+     RowBox[{"q1", "==", " ", 
       RowBox[{"(", 
-       RowBox[{"mPlan", " ", "/", " ", "mStar"}], " ", ")"}]}], "&&", 
-     RowBox[{"qMP", " ", "\[Equal]", 
+       RowBox[{"m2", " ", "/", " ", "m1"}], " ", ")"}]}], "&&", 
+     RowBox[{"q2", " ", "\[Equal]", 
       RowBox[{"(", 
-       RowBox[{"mMoon", " ", "/", " ", "mPlan"}], " ", ")"}]}], "&&", " ", 
+       RowBox[{"m3", " ", "/", " ", "m2"}], " ", ")"}]}], "&&", " ", 
      RowBox[{"mTot", "==", " ", 
       RowBox[{"(", 
-       RowBox[{"mStar", " ", "+", " ", "mPlan", " ", "+", " ", "mMoon"}], 
-       ")"}]}], "&&", 
+       RowBox[{"m1", " ", "+", " ", "m2", " ", "+", " ", "m3"}], ")"}]}], "&&", 
      RowBox[{"mTot", "\[Equal]", "1"}]}], ",", " ", 
     RowBox[{"{", 
-     RowBox[{"mStar", ",", " ", "mPlan", ",", " ", "mMoon"}], "}"}]}], 
+     RowBox[{"m1", ",", " ", "m2", ",", " ", "m3"}], "}"}]}], 
    "]"}]}]], "Input",
  CellChangeTimes->{{3.739117551524576*^9, 3.7391175521543207`*^9}, {
    3.7391175869869213`*^9, 3.739117614314948*^9}, {3.73911765170821*^9, 
@@ -47,31 +46,32 @@ Cell[BoxData[
    3.739118535823021*^9}, {3.739118799619196*^9, 3.7391188049577007`*^9}, {
    3.739118844400084*^9, 3.739118857984557*^9}, {3.739118893907786*^9, 
    3.7391188968831863`*^9}, {3.7391301625738907`*^9, 3.739130176572859*^9}, {
-   3.7391306333559933`*^9, 3.739130642700178*^9}}],
+   3.7391306333559933`*^9, 3.739130642700178*^9}, {3.739641989440675*^9, 
+   3.7396420168448563`*^9}}],
 
 Cell[BoxData[
  RowBox[{"{", 
   RowBox[{"{", 
    RowBox[{
-    RowBox[{"mMoon", "\[Rule]", 
+    RowBox[{"m3", "\[Rule]", 
      FractionBox[
-      RowBox[{"qMP", " ", "qPS"}], 
-      RowBox[{"1", "+", "qPS", "+", 
-       RowBox[{"qMP", " ", "qPS"}]}]]}], ",", 
-    RowBox[{"mStar", "\[Rule]", 
+      RowBox[{"q1", " ", "q2"}], 
+      RowBox[{"1", "+", "q1", "+", 
+       RowBox[{"q1", " ", "q2"}]}]]}], ",", 
+    RowBox[{"m1", "\[Rule]", 
      FractionBox["1", 
-      RowBox[{"1", "+", "qPS", "+", 
-       RowBox[{"qMP", " ", "qPS"}]}]]}], ",", 
-    RowBox[{"mPlan", "\[Rule]", 
-     FractionBox["qPS", 
-      RowBox[{"1", "+", "qPS", "+", 
-       RowBox[{"qMP", " ", "qPS"}]}]]}]}], "}"}], "}"}]], "Output",
+      RowBox[{"1", "+", "q1", "+", 
+       RowBox[{"q1", " ", "q2"}]}]]}], ",", 
+    RowBox[{"m2", "\[Rule]", 
+     FractionBox["q1", 
+      RowBox[{"1", "+", "q1", "+", 
+       RowBox[{"q1", " ", "q2"}]}]]}]}], "}"}], "}"}]], "Output",
  CellChangeTimes->{
   3.739118537388291*^9, {3.7391185850036783`*^9, 3.739118601204088*^9}, {
    3.739118669235937*^9, 3.7391186836602583`*^9}, {3.7391187808361073`*^9, 
    3.7391188084938602`*^9}, 3.739118858803959*^9, 3.739118898007387*^9, 
    3.73913017007101*^9, {3.7391306386589727`*^9, 3.739130643654828*^9}, 
-   3.739188903664562*^9}]
+   3.739188903664562*^9, 3.739642022002952*^9}]
 }, Open  ]]
 },
 WindowSize->{795, 970},
@@ -93,8 +93,8 @@ CellTagsIndex->{}
 (*NotebookFileOutline
 Notebook[{
 Cell[CellGroupData[{
-Cell[567, 22, 1308, 27, 114, "Input"],
-Cell[1878, 51, 872, 22, 101, "Output"]
+Cell[567, 22, 1320, 27, 89, "Input"],
+Cell[1890, 51, 873, 22, 76, "Output"]
 }, Open  ]]
 }
 ]
