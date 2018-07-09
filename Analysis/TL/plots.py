@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: May 22, 2018
 # TLPlots.py
-# Last Updated: Jun 26, 2018
+# Last Updated: Jul 09, 2018
 
 import matplotlib.pyplot as plt
 from TripleLens import TripleLens as TL
@@ -13,7 +13,7 @@ import numpy as np
 # Input parameters
 system = 'SPM'
 plot_frame = 'geo_cent'
-s1 = 1.3
+s1 = 0.8
 s2 = 0.6
 q1=1e-4
 q2=1e-1
@@ -23,7 +23,7 @@ phi = 0
 
 res = int(120)
 sample_res = 5
-region = 'caustic3a'
+region = 'caustic2b'
 region_lim = (5, 10, 0, 5)
 
 cutoff = 1.5
@@ -94,7 +94,7 @@ for solver in solvers:
 		plot.append(TL(**param[-1]))
 
 plot_types = []
-#plot_types.append('num_images')
+plot_types.append('num_images')
 #plot_types.append('magn')
 #plot_types.append('image_pos')
 #plot_types.append('num_iamges_coeff')
