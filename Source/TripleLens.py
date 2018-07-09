@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: June 08, 2018
 # TripleLens.py
-# Last Updated: June 28, 2018
+# Last Updated: Jul 09, 2018
 
 import sys
 import os
@@ -66,7 +66,6 @@ class TripleLens(object):
 
 					'SPM' - A system with a star, a planet, and a moon.
 							{z1,m1}: star; {z2,m2}: plan; {z3,m3}: moon
-							phi is the angle formed by the points z1,z2,z3
 					'SPP' - A system with a star and 2 planets
 							{z1,m1}: star, {z2,m2}: plan1, {z3,m3}: plan2
 					'SSP' - A system with 2 stars and a planet
@@ -498,31 +497,26 @@ class TripleLens(object):
 		self.get_size_caustic()
 		self.get_center_caustic()
 
-#		if region == 'caustic'
 		if 'caustic' in self.region:
 			region_xmin = self.xcenter_caustic - 0.8*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.8*self.width_caustic
 			region_ymin = -0.8*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.8*self.height_caustic + self.ycenter_caustic
-#		if region == 'onax_cusp':
 		if 'onax_cusp' in self.region:
 			region_xmin = self.xcenter_caustic + 0.55*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.8*self.width_caustic
 			region_ymin = -0.10*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.10*self.height_caustic + self.ycenter_caustic
-#		if region == 'offax_cusp':
 		if 'offax_cusp' in self.region:
 			region_xmin = self.xcenter_caustic - 0.10*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.10*self.width_caustic
 			region_ymin = 0.55*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.8*self.height_caustic + self.ycenter_caustic
-#		if region == 'both':
 		if 'both' in self.region:
-			region_xmin = -0.5*self.s
-			region_xmax = 0.5*self.s
-			region_ymin = -0.5*self.s
-			region_ymax = 0.5*self.s
-#		if region == 'custom':
+			region_xmin = -0.5*self.s1
+			region_xmax = 0.5*self.s1
+			region_ymin = -0.5*self.s1
+			region_ymax = 0.5*self.s1
 		if 'custom' in self.region:
 			(xmin, xmax, ymin, ymax) = (*self.region_lim,)
 			region_xmin = self.xcenter_caustic + 0.5*xmin*self.width_caustic
