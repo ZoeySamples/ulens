@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: June 06, 2018
 # BinaryLens.py
-# Last Updated: June 25, 2018
+# Last Updated: Jul 09, 2018
 
 import sys
 import os
@@ -148,7 +148,8 @@ class BinaryLens(object):
 
 	def __init__(self, s, q, origin, solver, x=None, y=None, res=None,
 				 tolerance=0.0001, coeff_multiplier=None,
-				 SFD=True, plot_frame='caustic'):
+				 SFD=True, region='caustic_a', region_lim=None, 
+				 plot_frame='caustic'):
 		self.s = s
 		self.q = q
 		self.origin = origin
@@ -158,6 +159,8 @@ class BinaryLens(object):
 		self.y = y
 #		self.tolerance = tolerance
 		self.coeff_multiplier = coeff_multiplier
+		self.region = region
+		self.region_lim = region_lim
 		self.SFD = SFD
 		self.plot_frame = plot_frame
 		self.get_mass()
@@ -214,46 +217,35 @@ class BinaryLens(object):
 	def get_source_position(self, x, y):
 		"""Define zeta."""
 
-		if self.plot_frame == 'geo_cent':
-			if self.origin == 'geo_cent':
-				self.zeta = x + y*1.j
-			elif self.origin == 'star':
-				self.zeta = (x + self.s/2.) + y*1.j
-			elif self.origin == 'plan':
-				self.zeta = (x - self.s/2.) + y*1.j
-			elif self.origin == 'com':
-				self.zeta = (x + (self.s/2.)*((1. - self.q)/(1. + self.q))) + y*1.j
-			elif self.origin == 'caustic':
-				self.zeta = (x + 1./(self.s) - self.s/2.) + y*1.j
-			else:
-				raise ValueError('Unknown coordinate system: {:}'.format(origin))
+		self.get_size_caustic()
 
-		elif self.plot_frame == 'caustic':
-			if self.origin == 'geo_cent':
-				self.zeta = (x + self.s/2. - 1./self.s) + y*1.j
-			elif self.origin == 'star':
-				self.zeta = (x - 1./self.s + self.s) + y*1.j
-			elif self.origin == 'plan':
-				self.zeta = (x - 1./self.s) + y*1.j
-			elif self.origin == 'com':
-				self.zeta = (x + (self.s/2.)*((1. - self.q)/(1. + self.q)) + self.s/2. - 1./self.s) + y*1.j
-			elif self.origin == 'caustic':
-				self.zeta = x + y*1.j
-			else:
-				raise ValueError('Unknown coordinate system: {:}'.format(origin))
-			if np.abs(self.s) < 1.0:
-				self.zeta += (2*np.sqrt(self.q) / (self.s*np.sqrt(1.+self.s**2)) -
-							 (0.5*np.sqrt(self.q)*(self.s)**3))*1.j
+		if self.origin == 'geo_cent':
+			zeta = x + y*1.j
+		elif self.origin == 'star':
+			zeta = (x + self.s/2.) + y*1.j
+		elif self.origin == 'plan':
+			zeta = (x - self.s/2.) + y*1.j
+		elif self.origin == 'com':
+			zeta = (x + (self.s/2.)*((1. - self.q)/(1. + self.q))) + y*1.j
+		elif self.origin == 'caustic':
+			zeta = (x + 1./(self.s) - self.s/2.) + y*1.j
+		else:
+			raise ValueError('Unknown coordinate system: {:}'.format(origin))
+
+		if self.plot_frame == 'caustic':
+			(xshift, yshift) = self.get_shift()
+			zeta += xshift + 1j*yshift
 
 		else:
 			raise ValueError('Unknown value for plot_frame')
+		return zeta
 
 ### The following functions calculate physical values for further analysis.
 
 	def get_coefficients(self, x, y):
 		"""Returns the coefficients for the polynomial equation."""
 
-		self.get_source_position(x=x, y=y)
+		zeta = self.get_source_position(x=x, y=y)
 
 		# Assign the values of the coefficients of the polynomial.
 
@@ -262,7 +254,7 @@ class BinaryLens(object):
 		else:
 			calc = 'general'
 
-		coefficients = getc.get_coefficients(calc=calc, zeta=self.zeta,
+		coefficients = getc.get_coefficients(calc=calc, zeta=zeta,
 								z1=self.z1, z2=self.z2, m=self.m, dm=self.dm)
 
 		return coefficients
@@ -300,12 +292,13 @@ class BinaryLens(object):
 		lens equation.
 		"""
 
+		zeta = self.get_source_position(x=x, y=y)
 		z = solution
 
 		# This is the binary lens equation.
 		zeta_actual = (z + (self.m - self.dm) / (self.z1_conj - z.conjugate()) +
 					  (self.m + self.dm) / (self.z2_conj - z.conjugate()))
-		if np.abs(self.zeta - zeta_actual) > self.tolerance:
+		if np.abs(zeta - zeta_actual) > self.tolerance:
 			return False
 		else:
 			return True
@@ -313,10 +306,11 @@ class BinaryLens(object):
 	# New method for calculating image positions; not working
 	def get_accepted_solutions(self, x, y):
 		
+		zeta = self.get_source_position(x=x, y=y)
 		roots = self.get_roots(x=x, y=y)
 		lensing_body1 = (self.m - self.dm) / np.conjugate(roots - self.z1)
 		lensing_body2 = (self.m + self.dm) / np.conjugate(roots - self.z2)
-		solutions = self.zeta + lensing_body1 + lensing_body2
+		solutions = zeta + lensing_body1 + lensing_body2
 
 		accepted_solutions = []
 		for (i, root) in enumerate(roots):
@@ -352,7 +346,6 @@ class BinaryLens(object):
 	def get_magnification(self, x, y):
 		"""Returns the magnification for each configuration."""
 
-		
 		magn = 0
 		image_positions = self.get_accepted_solutions(x=x, y=y)
 		for z in image_positions:
@@ -386,32 +379,56 @@ class BinaryLens(object):
 	def get_size_caustic(self):
 		"""
 		Determines the width, height, and position of the center of the
-		caustic.
+		planetary caustic. Estimated as a binary lens.
 		"""
 
-		if self.s >= 1.0:
-			self.width_caustic = 4.*np.sqrt(self.q)*(1. + 1./(2.*(self.s**2))) / (self.s**2)
-			self.height_caustic = 4.*np.sqrt(self.q)*(1. - 1./(2.*(self.s**2))) / (self.s**2)
+		if np.abs(self.s) >= 1.0:
+			self.width_caustic = (4.*np.sqrt(self.q)*
+							(1. + 1./(2.*(self.s**2))) / (self.s**2))
+			self.height_caustic = (4.*np.sqrt(self.q)*
+							(1. - 1./(2.*(self.s**2))) / (self.s**2))
 		else:
 			self.width_caustic = (3*np.sqrt(3) / 4.)*np.sqrt(self.q)*self.s**3
-			self.height_caustic = np.sqrt(self.q)*(self.s)**3
+			self.height_caustic = np.sqrt(self.q)*self.s**3
+
+	def get_center_caustic(self):
 
 		if self.plot_frame == 'geo_cent':
-			self.xcenter_caustic = 0.5*self.s - (1.0/self.s)
-			if self.s >= 1.0:
-				self.ycenter_caustic = 0.
-			else:
-				self.ycenter_caustic = 2*np.sqrt(self.q) / (self.s*np.sqrt(
-									1.+self.s**2)) - 0.5*self.height_caustic
+			(xshift, yshift) = self.get_shift()
+			self.xcenter_caustic = xshift
+			self.ycenter_caustic = yshift
+
 		elif self.plot_frame == 'caustic':
 			self.xcenter_caustic = 0.
 			self.ycenter_caustic = 0.
 		else:
 			raise ValueError('Unknown value for plot_frame.')
 
+	def get_shift(self):
+
+		xshift = (0.5*self.s - 1.0/self.s)
+		yshift = 0.
+		if self.s < 1.0:
+			self.height_center_twin = (2*np.sqrt(self.q) / (self.s*np.sqrt(
+									1.+self.s**2)) - 0.5*self.height_caustic)
+			if self.region[-1] == 'b':
+				yshift -= self.height_center_twin
+			else:
+				# Default to plotting the top caustic if 'a' or 'b'
+				# is not included in region string.
+				yshift += self.height_center_twin
+		return (xshift, yshift)
+
+		#	elif self.region[-1] == 'a':
+		#		yshift += self.height_center_twin
+		#	else:
+		#		raise ValueError('Specify whether you want to focus on the',
+		#				'top caustic or bottom caustic by including a or b',
+		#				'in string variable, region.')
+
 ### The following functions are used for assigning data into grids.
 
-	def get_position_arrays(self, region, region_lim=None):
+	def get_position_arrays(self):
 		"""
 		Fills arrays for the x- and y-position to prepare grid plots.
 
@@ -450,29 +467,30 @@ class BinaryLens(object):
 		"""
 
 		self.get_size_caustic()
+		self.get_center_caustic()
 
-		if region == 'caustic':
+		if 'caustic' in self.region:
 			region_xmin = self.xcenter_caustic - 0.8*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.8*self.width_caustic
 			region_ymin = -0.8*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.8*self.height_caustic + self.ycenter_caustic
-		if region == 'onax_cusp':
+		if 'onax_cusp' in self.region:
 			region_xmin = self.xcenter_caustic + 0.55*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.8*self.width_caustic
 			region_ymin = -0.10*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.10*self.height_caustic + self.ycenter_caustic
-		if region == 'offax_cusp':
+		if 'offax_cusp' in self.region:
 			region_xmin = self.xcenter_caustic - 0.10*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.10*self.width_caustic
 			region_ymin = 0.55*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.8*self.height_caustic + self.ycenter_caustic
-		if region == 'both':
+		if 'both' in self.region:
 			region_xmin = -0.5*self.s
 			region_xmax = 0.5*self.s
 			region_ymin = -0.5*self.s
 			region_ymax = 0.5*self.s
-		if region == 'custom':
-			(xmin, xmax, ymin, ymax) = (*region_lim,)
+		if 'custom' in self.region:
+			(xmin, xmax, ymin, ymax) = (*self.region_lim,)
 			region_xmin = self.xcenter_caustic + 0.5*xmin*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.5*xmax*self.width_caustic
 			region_ymin = 0.5*ymin*self.height_caustic + self.ycenter_caustic
@@ -701,7 +719,7 @@ class BinaryLens(object):
 				grid size is 5x5.
 		"""
 
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_coeff_array()
 		self.get_tstat_array(sample_res = sample_res)
 
@@ -887,7 +905,7 @@ class BinaryLens(object):
 		# Get data for plotting
 		kwargs = self.check_kwargs(**kwargs)
 		kwargs['cmap'] = 'coolwarm'
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_num_images_array()
 
 		if print_errors:
@@ -965,7 +983,7 @@ class BinaryLens(object):
 
 		# Get data for plotting
 		kwargs = self.check_kwargs(log_colorbar, **kwargs)
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_magnification_array()
 
 		# Assign plotting variables data according to whether we include
@@ -1053,7 +1071,7 @@ class BinaryLens(object):
 
 		# Get data for plotting
 		kwargs = self.check_kwargs(log_colorbar, **kwargs)
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_magnification_array()
 		self.get_coeff_array()
 		(x, y, magn, coeff) = (self.x_array, self.y_array, self.magn_array,
@@ -1150,7 +1168,7 @@ class BinaryLens(object):
 		if 's' not in kwargs:
 			kwargs['s'] = 8
 		kwargs = self.check_kwargs(**kwargs)
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_magnification_array()
 		self.get_num_images_array()
 		self.get_coeff_array()
@@ -1248,7 +1266,7 @@ class BinaryLens(object):
 		if 's' not in kwargs:
 			kwargs['s'] = 8
 		kwargs = self.check_kwargs(log_colorbar=log_colorbar, **kwargs)
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_magnification_array()
 		self.get_num_images_array()
 		self.get_coeff_array()
@@ -1486,9 +1504,9 @@ class BinaryLens(object):
 		# Get data for plotting
 		kwargs = self.check_kwargs(log_colorbar, **kwargs)
 		kwargs['s'] *= 0.8
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_magnification_array()
-		other_BL.get_position_arrays(region=region, region_lim=region_lim)
+		other_BL.get_position_arrays()
 		other_BL.get_magnification_array()
 
 		# Assign the appropriate data, based on whether we want to include all
@@ -1579,10 +1597,10 @@ class BinaryLens(object):
 		if 's' not in kwargs:
 			kwargs['s'] = 8
 		kwargs = self.check_kwargs(**kwargs)
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_magnification_array()
 		self.get_coeff_array()
-		other_BL.get_position_arrays(region=region, region_lim=region_lim)
+		other_BL.get_position_arrays()
 		other_BL.get_magnification_array()
 
 		rel_magn = self.magn_array / other_BL.magn_array
@@ -1656,7 +1674,7 @@ class BinaryLens(object):
 				'get_position_arrays' to see what the limits correspond to.				
 		"""
 
-		self.get_position_arrays(region=region, region_lim=region_lim)
+		self.get_position_arrays()
 		self.get_magnification_array()
 		self.get_num_images_array()
 		col = []
