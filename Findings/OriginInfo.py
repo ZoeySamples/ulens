@@ -46,6 +46,7 @@ def num_images_demo():
 
 			# Initialize each binary lens system with the BinaryLens class.
 			param[i][j] = ({'s': s[j], 'q': q, 'res': res, 'origin': origin,
+					'region': region[j], 'region_lim': region_lim,
 					'solver': solver, 'SFD': SFD})
 			plot[i][j] = BL(**param[i][j])
 
@@ -60,8 +61,7 @@ def num_images_demo():
 			kwargs = plot[i][j].check_kwargs()
 			kwargs['cmap'] = cmap
 			kwargs['norm'] = norm
-			plot[i][j].get_position_arrays(region=region[j],
-						region_lim=region_lim)
+			plot[i][j].get_position_arrays()
 			plot[i][j].get_num_images_array()
 			(x, y, num_images) = (plot[i][j].x_array, plot[i][j].y_array,
 						plot[i][j].num_images)
@@ -69,8 +69,8 @@ def num_images_demo():
 			# Create and adjust the plots appropriately.
 			ax[i][j] = plt.subplot(len(mass_ratios), len(origins), idx)
 			sc = ax[i][j].scatter(x, y, c=num_images, vmin=0, vmax=5, **kwargs)
-			caustic = caus(lens=plot[i][j])
-			caustic.plot_caustic(s=1, color='yellow')
+			caustic = caus(lens=plot[i][j], solver='SG12')
+			caustic.plot_caustic(s=1, color='yellow', points=5000)
 			(xmin, xmax) = (min(plot[i][j].x_array), max(plot[i][j].x_array))
 			(ymin, ymax) = (min(plot[i][j].y_array), max(plot[i][j].y_array))
 			(dx, dy) = (xmax-xmin, ymax-ymin)
@@ -135,8 +135,8 @@ def magnification_demo():
 
 			# Initialize each binary lens system with the BinaryLens class.
 			param[i][j] = ({'s': s[j], 'q': q, 'res': res, 'origin': origin,
-					'solver': solver, 'SFD': 
-					SFD})
+					'region': region[j], 'region_lim': region_lim, 
+					'solver': solver, 'SFD': SFD})
 			plot[i][j] = BL(**param[i][j])
 
 			# Get the data for the plots.
@@ -149,8 +149,7 @@ def magnification_demo():
 			kwargs = plot[i][j].check_kwargs()
 			kwargs['cmap'] = cmap
 			kwargs['norm'] = colors.LogNorm()
-			plot[i][j].get_position_arrays(region=region[j],
-						region_lim=region_lim)
+			plot[i][j].get_position_arrays()
 			plot[i][j].get_magnification_array()
 			(x, y, magnification) = (plot[i][j].x_array, plot[i][j].y_array,
 						plot[i][j].magn_array)
@@ -158,8 +157,8 @@ def magnification_demo():
 			# Create and adjust the plots appropriately.
 			ax[i][j] = plt.subplot(len(mass_ratios), len(origins), idx)
 			sc = ax[i][j].scatter(x, y, c=magnification, vmin=1, vmax=100, **kwargs)
-			caustic = caus(lens=plot[i][j])
-			caustic.plot_caustic(s=1, color='blue')
+#			caustic = caus(lens=plot[i][j], solver='SG12')
+#			caustic.plot_caustic(s=1, color='blue', points=5000)
 			(xmin, xmax) = (min(plot[i][j].x_array), max(plot[i][j].x_array))
 			(ymin, ymax) = (min(plot[i][j].y_array), max(plot[i][j].y_array))
 			(dx, dy) = (xmax-xmin, ymax-ymin)
@@ -214,23 +213,23 @@ def magnification_demo():
 
 
 # Here are the input parameters for making the plots.
-s = [0.5, 1.5, 1.5, 1.5]
-
+s = [0.7, 1.5, 1.5, 1.5]
 mass_ratios = [1e-6, 1e-12]
 origins = ['plan', 'plan', 'caustic', 'geo_cent']
-res = int(40)
+res = int(200)
 solver =  'SG12'
-region = ['caustic', 'caustic', 'caustic', 'caustic']
+region = ['caustica', 'caustic', 'caustic', 'caustic']
 region_lim = [-.5, .5, 0.0, 2]
-save_fig = False
-show_fig = True
+save_fig = True
+show_fig = False
 
 SFD = False
-num_images_demo()
+#num_images_demo()
 magnification_demo()
 
+
 SFD = True
-num_images_demo()
+#num_images_demo()
 magnification_demo()
 
 
