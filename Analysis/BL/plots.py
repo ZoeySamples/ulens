@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: May 22, 2018
 # BLPlots.py
-# Last Updated: Jul 09, 2018
+# Last Updated: Jul 10, 2018
 
 import matplotlib.pyplot as plt
 from BinaryLens import BinaryLens as BL
@@ -10,17 +10,17 @@ import MulensModel as mm
 import numpy as np
 
 # Input parameters
-s = 0.8
-mass_ratios = [1e-4]
+s = 1.5
+mass_ratios = [1e-15]
 solvers =  ['SG12']
 origins = ['plan']
 
 plot_frame = 'caustic'
 
-res = int(120)
+res = int(70)
 sample_res = 5
-region = 'caustic_b'
-region_lim = (-1,1,-1,1)
+region = 'caustic'
+region_lim = (0,1.2,0,1.2)
 
 cutoff = 1.5
 SFD = True
@@ -37,7 +37,7 @@ def make_plot():
 
 			if plot_type == 'num_images':
 				p.plot_num_images(errors_only=False, save=False, print_errors=True)
-				caustic.plot_caustic(s=1, color='yellow')
+#				caustic.plot_caustic(s=1, color='yellow')
 				plt.show()
 
 			if plot_type == 'magn':
@@ -79,8 +79,8 @@ for solver in solvers:
 			plot.append(BL(**param[-1]))
 
 plot_types = []
-#plot_types.append('num_images')
-plot_types.append('magn')
+plot_types.append('num_images')
+#plot_types.append('magn')
 #plot_types.append('num_iamges_coeff')
 #plot_types.append('magn_coeff')
 #plot_types.append('coeff')

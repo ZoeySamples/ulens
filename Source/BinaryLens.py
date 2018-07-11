@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: June 06, 2018
 # BinaryLens.py
-# Last Updated: Jul 09, 2018
+# Last Updated: Jul 10, 2018
 
 import sys
 import os
@@ -255,7 +255,7 @@ class BinaryLens(object):
 			calc = 'general'
 
 		coefficients = getc.get_coefficients(calc=calc, zeta=zeta,
-								z1=self.z1, z2=self.z2, m=self.m, dm=self.dm)
+								z1=self.z1, z2=self.z2, m=self.m, dm=self.dm, s=self.s)
 
 		return coefficients
 

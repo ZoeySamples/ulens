@@ -229,7 +229,7 @@ class Caustics(object):
 		self.calculate(points=points)
 		plt.scatter(self.x, self.y, **kwargs)
 
-	def calculate(self, points=8000):
+	def calculate(self, points=5000):
 
 		self.x = []
 		self.y = []
