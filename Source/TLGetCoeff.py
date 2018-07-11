@@ -362,7 +362,8 @@ def get_coefficients(calc, zeta, m3, m2, m1, z3, z2, z1):
 				m1*z3*z2*(-zeta + z1)) +  z3*z2*z1*(zeta*zeta_conj*z3*z2*z1 +  m2*z3*(-zeta + z2)*z1 -  zeta*z2*(m1*z3 + m3*z1))*z1_conj +  z3*z2*z1*z2_conj*(-(zeta*(m2*z3 + m3*z2 -  zeta_conj*z3*z2)*z1) +  m1*z3*z2*(-zeta + z1) -  zeta*z3*z2*z1*z1_conj)))
 
 	else:
-		raise ValueError('Unknown origin')
+		raise ValueError('Not able to retreive coefficients derived for {} frame'.
+							 format(calc))
 
 	coeff_array = np.array([coeff10, coeff9, coeff8, coeff7, coeff6, coeff5,
 						   coeff4, coeff3, coeff2, coeff1, coeff0])
