@@ -5,7 +5,6 @@
 *-fPIC
 *.aux
 *.log
-*.tex
 
 complex.c
 laguer.c
