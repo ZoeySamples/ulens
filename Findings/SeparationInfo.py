@@ -26,8 +26,9 @@ def num_images_demo():
 	fig, ax = plt.subplots(len(mass_ratios), len(separations))
 
 	for (i, q) in enumerate(mass_ratios):
-		for (j, origin) in enumerate(separations):
+		for (j, s) in enumerate(separations):
 			idx = 1 + j + len(separations)*i
+			fontsize=12+len(separations)
 
 			# Initialize each binary lens system with the BinaryLens class.
 			param[i][j] = ({'s': s, 'q': q, 'res': res, 'origin': origin,
@@ -55,35 +56,54 @@ def num_images_demo():
 			ax[i][j] = plt.subplot(len(mass_ratios), len(separations), idx)
 			sc = ax[i][j].scatter(x, y, c=num_images, vmin=0, vmax=5, **kwargs)
 			caustic = caus(lens=plot[i][j], solver='SG12')
-			caustic.plot_caustic(s=1, color='yellow', points=5000)
+			caustic.plot_caustic(s=1, color='yellow', points=2000)
 			(xmin, xmax) = (min(plot[i][j].x_array), max(plot[i][j].x_array))
 			(ymin, ymax) = (min(plot[i][j].y_array), max(plot[i][j].y_array))
 			(dx, dy) = (xmax-xmin, ymax-ymin)
 			plt.xlim(xmin, xmax)
 			plt.ylim(ymin, ymax)
-			plt.xticks(np.arange(xmin+0.2*dx, xmax, 0.6*dx))
-			plt.yticks(np.arange(ymin+0.2*dy, ymax, 0.3*dy))
-			ax[i][j].tick_params(axis='x', labelsize=8+len(separations))
-			ax[i][j].tick_params(axis='y', labelsize=8+len(separations))
+			plt.xticks(np.arange(-0.3*dx, xmax, 0.6*dx))
+			plt.yticks(np.arange(-0.3*dy, ymax, 0.3*dy))
+			ax[i][j].tick_params(axis='x', labelsize=11)
+			ax[i][j].tick_params(axis='y', labelsize=11)
 			ax[i][j].axes.yaxis.set_major_formatter(
-								mtick.FormatStrFormatter('%.1e'))
+								mtick.FormatStrFormatter('%.0e'))
 			ax[i][j].axes.xaxis.set_major_formatter(
-								mtick.FormatStrFormatter('%.2e'))
+								mtick.FormatStrFormatter('%.1e'))
 			if (i == 0):
-				ax[i][j].axes.set_title('{} Frame\ns={}'.format(
-						plot[i][j].origin_title, s), fontsize=12+len(separations))
+				ax[i][j].axes.set_title('s={}'.format(s), fontsize=fontsize)
+
+
+	## Formatting with color bar and constant parameters on top
 
 	# Add an axis for the color bar.
-	cbar = fig.add_axes([0.20, 0.09, 0.60, 0.04])
+	cbar = fig.add_axes([0.12, 0.90, 0.60, 0.03])
 	num_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks, orientation='horizontal')
-	num_color.set_label('Number of Images', fontsize=12+len(separations), labelpad=1)
+	num_color.set_label('Number of Images', fontsize=fontsize, labelpad=-66)
 	cbar.axes.tick_params(labelsize=8+len(separations))
 
 	for (i, q) in enumerate(mass_ratios):
-		fig.text(0.93, 0.90 - .33/len(mass_ratios) - .79*i/len(mass_ratios), 'q={}'.format(q), ha='center', va='center', fontsize=12+len(separations))
+		fig.text(0.92, 0.81 - .33/len(mass_ratios) - .77*i/len(mass_ratios), 'q={:.0e}'.format(q), ha='center', va='center', fontsize=11+len(separations))
+	fig.text(0.79, 0.91, '{} Frame\n{} Solver'.format(plot[0][0].origin_title,
+							plot[0][0].solver_title), fontsize=11+len(separations))
+
+	plt.subplots_adjust(wspace=0.50, hspace=0.20, top=0.82, bottom=0.06, left=0.12, right=0.88)
+	plt.gcf().set_size_inches(3.0*len(separations)+0.5, 2.0*len(mass_ratios)+1.0)
+
+	## Formatting with color bar and constant parameters on top
+	"""
+	# Add an axis for the color bar.
+	cbar = fig.add_axes([0.20, 0.09, 0.60, 0.04])
+	num_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks, orientation='horizontal')
+	num_color.set_label('Number of Images', fontsize=fontsize, labelpad=1)
+	cbar.axes.tick_params(labelsize=8+len(separations))
+
+	for (i, q) in enumerate(mass_ratios):
+		fig.text(0.93, 0.90 - .33/len(mass_ratios) - .79*i/len(mass_ratios), 'q={:.0e}'.format(q), ha='center', va='center', fontsize=fontsize)
 
 	plt.subplots_adjust(wspace=0.5, hspace=0.15, top=0.90, bottom=0.19, left=0.12, right=0.88)
 	plt.gcf().set_size_inches(3.0*len(separations)+1.0, 2.5*len(mass_ratios)+1.5)
+	"""
 
 	# Save the plot as a .png file.
 	if save_fig:
@@ -109,8 +129,9 @@ def magnification_demo():
 	fig, ax = plt.subplots(len(mass_ratios), len(separations))
 
 	for (i, q) in enumerate(mass_ratios):
-		for (j, origin) in enumerate(separations):
+		for (j, s) in enumerate(separations):
 			idx = 1 + j + len(separations)*i
+			fontsize=12+len(separations)
 
 			# Initialize each binary lens system with the BinaryLens class.
 			param[i][j] = ({'s': s, 'q': q, 'res': res, 'origin': origin,
@@ -137,14 +158,14 @@ def magnification_demo():
 			ax[i][j] = plt.subplot(len(mass_ratios), len(separations), idx)
 			sc = ax[i][j].scatter(x, y, c=magnification, vmin=1, vmax=100, **kwargs)
 #			caustic = caus(lens=plot[i][j], solver='SG12')
-#			caustic.plot_caustic(s=1, color='blue', points=5000)
+#			caustic.plot_caustic(s=1, color='blue', points=2000)
 			(xmin, xmax) = (min(plot[i][j].x_array), max(plot[i][j].x_array))
 			(ymin, ymax) = (min(plot[i][j].y_array), max(plot[i][j].y_array))
 			(dx, dy) = (xmax-xmin, ymax-ymin)
 			plt.xlim(xmin, xmax)
 			plt.ylim(ymin, ymax)
-			plt.xticks(np.arange(xmin+0.2*dx, xmax, 0.6*dx))
-			plt.yticks(np.arange(ymin+0.2*dy, ymax, 0.3*dy))
+			plt.xticks(np.arange(-0.3*dx, xmax, 0.6*dx))
+			plt.yticks(np.arange(-0.3*dy, ymax, 0.3*dy))
 			ax[i][j].tick_params(axis='x', labelsize=8+len(separations))
 			ax[i][j].tick_params(axis='y', labelsize=8+len(separations))
 			ax[i][j].axes.yaxis.set_major_formatter(
@@ -152,20 +173,39 @@ def magnification_demo():
 			ax[i][j].axes.xaxis.set_major_formatter(
 								mtick.FormatStrFormatter('%.3e'))
 			if (i == 0):
-				ax[i][j].axes.set_title('{} Frame\ns={}'.format(
-						plot[i][j].origin_title, s), fontsize=12+len(separations))
+				ax[i][j].axes.set_title('s={}'.format(s), fontsize=fontsize)
+
+	## Formatting with color bar and constant parameters on top
 
 	# Add an axis for the color bar.
-	cbar = fig.add_axes([0.20, 0.09, 0.60, 0.04])
-	magn_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks, orientation='horizontal')
-	magn_color.set_label('Magnification', fontsize=12+len(separations), labelpad=1)
+	cbar = fig.add_axes([0.12, 0.90, 0.60, 0.03])
+	num_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks, orientation='horizontal')
+	num_color.set_label('Magnification', fontsize=fontsize, labelpad=-66)
 	cbar.axes.tick_params(labelsize=8+len(separations))
 
 	for (i, q) in enumerate(mass_ratios):
-		fig.text(0.93, 0.90 - .33/len(mass_ratios) - .79*i/len(mass_ratios), 'q={}'.format(q), ha='center', va='center', fontsize=12+len(separations))
+		fig.text(0.92, 0.81 - .33/len(mass_ratios) - .77*i/len(mass_ratios), 'q={:.0e}'.format(q), ha='center', va='center', fontsize=11+len(separations))
+	fig.text(0.79, 0.91, '{} Frame\n{} Solver'.format(plot[0][0].origin_title,
+							plot[0][0].solver_title), fontsize=11+len(separations))
+
+	plt.subplots_adjust(wspace=0.50, hspace=0.20, top=0.82, bottom=0.06, left=0.12, right=0.88)
+	plt.gcf().set_size_inches(3.0*len(separations)+0.5, 2.0*len(mass_ratios)+1.0)
+
+	## Formatting with color bar and constant parameters on top
+	"""
+	# Add an axis for the color bar.
+	cbar = fig.add_axes([0.20, 0.09, 0.60, 0.04])
+	magn_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks, orientation='horizontal')
+	magn_color.set_label('Magnification', fontsize=fontsize, labelpad=1)
+	cbar.axes.tick_params(labelsize=8+len(separations))
+
+
+	for (i, q) in enumerate(mass_ratios):
+		fig.text(0.93, 0.90 - .33/len(mass_ratios) - .79*i/len(mass_ratios), 'q={:.0e}'.format(q), ha='center', va='center', fontsize=fontsize)
 
 	plt.subplots_adjust(wspace=0.5, hspace=0.15, top=0.90, bottom=0.19, left=0.12, right=0.88)
 	plt.gcf().set_size_inches(3.0*len(separations)+1.0, 2.5*len(mass_ratios)+1.5)
+	"""
 
 	# Save the plot as a .png file.
 	if save_fig:
@@ -186,24 +226,17 @@ def magnification_demo():
 
 
 # Here are the input parameters for making the plots.
-s = 1.5
-mass_ratios = [1e-6, 1e-12]
-origins = 'plan'
-res = int(20)
+separations = [0.6, 0.9, 1.1, 2.0, 5.0, 20.]
+mass_ratios = [1e-3, 1e-6, 1e-9, 1e-12]
+origin = 'plan'
+res = int(200)
 solver =  'SG12'
-region = 'caustic'
-region_lim = [-.5, .5, 0.0, 2]
+region = 'caustic_a'
+region_lim = [0, 40, -5, 5]
 save_fig = False
 show_fig = True
 
-SFD = False
+SFD = True
 num_images_demo()
 magnification_demo()
-
-
-SFD = True
-#num_images_demo()
-#magnification_demo()
-
-
 

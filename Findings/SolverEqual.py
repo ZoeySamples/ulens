@@ -65,8 +65,8 @@ def num_images_demo():
 			(dx, dy) = (xmax-xmin, ymax-ymin)
 			plt.xlim(xmin, xmax)
 			plt.ylim(ymin, ymax)
-			plt.xticks(np.arange(xmin+0.2*dx, xmax, 0.6*dx))
-			plt.yticks(np.arange(ymin+0.2*dy, ymax, 0.3*dy))
+			plt.xticks(np.arange(-0.3*dx, xmax, 0.6*dx))
+			plt.yticks(np.arange(-0.3*dy, ymax, 0.3*dy))
 			ax[i][j].tick_params(axis='x', labelsize=8+len(solvers))
 			ax[i][j].tick_params(axis='y', labelsize=8+len(solvers))
 			ax[i][j].axes.yaxis.set_major_formatter(
@@ -87,7 +87,7 @@ def num_images_demo():
 	cbar.axes.tick_params(labelsize=8+len(solvers))
 
 	for (i, q) in enumerate(mass_ratios):
-		fig.text(0.93, 0.80 - .33/len(mass_ratios) - .78*i/len(mass_ratios), 'q={}'.format(q), ha='center', va='center', fontsize=12+len(solvers))
+		fig.text(0.93, 0.80 - .33/len(mass_ratios) - .78*i/len(mass_ratios), 'q={:.0e}'.format(q), ha='center', va='center', fontsize=12+len(solvers))
 	fig.text(0.76, 0.91, 's={}; {} Frame'.format(s, plot[i][j].origin_title), fontsize=11+len(solvers))
 
 	plt.subplots_adjust(wspace=0.5, hspace=0.18, top=0.80, bottom=0.06, left=0.12, right=0.88)
@@ -168,8 +168,8 @@ def magnification_demo():
 			(dx, dy) = (xmax-xmin, ymax-ymin)
 			plt.xlim(xmin, xmax)
 			plt.ylim(ymin, ymax)
-			plt.xticks(np.arange(xmin+0.2*dx, xmax, 0.6*dx))
-			plt.yticks(np.arange(ymin+0.2*dy, ymax, 0.3*dy))
+			plt.xticks(np.arange(-0.3*dx, xmax, 0.6*dx))
+			plt.yticks(np.arange(-0.3*dy, ymax, 0.3*dy))
 			ax[i][j].tick_params(axis='x', labelsize=8+len(solvers))
 			ax[i][j].tick_params(axis='y', labelsize=8+len(solvers))
 			ax[i][j].axes.yaxis.set_major_formatter(
@@ -190,7 +190,7 @@ def magnification_demo():
 	cbar.axes.tick_params(labelsize=8+len(solvers))
 
 	for (i, q) in enumerate(mass_ratios):
-		fig.text(0.93, 0.80 - .33/len(mass_ratios) - .78*i/len(mass_ratios), 'q={}'.format(q), ha='center', va='center', fontsize=12+len(solvers))
+		fig.text(0.93, 0.80 - .33/len(mass_ratios) - .78*i/len(mass_ratios), 'q={:.0e}'.format(q), ha='center', va='center', fontsize=12+len(solvers))
 	fig.text(0.76, 0.91, 's={}; {} Frame'.format(s, plot[i][j].origin_title), fontsize=11+len(solvers))
 
 	plt.subplots_adjust(wspace=0.5, hspace=0.18, top=0.80, bottom=0.06, left=0.12, right=0.88)
@@ -234,7 +234,7 @@ def magnification_demo():
 s = 1.5
 mass_ratios = [1e-14, 1e-15, 1e-16]
 origin = 'plan'
-res = int(80)
+res = int(10)
 solvers =  ['SG12', 'zroots', 'numpy']
 region = 'custom'
 region_lim = [0.7, 1.3, -0.15, 0.15]

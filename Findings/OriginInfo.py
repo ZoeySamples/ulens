@@ -76,8 +76,8 @@ def num_images_demo():
 			(dx, dy) = (xmax-xmin, ymax-ymin)
 			plt.xlim(xmin, xmax)
 			plt.ylim(ymin, ymax)
-			plt.xticks(np.arange(xmin+0.2*dx, xmax, 0.6*dx))
-			plt.yticks(np.arange(ymin+0.2*dy, ymax, 0.3*dy))
+			plt.xticks(np.arange(-0.3*dx, xmax, 0.6*dx))
+			plt.yticks(np.arange(-0.3*dy, ymax, 0.3*dy))
 			ax[i][j].tick_params(axis='x', labelsize=8+len(origins))
 			ax[i][j].tick_params(axis='y', labelsize=8+len(origins))
 			ax[i][j].axes.yaxis.set_major_formatter(
@@ -97,7 +97,7 @@ def num_images_demo():
 	cbar.axes.tick_params(labelsize=8+len(origins))
 
 	for (i, q) in enumerate(mass_ratios):
-		fig.text(0.94, 0.76 - .33/len(mass_ratios) - .76*i/len(mass_ratios), 'q={}'.format(q), ha='center', va='center', fontsize=12+len(origins))
+		fig.text(0.94, 0.76 - .33/len(mass_ratios) - .76*i/len(mass_ratios), 'q={:.0e}'.format(q), ha='center', va='center', fontsize=12+len(origins))
 	fig.text(0.74, 0.905, 's={}; {} Solver'.format(s, plot[i][j].solver_title), fontsize=11+len(origins))
 
 	plt.subplots_adjust(wspace=0.6, hspace=0.22, top=0.75, bottom=0.06, left=0.08, right=0.90)
@@ -178,8 +178,8 @@ def magnification_demo():
 			(dx, dy) = (xmax-xmin, ymax-ymin)
 			plt.xlim(xmin, xmax)
 			plt.ylim(ymin, ymax)
-			plt.xticks(np.arange(xmin+0.2*dx, xmax, 0.6*dx))
-			plt.yticks(np.arange(ymin+0.2*dy, ymax, 0.3*dy))
+			plt.xticks(np.arange(-0.3*dx, xmax, 0.6*dx))
+			plt.yticks(np.arange(-0.3*dy, ymax, 0.3*dy))
 			ax[i][j].tick_params(axis='x', labelsize=8+len(origins))
 			ax[i][j].tick_params(axis='y', labelsize=8+len(origins))
 			ax[i][j].axes.yaxis.set_major_formatter(
@@ -199,7 +199,7 @@ def magnification_demo():
 	cbar.axes.tick_params(labelsize=8+len(origins))
 
 	for (i, q) in enumerate(mass_ratios):
-		fig.text(0.94, 0.75 - .33/len(mass_ratios) - .76*i/len(mass_ratios), 'q={}'.format(q), ha='center', va='center', fontsize=12+len(origins))
+		fig.text(0.94, 0.75 - .33/len(mass_ratios) - .76*i/len(mass_ratios), 'q={:.0e}'.format(q), ha='center', va='center', fontsize=12+len(origins))
 	fig.text(0.74, 0.905, 's={}; {} Solver'.format(s, plot[i][j].solver_title), fontsize=11+len(origins))
 
 	plt.subplots_adjust(wspace=0.6, hspace=0.22, top=0.74, bottom=0.06, left=0.08, right=0.90)
@@ -243,7 +243,7 @@ def magnification_demo():
 s = 1.5
 mass_ratios = [1e-6, 1e-12]
 origins = ['plan', 'caustic', 'geo_cent', 'star', 'com']
-res = int(80)
+res = int(10)
 solver =  'SG12'
 region = 'caustic'
 region_lim = [-.5, .5, 0.0, 2]
@@ -251,12 +251,12 @@ save_fig = False
 show_fig = True
 
 SFD = False
-#num_images_demo()
-#magnification_demo()
+num_images_demo()
+magnification_demo()
 
 SFD = True
 num_images_demo()
-#magnification_demo()
+magnification_demo()
 
 
 

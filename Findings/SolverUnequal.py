@@ -65,8 +65,8 @@ def num_images_demo():
 			(dx, dy) = (xmax-xmin, ymax-ymin)
 			plt.xlim(xmin, xmax)
 			plt.ylim(ymin, ymax)
-			plt.xticks(np.arange(xmin+0.2*dx, xmax, 0.6*dx))
-			plt.yticks(np.arange(ymin+0.2*dy, ymax, 0.3*dy))
+			plt.xticks(np.arange(-0.3*dx, xmax, 0.6*dx))
+			plt.yticks(np.arange(-0.3*dy, ymax, 0.3*dy))
 			ax[i][j].tick_params(axis='x', labelsize=8+len(solvers))
 			ax[i][j].tick_params(axis='y', labelsize=8+len(solvers))
 			ax[i][j].axes.yaxis.set_major_formatter(
@@ -85,7 +85,7 @@ def num_images_demo():
 	## Formatting with color bar and constant parameters on top
 
 	# Add an axis for the color bar.
-	cbar = fig.add_axes([0.12, 0.90, 0.60, 0.04])
+	cbar = fig.add_axes([0.12, 0.90, 0.60, 0.03])
 	num_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks, orientation='horizontal')
 	num_color.set_label('Number of Images', fontsize=12+len(solvers), labelpad=-66)
 	cbar.axes.tick_params(labelsize=8+len(solvers))
@@ -99,11 +99,11 @@ def num_images_demo():
 		if format(origin_title) == 'Center-of-Mass':
 			origin_title = 'Center-\nof-Mass'
 			fontsize -= 1
-		fig.text(0.90, 0.80 - .33/len(origins) - .77*i/len(origins), '{}\nFrame'.format(origin_title), ha='center', va='center', fontsize=fontsize)
+		fig.text(0.91, 0.81 - .33/len(origins) - .77*i/len(origins), '{}\nFrame'.format(origin_title), ha='center', va='center', fontsize=fontsize)
 	fig.text(0.79, 0.91, 's={}; q={}'.format(s, q), fontsize=11+len(solvers))
 
-	plt.subplots_adjust(wspace=0.12, hspace=0.12, top=0.82, bottom=0.06, left=0.12, right=0.80)
-	plt.gcf().set_size_inches(3.0*len(solvers)+1.0, 2.0*len(origins)+1.0)
+	plt.subplots_adjust(wspace=0.12, hspace=0.12, top=0.82, bottom=0.06, left=0.12, right=0.84)
+	plt.gcf().set_size_inches(3.0*len(solvers)+0.5, 2.0*len(origins)+1.0)
 
 	## Formatting with color bar and constant parameters on top
 	"""
@@ -184,8 +184,8 @@ def magnification_demo():
 			(dx, dy) = (xmax-xmin, ymax-ymin)
 			plt.xlim(xmin, xmax)
 			plt.ylim(ymin, ymax)
-			plt.xticks(np.arange(xmin+0.2*dx, xmax, 0.6*dx))
-			plt.yticks(np.arange(ymin+0.2*dy, ymax, 0.3*dy))
+			plt.xticks(np.arange(-0.3*dx, xmax, 0.6*dx))
+			plt.yticks(np.arange(-0.3*dy, ymax, 0.3*dy))
 			ax[i][j].tick_params(axis='x', labelsize=8+len(solvers))
 			ax[i][j].tick_params(axis='y', labelsize=8+len(solvers))
 			ax[i][j].axes.yaxis.set_major_formatter(
@@ -204,7 +204,7 @@ def magnification_demo():
 	## Formatting with color bar and constant parameters on top
 
 	# Add an axis for the color bar.
-	cbar = fig.add_axes([0.12, 0.90, 0.60, 0.04])
+	cbar = fig.add_axes([0.12, 0.90, 0.60, 0.03])
 	magn_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks, orientation='horizontal')
 	magn_color.set_label('Magnification', fontsize=12+len(solvers), labelpad=-66)
 	cbar.axes.tick_params(labelsize=8+len(solvers))
@@ -218,12 +218,12 @@ def magnification_demo():
 		if format(origin_title) == 'Center-of-Mass':
 			origin_title = 'Center-\nof-Mass'
 			fontsize -= 1
-		fig.text(0.90, 0.80 - .33/len(origins) - .77*i/len(origins), '{}\nFrame'.format(origin_title), ha='center', va='center', fontsize=fontsize)
+		fig.text(0.91, 0.81 - .33/len(origins) - .77*i/len(origins), '{}\nFrame'.format(origin_title), ha='center', va='center', fontsize=fontsize)
 	fig.text(0.79, 0.91, 's={}; q={}'.format(s, q), fontsize=11+len(solvers))
 
 
-	plt.subplots_adjust(wspace=0.12, hspace=0.12, top=0.82, bottom=0.06, left=0.12, right=0.80)
-	plt.gcf().set_size_inches(3.0*len(solvers)+1.0, 2.0*len(origins)+1.0)
+	plt.subplots_adjust(wspace=0.12, hspace=0.12, top=0.82, bottom=0.06, left=0.12, right=0.84)
+	plt.gcf().set_size_inches(3.0*len(solvers)+0.5, 2.0*len(origins)+1.0)
 
 	## Formatting with color bar and constant parameters on bottom
 	"""
@@ -267,7 +267,7 @@ def magnification_demo():
 s = 1.5
 q = 4e-8
 origins = ['geo_cent', 'caustic', 'plan', 'star', 'com']
-res = int(100)
+res = int(10)
 solvers =  ['SG12', 'zroots', 'numpy']
 region = 'custom'
 region_lim = [0.7, 1.3, -0.15, 0.15]
