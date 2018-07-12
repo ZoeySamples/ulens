@@ -9,17 +9,18 @@ from Caustics import Caustics as caus
 import MulensModel as mm
 import numpy as np
 
+
 # Input parameters
-s = 1.5
-mass_ratios = [1e-15]
+s = 5000
+mass_ratios = [1e-1]
 solvers =  ['SG12']
 origins = ['plan']
 
 plot_frame = 'caustic'
 
-res = int(70)
+res = int(100)
 sample_res = 5
-region = 'caustic'
+region = 'custom_a'
 region_lim = (0,1.2,0,1.2)
 
 cutoff = 1.5
@@ -33,16 +34,16 @@ def make_plot():
 	for p in plot:
 		for plot_type in plot_types:
 
-			caustic = caus(lens=p, solver='SG12')
-
 			if plot_type == 'num_images':
 				p.plot_num_images(errors_only=False, save=False, print_errors=True)
-#				caustic.plot_caustic(s=1, color='yellow')
+				caustic = caus(lens=p, solver='SG12')
+				caustic.plot_caustic(s=1, color='yellow')
 				plt.show()
 
 			if plot_type == 'magn':
 				p.plot_magnification(outliers=False, log_colorbar=True, cutoff=cutoff,
 						save=False)
+				caustic = caus(lens=p, solver='SG12')
 				#caustic.plot_caustic(s=1, color='blue')
 				plt.show()
 
@@ -85,6 +86,7 @@ plot_types.append('num_images')
 #plot_types.append('magn_coeff')
 #plot_types.append('coeff')
 #plot_types.append('fits')
+
 #plot_types.append('coeff_tstat')
 #plot_types.append('position_tstat')
 
