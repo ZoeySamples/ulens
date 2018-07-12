@@ -157,6 +157,8 @@ class Caustics(object):
 		self.lens = lens
 		self.plot_frame = self.lens.plot_frame
 
+		self.lens.get_caustic_param(refine=True)
+
 		if isinstance(self.lens, BL):
 			self.lens_type = 'BL'
 			self.s = self.lens.s
@@ -178,15 +180,13 @@ class Caustics(object):
 			self.m3 = self.q2*self.q1 / denominator
 			self.get_TL_lensing_body_positions()
 
-
 	def get_BL_lensing_body_positions(self):
 
 		self.z1 = 0.5*self.s + 0j	#This is the planet.
 		self.z2 = -0.5*self.s + 0j	#This is the star.
 
 		if self.plot_frame == 'caustic':
-			self.lens.get_size_caustic()
-			(xshift, yshift) = self.lens.get_shift()
+			(xshift, yshift) = (self.lens.xshift, self.lens.yshift)
 			self.z1 -= xshift + 1j*yshift
 			self.z2 -= xshift + 1j*yshift
 
@@ -247,7 +247,6 @@ class Caustics(object):
 				coeff2 = (z1**2 + 4*z1*z2 + z2**2 - 2*m*exp_ialpha)
 				coeff1 = (-2*z1**2*z2 - 2*z1*z2**2 + 2*dm*z1*exp_ialpha - 2*dm*z2*exp_ialpha + 2*m*(z1 + z2)*exp_ialpha)
 				coeff0 = (z1**2*z2**2 - dm*z1**2*exp_ialpha - m*z1**2*exp_ialpha + dm*z2**2*exp_ialpha - m*z2**2*exp_ialpha)
-
 
 				coefficients = np.array([coeff4, coeff3, coeff2, coeff1, coeff0])
 

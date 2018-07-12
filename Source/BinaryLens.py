@@ -150,6 +150,9 @@ class BinaryLens(object):
 				 tolerance=0.0001, coeff_multiplier=None,
 				 SFD=True, region='caustic_a', region_lim=None, 
 				 plot_frame='caustic'):
+
+		self._got_refined_param = False
+
 		self.s = s
 		self.q = q
 		self.origin = origin
@@ -165,7 +168,10 @@ class BinaryLens(object):
 		self.plot_frame = plot_frame
 		self.get_mass()
 		self.get_lensing_body_positions()
+		self.get_caustic_param(refine=False)
 		self.strings()
+
+
 
 ### The following functions assign values to variables pertaining to the class.
 
@@ -217,8 +223,6 @@ class BinaryLens(object):
 	def get_source_position(self, x, y):
 		"""Define zeta."""
 
-		self.get_size_caustic()
-
 		if self.origin == 'geo_cent':
 			zeta = x + y*1.j
 		elif self.origin == 'star':
@@ -233,8 +237,9 @@ class BinaryLens(object):
 			raise ValueError('Unknown coordinate system: {:}'.format(origin))
 
 		if self.plot_frame == 'caustic':
-			(xshift, yshift) = self.get_shift()
-			zeta += xshift + 1j*yshift
+			if self._got_refined_param == False:
+				self.get_caustic_param(refine=True)
+			zeta += self.xshift + 1j*self.yshift
 
 		else:
 			raise ValueError('Unknown value for plot_frame')
@@ -384,19 +389,18 @@ class BinaryLens(object):
 
 		if np.abs(self.s) >= 1.0:
 			self.width_caustic = (4.*np.sqrt(self.q)*
-							(1. + 1./(2.*(self.s**2))) / (self.s**2))
+							(1. + 1./(2.*(self.s**2)))/(self.s**2))
 			self.height_caustic = (4.*np.sqrt(self.q)*
-							(1. - 1./(2.*(self.s**2))) / (self.s**2))
+							(1. - 1./(2.*(self.s**2)))/(self.s**2))
 		else:
-			self.width_caustic = (3*np.sqrt(3) / 4.)*np.sqrt(self.q)*self.s**3
+			self.width_caustic = (3*np.sqrt(3)/4.)*np.sqrt(self.q)*self.s**3
 			self.height_caustic = np.sqrt(self.q)*self.s**3
 
-	def get_center_caustic(self):
+	def assign_center_caustic(self):
 
 		if self.plot_frame == 'geo_cent':
-			(xshift, yshift) = self.get_shift()
-			self.xcenter_caustic = xshift
-			self.ycenter_caustic = yshift
+			self.xcenter_caustic = self.xshift
+			self.ycenter_caustic = self.yshift
 
 		elif self.plot_frame == 'caustic':
 			self.xcenter_caustic = 0.
@@ -404,27 +408,107 @@ class BinaryLens(object):
 		else:
 			raise ValueError('Unknown value for plot_frame.')
 
-	def get_shift(self):
+	def get_caustic_param(self, refine=True):
 
-		xshift = (0.5*self.s - 1.0/self.s)
-		yshift = 0.
-		if self.s < 1.0:
-			self.height_center_twin = (2*np.sqrt(self.q) / (self.s*np.sqrt(
-									1.+self.s**2)) - 0.5*self.height_caustic)
-			if self.region[-1] == 'b':
-				yshift -= self.height_center_twin
-			else:
-				# Default to plotting the top caustic if 'a' or 'b'
-				# is not included in region string.
-				yshift += self.height_center_twin
-		return (xshift, yshift)
+		def get_first_shift():
+			# Assign the relative position of the approximate caustic center
+			# in the geometric center frame.
+			self.xshift = (0.5*self.s - 1.0/self.s)
+			self.yshift = 0.
+			if self.s < 1.0:
+				# If s<1, determine the height of the bifurcated caustics
+				# and shift to its approximated location.
+				self.height_center_twin = (2*np.sqrt(self.q) / (self.s*np.sqrt(
+										1.+self.s**2)) - 0.5*self.height_caustic)
+				if self.region[-1] == 'b':
+					# Shift to the bottom caustic.
+					self.yshift -= self.height_center_twin
+				else:
+					# Shift to the top caustic (default if not specified).
+					self.yshift += self.height_center_twin
 
-		#	elif self.region[-1] == 'a':
-		#		yshift += self.height_center_twin
-		#	else:
-		#		raise ValueError('Specify whether you want to focus on the',
-		#				'top caustic or bottom caustic by including a or b',
-		#				'in string variable, region.')
+		def make_corrections():
+
+			"""
+			(x_caus, y_caus) = make_caustic()
+			(x_local_caustic, y_local_caustic) = get_local_caustic(
+												 x_caus, y_caus)
+	
+			if len(x_local_caustic) == 0:
+				print('The first order caustic check failed.')
+				apply_second_shift(x_caus, y_caus)
+				(x_caus, y_caus) = make_caustic()
+				(x_local_caustic, y_local_caustic) = get_local_caustic(
+												 	 x_caus, y_caus)
+			"""
+
+			(x_caus, y_caus) = make_caustic()
+			apply_second_shift(x_caus, y_caus)
+			(x_caus, y_caus) = make_caustic()
+			(x_local_caustic, y_local_caustic) = get_local_caustic(
+											 	 x_caus, y_caus)
+
+			xmin_caustic = min(x_local_caustic)
+			xmax_caustic = max(x_local_caustic)
+			ymin_caustic = min(y_local_caustic)
+			ymax_caustic = max(y_local_caustic)
+			self.width_caustic = (xmax_caustic - xmin_caustic)
+			self.height_caustic = (ymax_caustic - ymin_caustic)
+			self.xshift -= (self.xcenter_caustic - xmin_caustic - 0.5*self.width_caustic)
+			self.yshift -= (self.ycenter_caustic - ymin_caustic - 0.5*self.height_caustic)
+			self.assign_center_caustic()
+
+		def make_caustic():
+			"""Gets the caustics for the current approximated parameters."""
+
+			from Caustics import Caustics as caus
+			caustic = caus(lens=self)
+			caustic.calculate(points=100)
+			return (caustic.x, caustic.y)
+
+		def get_local_caustic(x_caus, y_caus):
+			"""Attempts to locate the nearest planetary caustic."""
+
+			x_local_caustic = []
+			y_local_caustic = []
+			for i in range(len(x_caus)):
+				dx = np.abs(x_caus[i] - self.xcenter_caustic)
+				dy = np.abs(y_caus[i] - self.ycenter_caustic)
+				if ((dx < 1.8*self.width_caustic) and
+				   (dy < 1.3*self.height_caustic)):
+					x_local_caustic.append(x_caus[i])
+					y_local_caustic.append(y_caus[i])
+			return (x_local_caustic, y_local_caustic)
+
+		def apply_second_shift(x_caus, y_caus):
+			"""If get_local_caustic attempt fails, finds the nearest point
+			on the caustic and uses it as new starting point for second
+			attempt.
+			"""
+
+			x_distances = []
+			y_distances = []
+			distances = []
+			for i in range(len(x_caus)):
+				x_distances.append(self.xcenter_caustic - x_caus[i])
+				y_distances.append(self.ycenter_caustic - y_caus[i])
+				distances.append(np.sqrt(np.abs(x_distances[i]**2) +
+										 np.abs(y_distances[i]**2)))
+			idx_min = np.argmin(distances)
+			self.xshift -= x_distances[idx_min]
+			self.yshift -= y_distances[idx_min]
+			self.assign_center_caustic()
+
+		# Start of external method
+		if (self._got_refined_param):
+			return
+		self.get_size_caustic()
+		get_first_shift()
+		self.assign_center_caustic()
+
+		if (refine==True):
+			self._got_refined_param = True
+			make_corrections()
 
 ### The following functions are used for assigning data into grids.
 
@@ -466,35 +550,43 @@ class BinaryLens(object):
 					The off-axis cusps are given by: (x, y) = {(0, -1), (0, 1)}
 		"""
 
-		self.get_size_caustic()
-		self.get_center_caustic()
+		if self._got_refined_param == False:
+			self.get_caustic_param(refine=True)
 
 		if 'caustic' in self.region:
+			"""Defines the grid to be centered on the caustic,
+			determined by approximations in get_size_caustics() and
+			assign_center_caustics().
+			"""
+
 			region_xmin = self.xcenter_caustic - 0.8*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.8*self.width_caustic
 			region_ymin = -0.8*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.8*self.height_caustic + self.ycenter_caustic
-		if 'onax_cusp' in self.region:
+
+		elif 'onax_cusp' in self.region:
 			region_xmin = self.xcenter_caustic + 0.55*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.8*self.width_caustic
 			region_ymin = -0.10*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.10*self.height_caustic + self.ycenter_caustic
-		if 'offax_cusp' in self.region:
+		elif 'offax_cusp' in self.region:
 			region_xmin = self.xcenter_caustic - 0.10*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.10*self.width_caustic
 			region_ymin = 0.55*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.8*self.height_caustic + self.ycenter_caustic
-		if 'both' in self.region:
+		elif 'both' in self.region:
 			region_xmin = -0.5*self.s
 			region_xmax = 0.5*self.s
 			region_ymin = -0.5*self.s
 			region_ymax = 0.5*self.s
-		if 'custom' in self.region:
+		elif 'custom' in self.region:
 			(xmin, xmax, ymin, ymax) = (*self.region_lim,)
 			region_xmin = self.xcenter_caustic + 0.5*xmin*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.5*xmax*self.width_caustic
 			region_ymin = 0.5*ymin*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.5*ymax*self.height_caustic + self.ycenter_caustic
+		else:
+			raise ValueError('Unknown region {:}'.format(self.region))
 
 		x_grid = np.linspace(region_xmin, region_xmax, self.res)
 		y_grid = np.linspace(region_ymin, region_ymax, self.res)
@@ -1791,7 +1883,7 @@ class BinaryLens(object):
 
 	def get_coeff_strings(self):
 		"""
-		Assigns strings to global lists regarding coefficient names.
+		Assigns coefficient names to strings.
 		"""
 
 		self.coeff_string = [None]*12
