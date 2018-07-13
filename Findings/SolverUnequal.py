@@ -46,7 +46,7 @@ def num_images_demo():
 			kwargs = plot[i][j].check_kwargs()
 			kwargs['cmap'] = cmap
 			kwargs['norm'] = norm
-			kwargs['s'] = 2
+			kwargs['s'] = 1
 			plot[i][j].get_position_arrays()
 			plot[i][j].get_num_images_array()
 			if errors_only:
@@ -57,6 +57,7 @@ def num_images_demo():
 
 			# Create and adjust the plots appropriately.
 			ax[i][j] = plt.subplot(len(origins), len(solvers), idx)
+
 			sc = ax[i][j].scatter(x, y, c=num_images, vmin=0, vmax=5, **kwargs)
 #			caustic = caus(lens=plot[i][j], solver='SG12')
 #			caustic.plot_caustic(s=1, color='yellow', points=5000)
@@ -168,7 +169,7 @@ def magnification_demo():
 			kwargs = plot[i][j].check_kwargs()
 			kwargs['cmap'] = cmap
 			kwargs['norm'] = colors.LogNorm()
-			kwargs['s'] = 2
+			kwargs['s'] = 1
 			plot[i][j].get_position_arrays()
 			plot[i][j].get_magnification_array()
 			(x, y, magnification) = (plot[i][j].x_array, plot[i][j].y_array,
@@ -186,8 +187,8 @@ def magnification_demo():
 			plt.ylim(ymin, ymax)
 			plt.xticks(np.arange(-0.3*dx, xmax, 0.6*dx))
 			plt.yticks(np.arange(-0.3*dy, ymax, 0.3*dy))
-			ax[i][j].tick_params(axis='x', labelsize=8+len(solvers))
-			ax[i][j].tick_params(axis='y', labelsize=8+len(solvers))
+			ax[i][j].tick_params(axis='x', labelsize=12)
+			ax[i][j].tick_params(axis='y', labelsize=12)
 			ax[i][j].axes.yaxis.set_major_formatter(
 								mtick.FormatStrFormatter('%.1e'))
 			ax[i][j].axes.xaxis.set_major_formatter(
@@ -267,7 +268,7 @@ def magnification_demo():
 s = 1.5
 q = 4e-8
 origins = ['geo_cent', 'caustic', 'plan', 'star', 'com']
-res = int(10)
+res = int(200)
 solvers =  ['SG12', 'zroots', 'numpy']
 region = 'custom'
 region_lim = [0.7, 1.3, -0.15, 0.15]

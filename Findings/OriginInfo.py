@@ -61,6 +61,7 @@ def num_images_demo():
 			kwargs = plot[i][j].check_kwargs()
 			kwargs['cmap'] = cmap
 			kwargs['norm'] = norm
+			kwargs['s'] = 1
 			plot[i][j].get_position_arrays()
 			plot[i][j].get_num_images_array()
 			(x, y, num_images) = (plot[i][j].x_array, plot[i][j].y_array,
@@ -78,8 +79,8 @@ def num_images_demo():
 			plt.ylim(ymin, ymax)
 			plt.xticks(np.arange(-0.3*dx, xmax, 0.6*dx))
 			plt.yticks(np.arange(-0.3*dy, ymax, 0.3*dy))
-			ax[i][j].tick_params(axis='x', labelsize=8+len(origins))
-			ax[i][j].tick_params(axis='y', labelsize=8+len(origins))
+			ax[i][j].tick_params(axis='x', labelsize=12)
+			ax[i][j].tick_params(axis='y', labelsize=12)
 			ax[i][j].axes.yaxis.set_major_formatter(
 								mtick.FormatStrFormatter('%.1e'))
 			ax[i][j].axes.xaxis.set_major_formatter(
@@ -94,7 +95,7 @@ def num_images_demo():
 	cbar = fig.add_axes([0.08, 0.895, 0.60, 0.05])
 	num_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks, orientation='horizontal')
 	num_color.set_label('Number of Images', fontsize=12+len(origins), labelpad=-62)
-	cbar.axes.tick_params(labelsize=8+len(origins))
+	cbar.axes.tick_params(labelsize=12)
 
 	for (i, q) in enumerate(mass_ratios):
 		fig.text(0.94, 0.76 - .33/len(mass_ratios) - .76*i/len(mass_ratios), 'q={:.0e}'.format(q), ha='center', va='center', fontsize=12+len(origins))
@@ -163,6 +164,7 @@ def magnification_demo():
 			kwargs = plot[i][j].check_kwargs()
 			kwargs['cmap'] = cmap
 			kwargs['norm'] = colors.LogNorm()
+			kwargs['s'] = 1
 			plot[i][j].get_position_arrays()
 			plot[i][j].get_magnification_array()
 			(x, y, magnification) = (plot[i][j].x_array, plot[i][j].y_array,
@@ -180,8 +182,8 @@ def magnification_demo():
 			plt.ylim(ymin, ymax)
 			plt.xticks(np.arange(-0.3*dx, xmax, 0.6*dx))
 			plt.yticks(np.arange(-0.3*dy, ymax, 0.3*dy))
-			ax[i][j].tick_params(axis='x', labelsize=8+len(origins))
-			ax[i][j].tick_params(axis='y', labelsize=8+len(origins))
+			ax[i][j].tick_params(axis='x', labelsize=12)
+			ax[i][j].tick_params(axis='y', labelsize=12)
 			ax[i][j].axes.yaxis.set_major_formatter(
 								mtick.FormatStrFormatter('%.1e'))
 			ax[i][j].axes.xaxis.set_major_formatter(
@@ -196,7 +198,7 @@ def magnification_demo():
 	cbar = fig.add_axes([0.08, 0.89, 0.60, 0.05])
 	magn_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks, orientation='horizontal')
 	magn_color.set_label('Magnification', fontsize=12+len(origins), labelpad=-66)
-	cbar.axes.tick_params(labelsize=8+len(origins))
+	cbar.axes.tick_params(labelsize=12)
 
 	for (i, q) in enumerate(mass_ratios):
 		fig.text(0.94, 0.75 - .33/len(mass_ratios) - .76*i/len(mass_ratios), 'q={:.0e}'.format(q), ha='center', va='center', fontsize=12+len(origins))
@@ -243,7 +245,7 @@ def magnification_demo():
 s = 1.5
 mass_ratios = [1e-6, 1e-12]
 origins = ['plan', 'caustic', 'geo_cent', 'star', 'com']
-res = int(10)
+res = int(200)
 solver =  'SG12'
 region = 'caustic'
 region_lim = [-.5, .5, 0.0, 2]

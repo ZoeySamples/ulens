@@ -31,8 +31,8 @@ def num_images_demo():
 
 			# Initialize each binary lens system with the BinaryLens class.
 			param[i][j] = ({'s': s, 'q': q, 'res': res, 'origin': origin,
-					'region': region, 'region_lim': region_lim,
-					'solver': solver, 'SFD': SFD})
+					'region': region, 'region_lim': region_lim, 'SFD': SFD,
+					'refine_region': refine_region, 'solver': solver})
 			plot[i][j] = BL(**param[i][j])
 
 			cmap = plt.cm.Blues
@@ -46,7 +46,7 @@ def num_images_demo():
 			kwargs = plot[i][j].check_kwargs()
 			kwargs['cmap'] = cmap
 			kwargs['norm'] = norm
-			kwargs['s'] = 2
+			kwargs['s'] = 1
 			plot[i][j].get_position_arrays()
 			plot[i][j].get_num_images_array()
 			if errors_only:
@@ -67,8 +67,8 @@ def num_images_demo():
 			plt.ylim(ymin, ymax)
 			plt.xticks(np.arange(-0.3*dx, xmax, 0.6*dx))
 			plt.yticks(np.arange(-0.3*dy, ymax, 0.3*dy))
-			ax[i][j].tick_params(axis='x', labelsize=8+len(solvers))
-			ax[i][j].tick_params(axis='y', labelsize=8+len(solvers))
+			ax[i][j].tick_params(axis='x', labelsize=12)
+			ax[i][j].tick_params(axis='y', labelsize=12)
 			ax[i][j].axes.yaxis.set_major_formatter(
 								mtick.FormatStrFormatter('%.1e'))
 			ax[i][j].axes.xaxis.set_major_formatter(
@@ -84,7 +84,7 @@ def num_images_demo():
 	cbar = fig.add_axes([0.12, 0.90, 0.60, 0.04])
 	num_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks, orientation='horizontal')
 	num_color.set_label('Number of Images', fontsize=12+len(solvers), labelpad=-56)
-	cbar.axes.tick_params(labelsize=8+len(solvers))
+	cbar.axes.tick_params(labelsize=12)
 
 	for (i, q) in enumerate(mass_ratios):
 		fig.text(0.93, 0.80 - .33/len(mass_ratios) - .78*i/len(mass_ratios), 'q={:.0e}'.format(q), ha='center', va='center', fontsize=12+len(solvers))
@@ -139,7 +139,7 @@ def magnification_demo():
 			# Initialize each binary lens system with the BinaryLens class.
 			param[i][j] = ({'s': s, 'q': q, 'res': res, 'origin': origin,
 					'region': region, 'region_lim': region_lim, 
-					'solver': solver, 'SFD': SFD})
+					'solver': solver, 'SFD': SFD, 'refine_region': refine_region})
 			plot[i][j] = BL(**param[i][j])
 
 			# Get the data for the plots.
@@ -152,7 +152,7 @@ def magnification_demo():
 			kwargs = plot[i][j].check_kwargs()
 			kwargs['cmap'] = cmap
 			kwargs['norm'] = colors.LogNorm()
-			kwargs['s'] = 2
+			kwargs['s'] = 1
 			plot[i][j].get_position_arrays()
 			plot[i][j].get_magnification_array()
 			(x, y, magnification) = (plot[i][j].x_array, plot[i][j].y_array,
@@ -170,8 +170,8 @@ def magnification_demo():
 			plt.ylim(ymin, ymax)
 			plt.xticks(np.arange(-0.3*dx, xmax, 0.6*dx))
 			plt.yticks(np.arange(-0.3*dy, ymax, 0.3*dy))
-			ax[i][j].tick_params(axis='x', labelsize=8+len(solvers))
-			ax[i][j].tick_params(axis='y', labelsize=8+len(solvers))
+			ax[i][j].tick_params(axis='x', labelsize=12)
+			ax[i][j].tick_params(axis='y', labelsize=12)
 			ax[i][j].axes.yaxis.set_major_formatter(
 								mtick.FormatStrFormatter('%.1e'))
 			ax[i][j].axes.xaxis.set_major_formatter(
@@ -187,7 +187,7 @@ def magnification_demo():
 	cbar = fig.add_axes([0.12, 0.90, 0.60, 0.04])
 	magn_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks, orientation='horizontal')
 	magn_color.set_label('Magnification', fontsize=12+len(solvers), labelpad=-56)
-	cbar.axes.tick_params(labelsize=8+len(solvers))
+	cbar.axes.tick_params(labelsize=12)
 
 	for (i, q) in enumerate(mass_ratios):
 		fig.text(0.93, 0.80 - .33/len(mass_ratios) - .78*i/len(mass_ratios), 'q={:.0e}'.format(q), ha='center', va='center', fontsize=12+len(solvers))
@@ -234,16 +234,17 @@ def magnification_demo():
 s = 1.5
 mass_ratios = [1e-14, 1e-15, 1e-16]
 origin = 'plan'
-res = int(10)
+res = int(200)
 solvers =  ['SG12', 'zroots', 'numpy']
 region = 'custom'
 region_lim = [0.7, 1.3, -0.15, 0.15]
 save_fig = False
 show_fig = True
 
+refine_region = False
 SFD = True
 errors_only = False
-num_images_demo()
+#num_images_demo()
 magnification_demo()
 
 

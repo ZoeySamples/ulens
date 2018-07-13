@@ -6,13 +6,18 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import matplotlib.colors as colors
+from matplotlib.mlab import griddata
 import matplotlib
+from scipy import interpolate
 import pandas as pd
 import numpy as np
 from BinaryLens import BinaryLens as BL
 from Caustics import Caustics as caus
 import MulensModel as mm
 from pathlib import Path
+
+
+
 
 """
 This file shows plots for the planet frame, using the SG12 solver,for 
@@ -31,6 +36,12 @@ def num_images_demo():
 			fontsize=12+len(separations)
 
 			# Initialize each binary lens system with the BinaryLens class.
+
+			if idx == 2:
+				region = regions[1]
+			else:
+				region = regions[0]
+
 			param[i][j] = ({'s': s, 'q': q, 'res': res, 'origin': origin,
 					'region': region, 'region_lim': region_lim,
 					'solver': solver, 'SFD': SFD})
@@ -47,6 +58,7 @@ def num_images_demo():
 			kwargs = plot[i][j].check_kwargs()
 			kwargs['cmap'] = cmap
 			kwargs['norm'] = norm
+			kwargs['s'] = 1
 			plot[i][j].get_position_arrays()
 			plot[i][j].get_num_images_array()
 			(x, y, num_images) = (plot[i][j].x_array, plot[i][j].y_array,
@@ -55,8 +67,8 @@ def num_images_demo():
 			# Create and adjust the plots appropriately.
 			ax[i][j] = plt.subplot(len(mass_ratios), len(separations), idx)
 			sc = ax[i][j].scatter(x, y, c=num_images, vmin=0, vmax=5, **kwargs)
-			caustic = caus(lens=plot[i][j], solver='SG12')
-			caustic.plot_caustic(s=1, color='yellow', points=2000)
+		#	caustic = caus(lens=plot[i][j], solver='SG12')
+		#	caustic.plot_caustic(s=1, color='yellow', points=2000)
 			(xmin, xmax) = (min(plot[i][j].x_array), max(plot[i][j].x_array))
 			(ymin, ymax) = (min(plot[i][j].y_array), max(plot[i][j].y_array))
 			(dx, dy) = (xmax-xmin, ymax-ymin)
@@ -64,8 +76,8 @@ def num_images_demo():
 			plt.ylim(ymin, ymax)
 			plt.xticks(np.arange(-0.3*dx, xmax, 0.6*dx))
 			plt.yticks(np.arange(-0.3*dy, ymax, 0.3*dy))
-			ax[i][j].tick_params(axis='x', labelsize=11)
-			ax[i][j].tick_params(axis='y', labelsize=11)
+			ax[i][j].tick_params(axis='x', labelsize=12)
+			ax[i][j].tick_params(axis='y', labelsize=12)
 			ax[i][j].axes.yaxis.set_major_formatter(
 								mtick.FormatStrFormatter('%.0e'))
 			ax[i][j].axes.xaxis.set_major_formatter(
@@ -87,7 +99,7 @@ def num_images_demo():
 	fig.text(0.79, 0.91, '{} Frame\n{} Solver'.format(plot[0][0].origin_title,
 							plot[0][0].solver_title), fontsize=11+len(separations))
 
-	plt.subplots_adjust(wspace=0.50, hspace=0.20, top=0.82, bottom=0.06, left=0.12, right=0.88)
+	plt.subplots_adjust(wspace=0.50, hspace=0.22, top=0.82, bottom=0.06, left=0.12, right=0.88)
 	plt.gcf().set_size_inches(3.0*len(separations)+0.5, 2.0*len(mass_ratios)+1.0)
 
 	## Formatting with color bar and constant parameters on top
@@ -134,6 +146,11 @@ def magnification_demo():
 			fontsize=12+len(separations)
 
 			# Initialize each binary lens system with the BinaryLens class.
+			if idx == 2:
+				region = regions[1]
+			else:
+				region = regions[0]
+
 			param[i][j] = ({'s': s, 'q': q, 'res': res, 'origin': origin,
 					'region': region, 'region_lim': region_lim, 
 					'solver': solver, 'SFD': SFD})
@@ -149,6 +166,7 @@ def magnification_demo():
 			kwargs = plot[i][j].check_kwargs()
 			kwargs['cmap'] = cmap
 			kwargs['norm'] = colors.LogNorm()
+			kwargs['s'] = 1
 			plot[i][j].get_position_arrays()
 			plot[i][j].get_magnification_array()
 			(x, y, magnification) = (plot[i][j].x_array, plot[i][j].y_array,
@@ -156,7 +174,7 @@ def magnification_demo():
 
 			# Create and adjust the plots appropriately.
 			ax[i][j] = plt.subplot(len(mass_ratios), len(separations), idx)
-			sc = ax[i][j].scatter(x, y, c=magnification, vmin=1, vmax=100, **kwargs)
+			sc = ax[i][j].scatter(x, y, c=magnification, vmin=1, vmax=200, **kwargs)
 #			caustic = caus(lens=plot[i][j], solver='SG12')
 #			caustic.plot_caustic(s=1, color='blue', points=2000)
 			(xmin, xmax) = (min(plot[i][j].x_array), max(plot[i][j].x_array))
@@ -166,12 +184,12 @@ def magnification_demo():
 			plt.ylim(ymin, ymax)
 			plt.xticks(np.arange(-0.3*dx, xmax, 0.6*dx))
 			plt.yticks(np.arange(-0.3*dy, ymax, 0.3*dy))
-			ax[i][j].tick_params(axis='x', labelsize=8+len(separations))
-			ax[i][j].tick_params(axis='y', labelsize=8+len(separations))
+			ax[i][j].tick_params(axis='x', labelsize=12)
+			ax[i][j].tick_params(axis='y', labelsize=12)
 			ax[i][j].axes.yaxis.set_major_formatter(
-								mtick.FormatStrFormatter('%.1e'))
+								mtick.FormatStrFormatter('%.0e'))
 			ax[i][j].axes.xaxis.set_major_formatter(
-								mtick.FormatStrFormatter('%.3e'))
+								mtick.FormatStrFormatter('%.1e'))
 			if (i == 0):
 				ax[i][j].axes.set_title('s={}'.format(s), fontsize=fontsize)
 
@@ -188,7 +206,7 @@ def magnification_demo():
 	fig.text(0.79, 0.91, '{} Frame\n{} Solver'.format(plot[0][0].origin_title,
 							plot[0][0].solver_title), fontsize=11+len(separations))
 
-	plt.subplots_adjust(wspace=0.50, hspace=0.20, top=0.82, bottom=0.06, left=0.12, right=0.88)
+	plt.subplots_adjust(wspace=0.50, hspace=0.22, top=0.82, bottom=0.06, left=0.12, right=0.88)
 	plt.gcf().set_size_inches(3.0*len(separations)+0.5, 2.0*len(mass_ratios)+1.0)
 
 	## Formatting with color bar and constant parameters on top
@@ -226,13 +244,13 @@ def magnification_demo():
 
 
 # Here are the input parameters for making the plots.
-separations = [0.6, 0.9, 1.1, 2.0, 5.0, 20.]
-mass_ratios = [1e-3, 1e-6, 1e-9, 1e-12]
+separations = [0.6, 0.9, 1.1, 2.0, 5.0]
+mass_ratios = [1e-1, 1e-3, 1e-7, 1e-12]
 origin = 'plan'
 res = int(200)
 solver =  'SG12'
-region = 'caustic_a'
-region_lim = [0, 40, -5, 5]
+regions = ['caustic_a', 'custom_a']
+region_lim = [-2, 2.8, -5.08, 2.2]
 save_fig = False
 show_fig = True
 
