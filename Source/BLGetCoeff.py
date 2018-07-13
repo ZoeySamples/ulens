@@ -7,7 +7,7 @@ import numpy as np
 import math
 import MulensModel as mm
 
-def get_coefficients(calc, zeta, z1, z2, m, dm, s):
+def get_coefficients(calc, zeta, z1, z2, m, dm, s, q):
 
 	zeta_conj = np.conj(zeta)
 	zeta_real = np.real(zeta)
@@ -58,8 +58,8 @@ def get_coefficients(calc, zeta, z1, z2, m, dm, s):
 		coeff1 = -((dm - m)*z2*(dm*z2 + m*(z2 - 4*zeta) - z2*zeta*(z2 - 2*zeta_conj)))
 
 		coeff0 = ((dm - m)**2*z2**2*zeta)
-		"""
 
+		"""
 		coeff5 = -(zeta_conj*csum([-z2, zeta_conj]))
 
 		coeff4 = csum([dm*z2, m*csum([z2, -2*zeta_conj]), -csum([2*z2, zeta])*csum([z2, -zeta_conj])*zeta_conj])
@@ -80,6 +80,30 @@ def get_coefficients(calc, zeta, z1, z2, m, dm, s):
 		coeff2 = (-2*m*(dm + m)*z2 + (4*m**2 - (dm - 3*m)*z2**2)*zeta + z2*zeta_conj*(-((6*m + z2**2)*zeta) + 2*dm*(z2 + zeta) + z2*zeta*zeta_conj))
 		coeff1 = ((-dm + m)*z2*((dm + m)*z2 - (4*m + z2**2)*zeta + 2*z2*zeta*zeta_conj))
 		coeff0 = ((dm - m)**2*z2**2*zeta)
+		"""
+		"""
+		m2 = (m+dm)
+		m1 = (m-dm)
+		#m2 = 1./ (1. + q)
+		#m1 = q / (1. + q)
+
+
+		coeff5 = (z2 - zeta_conj)*zeta_conj
+		coeff5 = -(zeta_conj*csum([-z2, zeta_conj]))
+
+		coeff4 = (z2 - m1*z2 + zeta_conj*(-1 - z2*(2*z2 + zeta) + (2*z2 + zeta)*zeta_conj))
+		coeff4 = csum([z2, -m1*z2, zeta_conj*csum([-1., -z2*csum([2*z2, zeta]), csum([2*z2, zeta])*zeta_conj])])
+
+		coeff3 = (z2*((-1 + m1)*z2 - zeta) + zeta_conj*(2*m1*z2 + z2**3 + 2*(1 + z2**2)*zeta - z2*(z2 + 2*zeta)*zeta_conj))
+		coeff3 = csum([z2*csum([csum([-1, m1])*z2, -zeta]), zeta_conj*csum([2*m1*z2, z2**3, 2*csum([1., z2**2])*zeta, -z2*csum([z2, 2*zeta])*zeta_conj])])
+
+		coeff2 = (zeta + z2*(-1 + m1 + (1 + m1)*z2*zeta) + z2*zeta_conj*(z2 - 2*m1*z2 - 2*(1 + m1)*zeta - z2**2*zeta + z2*zeta*zeta_conj))
+		coeff2 = csum([zeta, z2*csum([-1., m1, csum([1., m1])*z2*zeta]), z2*zeta_conj*csum([z2, -2.*m1*z2, -2.*csum([1., m1])*zeta, -z2**2*zeta, z2*zeta*zeta_conj])])
+
+		coeff1 = m1*z2*(-2*zeta - z2*(-1 + m1 + z2*zeta) + 2*z2*zeta*zeta_conj)
+		coeff1 = m1*z2*csum([-2*zeta, -z2*csum([-1., m1, z2*zeta]), 2.*z2*zeta*zeta_conj])
+
+		coeff0 = m1**2*z2**2*zeta
 		"""
 
 	elif (calc == 'caustic'):

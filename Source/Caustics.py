@@ -157,7 +157,7 @@ class Caustics(object):
 		self.lens = lens
 		self.plot_frame = self.lens.plot_frame
 
-		self.lens.get_caustic_param(refine=True)
+		self.lens.get_caustic_param(refine_region=self.lens.refine_region)
 
 		if isinstance(self.lens, BL):
 			self.lens_type = 'BL'
@@ -319,6 +319,43 @@ class Caustics(object):
 	coeff1 = 2*m2*s1*(s1 - s2)*s2*z*exp_ialpha
 	coeff0 = -m2*s1**2*s2**2*exp_ialpha
 	"""
+	"""
+	r_array = np.linspace(1e-5,10,5000)
+	for r in r_array:
+		d = self.s
+		m1 = (self.m - self.dm)
+		m2 = (self.m + self.dm)
+
+		G = r**2 - d**2
+		H = 2*d*r
+		g = 1. - m1**2 / r**4
+		h = 2*m1*m2 / r**2
+
+		coeff2 = H**2*g - 2.*d**2*h
+		coeff1 = H*(h-2*G*g)
+		coeff0 = G*(G*g - h) + 2.*d**2*h - m2**2
+
+		coefficients = np.array([coeff2, coeff1, coeff0])
+		cosine_phi_solns = np.roots(coefficients)
+		phi = []
+		for cosine_phi in cosine_phi_solns:
+			try:
+				phi.append(math.acos(cosine_phi))
+			except:
+				break
+
+		for angle in phi:
+			root = r*math.cos(angle) + 1j*r*math.sin(angle)
+			self.x.append(root.real)
+			self.y.append(root.imag)
+
+			self.critical_curve.x.append(root.real)
+			self.critical_curve.y.append(root.imag)
+
+			caustic_point = self.solve_lens_equation(root)
+			self.x.append(caustic_point.real)
+			self.y.append(caustic_point.imag)
+		"""
 
 	def solve_lens_equation(self, image_position):
 		z = image_position
