@@ -11,17 +11,18 @@ import numpy as np
 
 
 # Input parameters
-s = 5000
-mass_ratios = [1e-1]
+s = 1.5
+mass_ratios = [1e-5]
 solvers =  ['SG12']
 origins = ['plan']
 
 plot_frame = 'caustic'
 
-res = int(100)
+res = int(60)
 sample_res = 5
 region = 'custom_a'
-region_lim = (0,1.2,0,1.2)
+region_lim = [0, 2, -1.0, 1.0]
+refine_region = True
 
 cutoff = 1.5
 SFD = True
@@ -76,7 +77,7 @@ for solver in solvers:
 		for q in mass_ratios:
 			param.append(({'s': s, 'q': q, 'res': res, 'origin': origin,
 					'solver': solver, 'plot_frame': plot_frame, 'region': region,
-					'region_lim': region_lim, 'SFD': SFD}))
+					'region_lim': region_lim, 'refine_region': refine_region, 'SFD': SFD}))
 			plot.append(BL(**param[-1]))
 
 plot_types = []
