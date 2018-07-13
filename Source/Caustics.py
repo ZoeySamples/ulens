@@ -182,13 +182,11 @@ class Caustics(object):
 
 	def get_BL_lensing_body_positions(self):
 
-		self.z1 = 0.5*self.s + 0j	#This is the planet.
-		self.z2 = -0.5*self.s + 0j	#This is the star.
-
-		if self.plot_frame == 'caustic':
-			(xshift, yshift) = (self.lens.xshift, self.lens.yshift)
-			self.z1 -= xshift + 1j*yshift
-			self.z2 -= xshift + 1j*yshift
+		(xshift, yshift) = (self.lens.xshift, self.lens.yshift)
+		(xcenter, ycenter) = (self.lens.xcenter_caustic, self.lens.ycenter_caustic)
+		#FIXME: Error in geo_cent plot frame.
+		self.z1 = 0.5*self.s - (xshift + xcenter + 1j*(yshift + ycenter))
+		self.z2 = -0.5*self.s - (xshift + xcenter + 1j*(yshift + ycenter))
 
 	def get_TL_lensing_body_positions(self):
 

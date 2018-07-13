@@ -152,6 +152,7 @@ class BinaryLens(object):
 				 plot_frame='caustic'):
 
 		self._got_refined_param = False
+		self._got_caustic_param = False
 
 		self.s = s
 		self.q = q
@@ -163,10 +164,16 @@ class BinaryLens(object):
 #		self.tolerance = tolerance
 		self.coeff_multiplier = coeff_multiplier
 		self.refine_region = refine_region
+		if self.q < 1e-13:
+			if self.refine_region == True:
+				print('Turning off "refine_region." q is too small.')
+			self.refine_region = False
 		self.region = region
 		self.region_lim = region_lim
 		self.SFD = SFD
 		self.plot_frame = plot_frame
+		self._custom_xshift = 0.
+		self._custom_yshift = 0.
 		self.get_mass()
 		self.get_lensing_body_positions()
 		self.get_caustic_param(refine_region=False)
@@ -238,9 +245,11 @@ class BinaryLens(object):
 			raise ValueError('Unknown coordinate system: {:}'.format(origin))
 
 		if self.plot_frame == 'caustic':
-			if self._got_refined_param == False:
-				self.get_caustic_param(refine_region=self.refine_region)
+			if self._got_refined_param == False and self.refine_region==True:
+				self.get_caustic_param(refine_region=True)
 			zeta += self.xshift + 1j*self.yshift
+			if 'custom' in self.region:
+				zeta += self._custom_xshift + 1j*self._custom_yshift
 
 		else:
 			raise ValueError('Unknown value for plot_frame')
@@ -400,14 +409,17 @@ class BinaryLens(object):
 	def assign_center_caustic(self):
 
 		if self.plot_frame == 'geo_cent':
-			self.xcenter_caustic = self.xshift
-			self.ycenter_caustic = self.yshift
+			self.xcenter_caustic = self.xshift + self._custom_xshift
+			self.ycenter_caustic = self.yshift + self._custom_yshift
 
 		elif self.plot_frame == 'caustic':
-			self.xcenter_caustic = 0.
-			self.ycenter_caustic = 0.
+			self.xcenter_caustic = 0. + self._custom_xshift
+			self.ycenter_caustic = 0. + self._custom_yshift
 		else:
 			raise ValueError('Unknown value for plot_frame.')
+
+		self.xcenter_plot = self.xcenter_caustic - self._custom_xshift
+		self.ycenter_plot = self.ycenter_caustic - self._custom_yshift
 
 	def get_caustic_param(self, refine_region=True):
 
@@ -503,9 +515,12 @@ class BinaryLens(object):
 		# Start of external method
 		if (self._got_refined_param):
 			return
-		self.get_size_caustic()
-		get_first_shift()
-		self.assign_center_caustic()
+
+		if self._got_caustic_param == False:
+			self._got_caustic_param = True
+			self.get_size_caustic()
+			get_first_shift()
+			self.assign_center_caustic()
 
 		if (refine_region==True):
 			self._got_refined_param = True
@@ -551,7 +566,7 @@ class BinaryLens(object):
 					The off-axis cusps are given by: (x, y) = {(0, -1), (0, 1)}
 		"""
 
-		if self._got_refined_param == False:
+		if self._got_refined_param == False and self.refine_region == True:
 			self.get_caustic_param(refine_region=self.refine_region)
 
 		if 'caustic' in self.region:
@@ -570,16 +585,19 @@ class BinaryLens(object):
 			region_xmax = self.xcenter_caustic + 0.8*self.width_caustic
 			region_ymin = -0.10*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.10*self.height_caustic + self.ycenter_caustic
+
 		elif 'offax_cusp' in self.region:
 			region_xmin = self.xcenter_caustic - 0.10*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.10*self.width_caustic
 			region_ymin = 0.55*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.8*self.height_caustic + self.ycenter_caustic
+
 		elif 'both' in self.region:
 			region_xmin = -0.5*self.s
 			region_xmax = 0.5*self.s
 			region_ymin = -0.5*self.s
 			region_ymax = 0.5*self.s
+
 		elif 'custom' in self.region:
 			(xmin, xmax, ymin, ymax) = (*self.region_lim,)
 			grid_xmin = self.xcenter_caustic + 0.5*xmin*self.width_caustic
@@ -589,14 +607,14 @@ class BinaryLens(object):
 
 			xcent = (grid_xmax + grid_xmin) / 2.
 			ycent = (grid_ymax + grid_ymin) / 2.
-			self.xshift += xcent - self.xcenter_caustic
-			self.yshift += ycent - self.ycenter_caustic
+			self._custom_xshift = xcent - self.xcenter_caustic
+			self._custom_yshift = ycent - self.ycenter_caustic
 			self.assign_center_caustic()
 
-			region_xmin = self.xcenter_caustic - 0.5*(grid_xmax - grid_xmin)
-			region_xmax = self.xcenter_caustic + 0.5*(grid_xmax - grid_xmin)
-			region_ymin = self.ycenter_caustic - 0.5*(grid_ymax - grid_ymin)
-			region_ymax = self.ycenter_caustic + 0.5*(grid_ymax - grid_ymin)
+			region_xmin = self.xcenter_plot - 0.5*(grid_xmax - grid_xmin)
+			region_xmax = self.xcenter_plot + 0.5*(grid_xmax - grid_xmin)
+			region_ymin = self.ycenter_plot - 0.5*(grid_ymax - grid_ymin)
+			region_ymax = self.ycenter_plot + 0.5*(grid_ymax - grid_ymin)
 
 		else:
 			raise ValueError('Unknown region {:}'.format(self.region))
