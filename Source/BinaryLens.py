@@ -147,7 +147,7 @@ class BinaryLens(object):
 	"""
 
 	def __init__(self, s, q, origin, solver, x=None, y=None, res=None,
-				 tolerance=0.0001, coeff_multiplier=None,
+				 tolerance=0.0001, coeff_multiplier=None, refine_region=True,
 				 SFD=True, region='caustic_a', region_lim=None, 
 				 plot_frame='caustic'):
 
@@ -162,13 +162,14 @@ class BinaryLens(object):
 		self.y = y
 #		self.tolerance = tolerance
 		self.coeff_multiplier = coeff_multiplier
+		self.refine_region = refine_region
 		self.region = region
 		self.region_lim = region_lim
 		self.SFD = SFD
 		self.plot_frame = plot_frame
 		self.get_mass()
 		self.get_lensing_body_positions()
-		self.get_caustic_param(refine=False)
+		self.get_caustic_param(refine_region=False)
 		self.strings()
 
 
@@ -238,7 +239,7 @@ class BinaryLens(object):
 
 		if self.plot_frame == 'caustic':
 			if self._got_refined_param == False:
-				self.get_caustic_param(refine=True)
+				self.get_caustic_param(refine_region=self.refine_region)
 			zeta += self.xshift + 1j*self.yshift
 
 		else:
@@ -259,8 +260,8 @@ class BinaryLens(object):
 		else:
 			calc = 'general'
 
-		coefficients = getc.get_coefficients(calc=calc, zeta=zeta,
-								z1=self.z1, z2=self.z2, m=self.m, dm=self.dm, s=self.s)
+		coefficients = getc.get_coefficients(calc=calc, zeta=zeta, z1=self.z1,
+						z2=self.z2, m=self.m, dm=self.dm, s=self.s, q=self.q)
 
 		return coefficients
 
@@ -408,7 +409,7 @@ class BinaryLens(object):
 		else:
 			raise ValueError('Unknown value for plot_frame.')
 
-	def get_caustic_param(self, refine=True):
+	def get_caustic_param(self, refine_region=True):
 
 		def get_first_shift():
 			# Assign the relative position of the approximate caustic center
@@ -506,7 +507,7 @@ class BinaryLens(object):
 		get_first_shift()
 		self.assign_center_caustic()
 
-		if (refine==True):
+		if (refine_region==True):
 			self._got_refined_param = True
 			make_corrections()
 
@@ -551,7 +552,7 @@ class BinaryLens(object):
 		"""
 
 		if self._got_refined_param == False:
-			self.get_caustic_param(refine=True)
+			self.get_caustic_param(refine_region=self.refine_region)
 
 		if 'caustic' in self.region:
 			"""Defines the grid to be centered on the caustic,
@@ -581,10 +582,22 @@ class BinaryLens(object):
 			region_ymax = 0.5*self.s
 		elif 'custom' in self.region:
 			(xmin, xmax, ymin, ymax) = (*self.region_lim,)
-			region_xmin = self.xcenter_caustic + 0.5*xmin*self.width_caustic
-			region_xmax = self.xcenter_caustic + 0.5*xmax*self.width_caustic
-			region_ymin = 0.5*ymin*self.height_caustic + self.ycenter_caustic
-			region_ymax = 0.5*ymax*self.height_caustic + self.ycenter_caustic
+			grid_xmin = self.xcenter_caustic + 0.5*xmin*self.width_caustic
+			grid_xmax = self.xcenter_caustic + 0.5*xmax*self.width_caustic
+			grid_ymin = 0.5*ymin*self.height_caustic + self.ycenter_caustic
+			grid_ymax = 0.5*ymax*self.height_caustic + self.ycenter_caustic
+
+			xcent = (grid_xmax + grid_xmin) / 2.
+			ycent = (grid_ymax + grid_ymin) / 2.
+			self.xshift += xcent - self.xcenter_caustic
+			self.yshift += ycent - self.ycenter_caustic
+			self.assign_center_caustic()
+
+			region_xmin = self.xcenter_caustic - 0.5*(grid_xmax - grid_xmin)
+			region_xmax = self.xcenter_caustic + 0.5*(grid_xmax - grid_xmin)
+			region_ymin = self.ycenter_caustic - 0.5*(grid_ymax - grid_ymin)
+			region_ymax = self.ycenter_caustic + 0.5*(grid_ymax - grid_ymin)
+
 		else:
 			raise ValueError('Unknown region {:}'.format(self.region))
 
