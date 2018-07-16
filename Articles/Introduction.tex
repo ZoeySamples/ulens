@@ -8,19 +8,22 @@ Microlensing is becoming an increasingly popular method to search for
 planets because of its ability to discover more diverse distributions
 of planets than other common methods. Whereas the radial velocity method
 and the transit method are most sensitive to hot Jupiters, microlensing
-is most sensitive to distance Neptunes. Moreover, it has the potential
-to detect Earth-sized and Mercury-sized planets, something the other
-methods are not yet able to do. As WFIRST is expected to be launched
-in the mid-2020s, one of the goals of the mission is to discover more
-properties of planet formation, including for Earth-like planets.
+is most sensitive to distant Neptunes. Moreover, it has the potential
+to detect Earth-sized and even Mercury-sized planets, something the other
+methods are not yet able to do. The Wide Field Infrared Survey Telescope
+(WFIRST) is expected to be launched in the mid-2020s. Astronomers are
+planning on focusing the WFIRST on the galactic bulge, where it will
+measure light curves for microlensing events. By doing this, researchers
+hope to discover more properties of planet formation, including for
+Earth-like planets.
 
 A microlensing event occurs when a distant body, known as the source,
 passes behind another body or system of bodies, known as the lens. By
-the gravitational lens effect, The light of the source is bent around
+the gravitational lens effect, the light of the source is bent around
 the lens and magnified. This produces an observable light curve that can
 indicate details about the lensing bodies, including the mass ratios and
-separations between each of the lensing bodies. Hereafter, this paper will
-focus on point-source point-lens microlensing events for binary and triple
+separations between each of the lensing bodies. My project focus on 
+modeling point-source point-lens microlensing events for binary and triple
 lenses.
 
 In a binary lens, the mass ratio of the planet to the star is denoted by $q$,
@@ -29,8 +32,9 @@ separation is in units of the Einstein radius of the whole lens system,
 which means $q$ and $s$ are both unitless. In a triple lens, there will be two
 mass ratios, two separations, and an angle that is formed by the 3 bodies, 
 which all have various definitions depending on the types of bodies in the
-system (e.g. stars, planets, or a moon). The definitions of these parameters
-are arbitrary on a case-by-case basis, so they will not be defined here.
+system (e.g. star(s), planet(s), or a moon) and the parameter space being used.
+The definitions of these parameters are arbitrarily defined on a case-by-case
+basis, so they will not be defined here.
 
 The lensing equation is given by
 \begin{equation}
@@ -40,29 +44,34 @@ where ${m_{i}}$ is the mass of the lensing body divided by the total mass
 of the system, ${z_{i}}$ is the position of the lensing body in units of the
 total system's Einstein radius, $z$ is the position of each of the resulting 
 images, $\bar{z}$ is the complex conjugate of $z$, and $\zeta$ is the position
-of the source. Each of the positions are given in complex space so that the
-subsequent calculations can be expressed in one polynomial, rather than 2
-separate polynomials in the x- and y-directions. By solving for $z$, taking
-the complex conjugate, substituting this expression back into the lensing
-equation, and some algebra, we can obtain a very messy polynomial equation
-of variable $z$, which is equal to $0$. This results in a 5th-degree
-polynomial for the binary lens, and a 10th-degree polynomial for the triple
-lens. Writing the equation in terms of a polynomial is favored because it
-more easily allows us to use polynomial root solvers to determine the
-positions and magnifications of the images. The lensing polynomial can 
-alse be derived in different coordinate frames, which will be discussed later.
+of the source. The positions are complex so that we can simplify the 2-dimensional
+lens equation into a single complex equation, allowing us to solve it analytically.
 
-The problem with calculating microlensing events with a typical 64-bit computer
+Equation (1) can be turned into a complex polynomial of $z$ by
+taking its conjugate, substituting the expression for $\bar{z}$ back into
+equation (1), moving zeta to the right hand side, and setting the remaining
+expression equal to $0$. This results in a 5th-degree  polynomial for the
+binary lens case, and a 10th-degree polynomial for the triple lens case.
+Writing the equation in terms of a polynomial is favored because it more
+easily allows us to use polynomial root solvers to determine the positions
+and magnifications of the images. This form of the polynomial, without
+further simplifications or assumptions, will hereafter be referred to as
+the "general form" of the lens polynomial. The polynomial can alse be derived
+and simplified in different coordinate frames, which will be discussed later.
+
+One problem with calculating microlensing events with a typical 64-bit computer
 is that floating point values are used to represent these variables. Because
-floating point values are written in binary code, there will inevitably be
-roundoff error as the terms of the polynomial are of extremely varying orders
+floating point values are expressed in binary code, there will inevitably be
+roundoff error as the terms of the polynomial are of greatly varying orders
 of magnitude. For reference, a 64-bit double floating point number carries
 approximately 16 significant digits. This means, if a computer were to make
 the computation $1 + 10^{-17} - 1$, it would truncate the decimal and yield
 the value $0$, where we would expect it to return $10^{-17}$. On the other
 hand, using more precise calculation methods is not favorable because it will
-take much longer than necessary. One purpose of this project is to
-determine which coordinate frames minimize the effect of the roundoff error,
-without relying on more time-consuming methods.
+take much longer than necessary. One purpose of this project is to determine
+if we can derive the polynomial form of the lens equation in ways that minimize
+the roundoff error without relying on more time-consuming methods. My project
+addresses the effects of deriving the polynomial in different coordinate frames
+and solving it with different root solver algorithms.
 
 \end{document}

@@ -1,68 +1,63 @@
 \documentclass{article}
 
 \usepackage{graphicx}
+\usepackage[left=2cm, right=2cm, top=2cm]{geometry}
 
 \begin{document}
 
 % The following part of this document will be placed in the Methods section
 
-The first test determines, for the binary lens, which coordinate systems
-and which version of the derivation (general versus specific) ought to be
-used to produce reliable results as the mass ratio decreases. In all cases,
-the two bodies are assumed to lie on the real axis. The coordinate frames
-that are being considered are: the geometric center frame, which assumes
-the vertical axis lies halfway between the star and the planet; the planet
-frame, which assumes the planet lies on the origin; and the planetary
-caustic frame, which assumes the central point of the planetary caustic
-lies on the origin. 
+The first test determines which coordinate system(s) and which version of the
+derivation (general versus specific) ought to be used to produce the most
+reliable results as the mass ratio decreases. This test is done for
+the binary lens. In all cases, the two bodies are assumed to lie on the real
+axis. The coordinate frames that are being considered are: the geometric center
+frame, which assumes the vertical axis lies halfway between the star and the
+planet; the planetary caustic frame, which assumes the central point of the
+planetary caustic lies on the origin; the planet frame; the star frame; and
+the center-of-mass frame. All calculations were done using the complex
+polynomial root solver in Skowron and Gould 2012, for a constant value of s.
 
-To test the success of each calculation, I simulated a grid of points
-centered on the planetary caustic. Each point represents a position
-for the source body. At each point, I calculated the number of images
-that should be seen by an observer. There should be three images when
-the source is outside the caustic, and five images when the source is
-inside the caustic. We can make these plots and check whether they
-produce a result that agrees with what we expect. However, checking whether
-the frames yield the correct number of solutions is insufficient to qualify
-whether they pass. I also calculate the magnification at each of the
-points in the grid. These simulations are done for each  of the
-aforementioned coordinate frames, for both the specifically-derived and
-general forms of the polynomial. Success is determined by whether the
-plots produce results that agree with theoretical expectations. This can
-be qualified visually, as it is clear when a method fails because the
+To test the success of each calculation, I simulated a grid of coordinates
+in the source plane, centered on the planetary caustic. At each point, I
+calculated the number of images that should be produced if the source were
+at that position. There should be three images when the source is outside
+the caustic, and five images when the source is inside the caustic. I also
+calculate the magnification at each of the points in the grid. These
+simulations are done for each of the aforementioned coordinate frames, for
+both the specifically-derived and general forms of the polynomial.
+
+After making these plots, I checked whether they produced a result that
+agrees with theoretical expectations, using a pass-or-fail determination.
+This can be qualified visually, as it is clear when a method fails because the
 plot will reproduce a very noisey result with seemingly no regard to the
 caustic. \textbf{Figure 1} and \textbf{Figure 2} show the plots of the
 number of accepted images; \textbf{Figure 3} and \textbf{Figure 4} show
 the plots of the magnification for the same grid of points.
 
 \begin{figure}
-	\includegraphics[width=0.9\textwidth]{../Tables/images_SFD_0.png}
+	\includegraphics[width=0.9\textwidth]{../Tables/images_origin_0.png}
 	\caption{The number of images versus position for each coordinate
 	frame using the general form of the polynomial. The top row shows
 	the plots for a mass ratio, $q=10^{-6}$. The bottom row shows the
 	plots for a mass ratio, $q=10^{-12}$. Notice that the scale on the
-	x- and y-axes differ by orders of magnitude. There are two values of
-	separation for the planet frame; the reason will be justified in
-	the next plot. As expected, for $q=10^{-6}$, the plots show the
+	x- and y-axes scale by orders of magnitude, an effect of the two
+	given mass ratios. As expected, for $q=10^{-6}$, the plots show the
 	correct number of images for each coordinate system. However, for
 	$q=10^{-12}$, the plots fail for all coordinate frames.}
 
 	\vspace*{\floatsep}
 
-	\includegraphics[width=0.9\textwidth]{../Tables/images_SFD_1.png}
+	\includegraphics[width=0.9\textwidth]{../Tables/images_origin_1.png}
 	\caption{Same as \textbf{Figure 1} except using the specifically-
-	derived forms of the polynomial. As
-	expected, for $q=10^{-6}$, the plots show the correct number of
-	images for each coordinate system. For $q=10^{-12}$, the plots fail
-	for all coordinate frames except for the planet frame. Because it
-	succeeds for planet frame with a separation $s>1$, it it also worth
-	checking if it succeeds for a separation, $s<1$. It does succeed,
-	and justifies that the planet frame is the only frame that succeeds
-	for very small mass ratios.}
+	derived forms of the polynomial. As	expected, for $q=10^{-6}$, the
+	plots show the correct number of images for each coordinate system.
+	For $q=10^{-12}$, the plots fail for all coordinate frames except for
+	the planet frame.}
 \end{figure}
 
 \begin{figure}
-	\includegraphics[width=0.9\textwidth]{../Tables/magn_SFD_0.png}
+	\includegraphics[width=0.9\textwidth]{../Tables/magn_origin_0.png}
 	\caption{The magnification versus the position for each coordinate
 	frame using the general form of the polynomial. As seen in plots
 	of the number of images, the simulations pass for all coordinate
@@ -71,35 +66,32 @@ the plots of the magnification for the same grid of points.
 
 	\vspace*{\floatsep}
 
-	\includegraphics[width=0.9\textwidth]{../Tables/magn_SFD_1.png}
-	\caption{Same as \textbf{Figure 1} except using the specifically-
-	derived forms of the polynomial. As
-	seen in the plots of the number of images, when $q=10^{-12}$, the
-	simulation fails for all coordinate frames except for the planet
-	frame. Again, it succeeds for both $s>1$ and $s<1$ frame.}
+	\includegraphics[width=0.9\textwidth]{../Tables/magn_origin_1.png}
+	\caption{Same as \textbf{Figure 3} except using the specifically-
+	derived forms of the polynomial. As seen in the plots of the number
+	of images, when $q=10^{-12}$, the simulation fails for all coordinate
+	frames except for the planet frame.}
 \end{figure}
 
 % The following part of this document will be placed in the Results/Analysis
 % section
 
 When using the general form of the polynomial equation, the planet frame
-performs better than the geometric center frame and the caustic frame only
-when the mass ratio approaches $10^{-8}$; at mass ratios greater than
-$10^{-7}$, none of the coordinate frames produce any errors. However, all
-of the frames result in high numbers of errors when the mass ratio drops
-below something of the order $10^{-8}$.
+performs slightly better than the other frames as the mass ratio approaches
+$10^{-8}$. At mass ratios greater than $10^{-7}$, none of the coordinate
+frames produce any errors. However, all of the frames result in high numbers
+of errors when the mass ratio drops below something of the order $10^{-8}$.
 
-On the other hand, when using the specifically-derived forms of the
-polynomial, we see much different results. The planet frame now produces
-a correct plot of the number of images all the way down to a mass ratio of
-$10^{-15}$; whereas the other frames' performance is slightly worse. The
-hypothesized reason for this is that the form of the polynomial specifically
-derived for the planet frame elimates many instances of terms with the
-mass ratio squared. Because 64-bit floating point numbers can only store
-around 16 digits, many errors tend to accumulate when adding terms of the
-order $10^{0}$ with other terms of the order $10^{-16}$. By eliminating
-nearly every instance of the mass ratio squared, it is possible to keep
-every significant digit throughout the calculation with mass ratios all
-the way down to $10^{-15}$.
+On the other hand, when using the specifically-derived forms of the polynomial,
+the planet frame produces a correct plot of the number of images all the way
+down to a mass ratio of $10^{-15}$; whereas the other frame fail. The
+speculated reason for this is that the form of the polynomial specifically
+derived for the planet frame elimates all instances of the term, $q^{2}$;
+whereas the derivations for all other frames have at least one $q^{2}$ term.
+Because 64-bit floating point numbers can only store around 16 digits, many
+errors tend to accumulate when adding terms of the order $10^{0}$ with other
+terms of the order $10^{-16}$. By eliminating every instance of $q^{2}$,
+it is possible to keep every significant digit throughout the calculation with
+mass ratios all the way down to $10^{-15}$.
 
 \end{document}
