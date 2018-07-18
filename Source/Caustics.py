@@ -157,10 +157,11 @@ class Caustics(object):
 		self.lens = lens
 		self.plot_frame = self.lens.plot_frame
 
-		self.lens.get_caustic_param(refine_region=self.lens.refine_region)
-
 		if isinstance(self.lens, BL):
 			self.lens_type = 'BL'
+
+			# Move this outside once added to TL
+			self.lens.get_caustic_param(refine_region=self.lens.refine_region)
 			self.s = self.lens.s
 			self.q = self.lens.q
 			(self.m, self.dm) = (self.lens.m, self.lens.dm)
