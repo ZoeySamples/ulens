@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: June 06, 2018
 # BinaryLens.py
-# Last Updated: Jul 10, 2018
+# Last Updated: Jul 17, 2018
 
 import sys
 import os
@@ -162,7 +162,7 @@ class BinaryLens(object):
 		self.x = x
 		self.y = y
 #		self.tolerance = tolerance
-		self.coeff_multiplier = coeff_multiplier
+#		self.coeff_multiplier = coeff_multiplier
 		self.refine_region = refine_region
 		if self.q < 1e-13:
 			if self.refine_region == True:
@@ -179,8 +179,6 @@ class BinaryLens(object):
 		self.get_caustic_param(refine_region=False)
 		self.strings()
 
-
-
 ### The following functions assign values to variables pertaining to the class.
 
 	def get_mass(self):
@@ -196,7 +194,6 @@ class BinaryLens(object):
 		# mass is equal to 1.
 		self.m = 1./2.
 		self.dm = (1. - self.q) / (2.*(1. + self.q))
-
 
 	def get_lensing_body_positions(self):
 		"""
@@ -251,8 +248,6 @@ class BinaryLens(object):
 			if 'custom' in self.region:
 				zeta += self._custom_xshift + 1j*self._custom_yshift
 
-		else:
-			raise ValueError('Unknown value for plot_frame')
 		return zeta
 
 ### The following functions calculate physical values for further analysis.
@@ -279,8 +274,8 @@ class BinaryLens(object):
 
 		coefficients = self.get_coefficients(x=x, y=y)
 
-		if (self.coeff_multiplier is not None):
-			coefficients *= self.coeff_multiplier
+#		if (self.coeff_multiplier is not None):
+#			coefficients *= self.coeff_multiplier
 
 		# Return the roots of the polynomial via the given root finder
 		if self.solver == 'SG12':
@@ -409,17 +404,17 @@ class BinaryLens(object):
 	def assign_center_caustic(self):
 
 		if self.plot_frame == 'geo_cent':
-			self.xcenter_caustic = self.xshift + self._custom_xshift
-			self.ycenter_caustic = self.yshift + self._custom_yshift
+			self.xcenter_caustic = self.xshift
+			self.ycenter_caustic = self.yshift
 
 		elif self.plot_frame == 'caustic':
-			self.xcenter_caustic = 0. + self._custom_xshift
-			self.ycenter_caustic = 0. + self._custom_yshift
+			self.xcenter_caustic = 0. - self._custom_xshift
+			self.ycenter_caustic = 0. - self._custom_yshift
 		else:
 			raise ValueError('Unknown value for plot_frame.')
 
-		self.xcenter_plot = self.xcenter_caustic - self._custom_xshift
-		self.ycenter_plot = self.ycenter_caustic - self._custom_yshift
+		self.xcenter_plot = self.xcenter_caustic + self._custom_xshift
+		self.ycenter_plot = self.ycenter_caustic + self._custom_yshift
 
 	def get_caustic_param(self, refine_region=True):
 
@@ -487,6 +482,7 @@ class BinaryLens(object):
 			for i in range(len(x_caus)):
 				dx = np.abs(x_caus[i] - self.xcenter_caustic)
 				dy = np.abs(y_caus[i] - self.ycenter_caustic)
+
 				if ((dx < 1.8*self.width_caustic) and
 				   (dy < 1.3*self.height_caustic)):
 					x_local_caustic.append(x_caus[i])
@@ -605,10 +601,10 @@ class BinaryLens(object):
 			grid_ymin = 0.5*ymin*self.height_caustic + self.ycenter_caustic
 			grid_ymax = 0.5*ymax*self.height_caustic + self.ycenter_caustic
 
-			xcent = (grid_xmax + grid_xmin) / 2.
-			ycent = (grid_ymax + grid_ymin) / 2.
-			self._custom_xshift = xcent - self.xcenter_caustic
-			self._custom_yshift = ycent - self.ycenter_caustic
+			xcent_grid = (grid_xmax + grid_xmin) / 2.
+			ycent_grid = (grid_ymax + grid_ymin) / 2.
+			self._custom_xshift = xcent_grid - self.xcenter_caustic
+			self._custom_yshift = ycent_grid - self.ycenter_caustic
 			self.assign_center_caustic()
 
 			region_xmin = self.xcenter_plot - 0.5*(grid_xmax - grid_xmin)

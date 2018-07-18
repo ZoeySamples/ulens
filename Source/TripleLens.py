@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: June 08, 2018
 # TripleLens.py
-# Last Updated: Jul 09, 2018
+# Last Updated: Jul 18, 2018
 
 import sys
 import os
@@ -195,29 +195,43 @@ class TripleLens(object):
 	"""
 
 
-	def __init__(self, q2, q1, s2, s1, phi, origin, solver, system=None, x=None,
-				 y=None, res=None, SFD=True, region='caustic2a', region_lim=None, 
-				 plot_frame='caustic'):
+	def __init__(self, q2, q1, s2, s1, phi, origin, solver, system, x=None,
+				 y=None, plot_frame='caustic', refine_region=True, 
+				 region='caustic2a', region_lim=None, res=None, SFD=True):
+
+		self._got_refined_param = False
+		self._got_caustic_param = False
 
 		self.q2 = q2
 		self.q1 = q1
 		self.s2 = s2
 		self.s1 = s1
 		self.phi = phi*(math.pi / 180.)
+		self.system = system
+		self.plot_frame = plot_frame
+		self.check_attributes()
 		self.origin = origin
 		self.solver = solver
-		self.system = system
 		self.res = res
 		self.x = x
 		self.y = y
-		self.roots = None
+		self.region = region
+		self.refine_region = refine_region #Keep track of this while debugging
+		if self.refine_region == True:
+			self.check_refine_region()
 		self.region = region
 		self.region_lim = region_lim
 		self.SFD = SFD
-		self.plot_frame = plot_frame
+		self._custom_xshift = 0. #Keep track of this while debugging
+		self._custom_yshift = 0. #Keep track of this while debugging
 		self.get_mass()
 		self.get_lensing_body_positions()
+		self.get_caustic_param(refine_region=False)
 		self.strings()
+
+### The following functions assign values to variables pertaining to the class.
+
+	def check_attributes(self):
 
 		if (self.q1 > 1.) or (self.q2 > 1.):
 			raise ValueError('q1 and q2 cannot be greater than 1.')
@@ -228,7 +242,20 @@ class TripleLens(object):
 		if (self.system != 'SPM') and (self.system != 'SPP') and (self.system != 'SSP'):
 			raise ValueError('Unknown value for string variable, system.')
 
-### The following functions assign values to variables pertaining to the class.
+		if (self.plot_frame != 'caustic') and (self.plot_fram != 'geo_cent'):
+			raise ValueError('Unknown value for string variable, plot_frame.')
+
+	def check_refine_region(self):
+
+		if self.system == 'SPM':
+			if self.q1*self.q2 < 1e-13:
+				print('Turning off "refine_region." q is too small.')
+				self.refine_region = False
+
+		if (self.system == 'SPP') or (self.system == 'SSP'):
+			if (self.q1 < 1e-13) or (self.q2 < 1e-13):
+				print('Turning off "refine_region." q is too small.')
+				self.refine_region = False
 
 	def get_mass(self):
 
@@ -292,9 +319,7 @@ class TripleLens(object):
 			else:
 				raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
 
-	def get_source_position(self, x, y):
-
-		self.get_size_caustic()
+	def get_source_position(self, x, y): #Keep track of this while debugging
 
 		if self.origin == 'geo_cent':
 			zeta = x + y*1.j
@@ -309,11 +334,18 @@ class TripleLens(object):
 			raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
 
 		if self.plot_frame == 'caustic':
+			if self._got_refined_param == False and self.refine_region==True:
+				self.get_caustic_param(refine_region=True)
+			zeta += self.xshift + 1j*self.yshift
+			if 'custom' in self.region:
+				zeta += self._custom_xshift + 1j*self._custom_yshift
+
+		return zeta
+		"""
 			(s, q, phi) = self.get_caustic_param()
 			(xshift, yshift) = self.get_shift(s, q, phi)
 			zeta += xshift + 1j*yshift
-
-		return zeta
+		"""
 
 	def get_coefficients(self, x, y):
 		"""Returns the coefficients for the polynomial equation."""
@@ -335,7 +367,7 @@ class TripleLens(object):
 
 		coefficients = self.get_coefficients(x=x, y=y)
 
-			# Return the roots of the polynomial via the given root finder
+		# Return the roots of the polynomial via the given root finder
 		if self.solver == 'SG12':
 			rev_list = coefficients[::-1]
 			out = _vbbl_SG12_10(*(rev_list.real.tolist() + rev_list.imag.tolist()))
@@ -393,52 +425,57 @@ class TripleLens(object):
 		planetary caustic. Estimated as a binary lens.
 		"""
 
-		(s, q, phi) = self.get_caustic_param()
+		self.find_caustic()
+		(d, q) = (self._d, self._q)
 
-		if np.abs(s) >= 1.0:
-			self.width_caustic = 4.*np.sqrt(q)*(1. + 1./(2.*(s**2))) / (s**2)
-			self.height_caustic = 4.*np.sqrt(q)*(1. - 1./(2.*(s**2))) / (s**2)
+		if np.abs(d) >= 1.0:
+			width = 4.*np.sqrt(q)*(1. + 1./(2.*(d**2))) / (d**2)
+			height = 4.*np.sqrt(q)*(1. - 1./(2.*(d**2))) / (d**2)
 		else:
-			self.width_caustic = (3*np.sqrt(3) / 4.)*np.sqrt(q)*s**3
-			self.height_caustic = np.sqrt(q)*s**3
+			width = (3*np.sqrt(3) / 4.)*np.sqrt(q)*d**3
+			height = np.sqrt(q)*d**3
 
-	def get_center_caustic(self):
+		self.width_caustic = max(width*math.cos(self._phi), height*math.sin(self._phi))
+		self.height_caustic = max(height*math.cos(self._phi), width*math.sin(self._phi))
 
-		(s, q, phi) = self.get_caustic_param()
+	def assign_center_caustic(self):
 
 		if self.plot_frame == 'geo_cent':
-			(xshift, yshift) = self.get_shift(s, q, phi)
-			self.xcenter_caustic = xshift
-			self.ycenter_caustic = yshift
+			self.xcenter_caustic = self.xshift
+			self.ycenter_caustic = self.yshift
 
 		elif self.plot_frame == 'caustic':
-			self.xcenter_caustic = 0.
-			self.ycenter_caustic = 0.
+			self.xcenter_caustic = 0. - self._custom_xshift
+			self.ycenter_caustic = 0. - self._custom_yshift
 		else:
 			raise ValueError('Unknown value for plot_frame.')
 
-	def get_caustic_param(self):
+		self.xcenter_plot = self.xcenter_caustic + self._custom_xshift
+		self.ycenter_plot = self.ycenter_caustic + self._custom_yshift
+
+	def find_caustic(self):
 
 		if '2' in self.region:
-			s = (self.z2 - self.z1).real
-			q = self.m2 / self.m1
-			phi = 0
+			self._s = (self.z2 - self.z1)
+			self._q = self.m2 / self.m1
+			self._phi = 0
 		elif '3' in self.region:
-			s = (self.z3 - self.z1).real
-			q = self.m3 / self.m1
+			self._s = (self.z3 - self.z1)
+			self._q = self.m3 / self.m1
 			if (self.system == 'SPP') or (self.system == 'SSP'):
-				phi = self.phi
+				self._phi = self.phi
 			elif self.system == 'SPM':
 				d12 = np.abs(self.z2 - self.z1)
 				d13 = np.abs(self.z3 - self.z1)
 				d23 = np.abs(self.z3 - self.z2)
-				phi = math.acos((d12**2 - d23**2 + d13**2) / (2*d12*d13))
+				self._phi = math.acos((d12**2 - d23**2 + d13**2) / (2*d12*d13))
 		else:
-			raise ValueError('Specify which caustic you want to center on\n',
-					'by including a 2 or a 3 on the string variable, region.')
+			raise ValueError('Specify which caustic you want to plot by\n',
+					'including a 2 or a 3 on the string variable, region.')
 
-		return (s, q, phi)
+		self._d = np.abs(self._s)
 
+	"""
 	def get_shift(self, s, q, phi):
 
 		xshift = (0.5*s - 1.0/s)*math.cos(phi)
@@ -458,6 +495,146 @@ class TripleLens(object):
 						'in string variable, region.')
 
 		return (xshift, yshift)
+	"""
+
+	#comeback
+	def get_caustic_param(self, refine_region=True):
+
+		def get_first_shift():
+			# Assign the relative position of the approximate caustic center
+			# in the geometric center frame.
+			self.xshift = (0.5*self._s - 1.0/self._s).real
+			self.yshift = (0.5*self._s - 1.0/self._s).imag
+			if self._s < 1.0:
+				# If s<1, determine the height of the bifurcated caustics
+				# and shift to its approximated location.
+				self.height_center_twin = (2*np.sqrt(self._q) / (self._d*np.sqrt(
+										1.+self._d**2)) - 0.5*self.height_caustic)
+				if self.region[-1] == 'b':
+					# Shift to the bottom caustic.
+					self.xshift += self.height_center_twin*math.sin(self._phi)
+					self.yshift -= self.height_center_twin*math.cos(self._phi)
+				else:
+					# Shift to the top caustic (default if not specified).
+					self.xshift -= self.height_center_twin*math.sin(self._phi)
+					self.yshift += self.height_center_twin*math.cos(self._phi)
+
+		def make_corrections():
+
+			(x_caus, y_caus) = make_caustic()
+			apply_second_shift(x_caus, y_caus)
+			(x_caus, y_caus) = make_caustic()
+			(x_local_caustic, y_local_caustic) = get_local_caustic(
+											 	 x_caus, y_caus)
+
+			xmin_caustic = min(x_local_caustic)
+			xmax_caustic = max(x_local_caustic)
+			ymin_caustic = min(y_local_caustic)
+			ymax_caustic = max(y_local_caustic)
+			self.width_caustic = (xmax_caustic - xmin_caustic)
+			self.height_caustic = (ymax_caustic - ymin_caustic)
+			self.xshift -= (self.xcenter_caustic - xmin_caustic - 0.5*self.width_caustic)
+			self.yshift -= (self.ycenter_caustic - ymin_caustic - 0.5*self.height_caustic)
+			self.assign_center_caustic()
+
+		def make_caustic():
+			"""Gets the caustics for the current approximated parameters."""
+
+			from Caustics import Caustics as caus
+			caustic = caus(lens=self)
+			caustic.calculate(points=200)
+			return (caustic.x, caustic.y)
+
+		def get_local_caustic(x_caus, y_caus):
+			"""Attempts to locate the nearest planetary caustic."""
+
+			x_distances = []
+			y_distances = []
+			distances = []
+			x_local_caustic = []
+			y_local_caustic = []
+			caus = np.array(x_caus) + 1j*np.array(y_caus)
+
+			for i in range(len(x_caus)):
+				x_distances.append(self.xcenter_caustic - x_caus[i])
+				y_distances.append(self.ycenter_caustic - y_caus[i])
+				distances.append(np.sqrt(np.abs(x_distances[i]**2) +
+										 np.abs(y_distances[i]**2)))
+
+			idx_min = np.argmin(distances)
+			test_point = [None]*4
+			test_point = [x_caus[idx_min] + 1j*y_caus[idx_min]]*4
+
+
+			# This is here for documentation. Remove it later.
+			print('Starting size of local caustic is', len(x_local_caustic))
+
+
+			iterate_again = True
+			while iterate_again:
+				num_fails = 0
+				for point in test_point:
+					points_added = int(0)
+					for i in range(len(x_caus)):
+						if np.abs(caus[i] - point) < 0.1*self.width_caustic:
+							if ((x_caus[i] not in x_local_caustic) and
+										(y_caus[i] not in y_local_caustic)):
+								x_local_caustic.append(x_caus[i])
+								y_local_caustic.append(y_caus[i])
+								points_added += 1
+					if points_added == 0:
+						num_fails += 1
+						if num_fails == 4:
+							iterate_again = False
+					else:
+						idx_xmin = np.argmin(x_local_caustic)
+						idx_xmax = np.argmax(x_local_caustic)
+						idx_ymin = np.argmin(y_local_caustic)
+						idx_ymax = np.argmax(y_local_caustic)
+						test_point = [x_local_caustic[idx_xmin] + 1j*y_local_caustic[idx_xmin],
+									  x_local_caustic[idx_xmax] + 1j*y_local_caustic[idx_xmax],
+									  x_local_caustic[idx_ymin] + 1j*y_local_caustic[idx_ymin],
+									  x_local_caustic[idx_ymax] + 1j*y_local_caustic[idx_ymax]]
+
+				# These are here for documentation. Remove them later.
+				print('\nnumber of fails that attempt:', num_fails, 'out of 4 test points.')
+				print('size of local caustic is', len(x_local_caustic))
+
+			return (x_local_caustic, y_local_caustic)
+
+		def apply_second_shift(x_caus, y_caus):
+			"""If get_local_caustic attempt fails, finds the nearest point
+			on the caustic and uses it as new starting point for second
+			attempt.
+			"""
+
+			x_distances = []
+			y_distances = []
+			distances = []
+			for i in range(len(x_caus)):
+				x_distances.append(self.xcenter_caustic - x_caus[i])
+				y_distances.append(self.ycenter_caustic - y_caus[i])
+				distances.append(np.sqrt(np.abs(x_distances[i]**2) +
+										 np.abs(y_distances[i]**2)))
+			idx_min = np.argmin(distances)
+			self.xshift -= x_distances[idx_min]
+			self.yshift -= y_distances[idx_min]
+			self.assign_center_caustic()
+
+		# Start of external method
+		if (self._got_refined_param):
+			return
+
+		if self._got_caustic_param == False:
+			self._got_caustic_param = True
+			self.get_size_caustic()
+			get_first_shift()
+			self.assign_center_caustic()
+
+		if (refine_region==True):
+			self._got_refined_param = True
+			make_corrections()
+
 
 ### The following functions are used for assigning data into grids.
 
@@ -494,35 +671,69 @@ class TripleLens(object):
 					The off-axis cus1 are given by: (x, y) = {(0, -1), (0, 1)}
 		"""
 
-		self.get_size_caustic()
-		self.get_center_caustic()
+		if self._got_refined_param == False and self.refine_region == True:
+			self.get_caustic_param(refine_region=self.refine_region)
+
+		#self.get_size_caustic()
+		#self.assign_center_caustic()
 
 		if 'caustic' in self.region:
+			"""Defines the grid to be centered on the caustic,
+			determined by approximations in get_size_caustics() and
+			assign_center_caustics().
+			"""
+
 			region_xmin = self.xcenter_caustic - 0.8*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.8*self.width_caustic
 			region_ymin = -0.8*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.8*self.height_caustic + self.ycenter_caustic
-		if 'onax_cusp' in self.region:
+
+		elif 'onax_cusp' in self.region:
 			region_xmin = self.xcenter_caustic + 0.55*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.8*self.width_caustic
 			region_ymin = -0.10*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.10*self.height_caustic + self.ycenter_caustic
-		if 'offax_cusp' in self.region:
+
+		elif 'offax_cusp' in self.region:
 			region_xmin = self.xcenter_caustic - 0.10*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.10*self.width_caustic
 			region_ymin = 0.55*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.8*self.height_caustic + self.ycenter_caustic
-		if 'both' in self.region:
+
+		elif 'both' in self.region:
 			region_xmin = -0.5*self.s1
 			region_xmax = 0.5*self.s1
 			region_ymin = -0.5*self.s1
 			region_ymax = 0.5*self.s1
-		if 'custom' in self.region:
+
+		elif 'custom' in self.region:
+			"""
 			(xmin, xmax, ymin, ymax) = (*self.region_lim,)
 			region_xmin = self.xcenter_caustic + 0.5*xmin*self.width_caustic
 			region_xmax = self.xcenter_caustic + 0.5*xmax*self.width_caustic
 			region_ymin = 0.5*ymin*self.height_caustic + self.ycenter_caustic
 			region_ymax = 0.5*ymax*self.height_caustic + self.ycenter_caustic
+			"""
+
+			(xmin, xmax, ymin, ymax) = (*self.region_lim,)
+			grid_xmin = self.xcenter_caustic + 0.5*xmin*self.width_caustic
+			grid_xmax = self.xcenter_caustic + 0.5*xmax*self.width_caustic
+			grid_ymin = 0.5*ymin*self.height_caustic + self.ycenter_caustic
+			grid_ymax = 0.5*ymax*self.height_caustic + self.ycenter_caustic
+
+			xcent_grid = (grid_xmax + grid_xmin) / 2.
+			ycent_grid = (grid_ymax + grid_ymin) / 2.
+			self._custom_xshift = xcent_grid - self.xcenter_caustic
+			self._custom_yshift = ycent_grid - self.ycenter_caustic
+			self.assign_center_caustic()
+
+			region_xmin = self.xcenter_plot - 0.5*(grid_xmax - grid_xmin)
+			region_xmax = self.xcenter_plot + 0.5*(grid_xmax - grid_xmin)
+			region_ymin = self.ycenter_plot - 0.5*(grid_ymax - grid_ymin)
+			region_ymax = self.ycenter_plot + 0.5*(grid_ymax - grid_ymin)
+
+		else:
+			raise ValueError('Unknown region {:}'.format(self.region))
 
 		x_grid = np.linspace(region_xmin, region_xmax, self.res)
 		y_grid = np.linspace(region_ymin, region_ymax, self.res)
@@ -1815,10 +2026,11 @@ class TripleLens(object):
 
 ### The following functions gather string data that are used within the source code.
 
+	"""
 	def get_coeff_strings(self):
-		"""
-		Assigns strings to global lists regarding coefficient names.
-		"""
+		""
+		Assigns coefficient names to strings.
+		""
 
 		self.coeff_string = [None]*12
 		self.coeff_file = [None]*12
@@ -1827,6 +2039,7 @@ class TripleLens(object):
 			self.coeff_string[i+6] = ('Im(coeff{})'.format(i))
 			self.coeff_file[i] = ('Re_c{}'.format(i))
 			self.coeff_file[i+6] = ('Im_c{}'.format(i))
+	"""
 
 	def strings(self):
 		"""

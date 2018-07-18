@@ -156,12 +156,10 @@ class Caustics(object):
 		self.solver = solver
 		self.lens = lens
 		self.plot_frame = self.lens.plot_frame
+		self.lens.get_caustic_param(refine_region=self.lens.refine_region)
 
 		if isinstance(self.lens, BL):
 			self.lens_type = 'BL'
-
-			# Move this outside once added to TL
-			self.lens.get_caustic_param(refine_region=self.lens.refine_region)
 			self.s = self.lens.s
 			self.q = self.lens.q
 			(self.m, self.dm) = (self.lens.m, self.lens.dm)
@@ -183,26 +181,34 @@ class Caustics(object):
 
 	def get_BL_lensing_body_positions(self):
 
-		(xshift, yshift) = (self.lens.xshift, self.lens.yshift)
-		(xcenter, ycenter) = (self.lens.xcenter_caustic, self.lens.ycenter_caustic)
-		#FIXME: Error in geo_cent plot frame.
-		self.z1 = 0.5*self.s - (xshift + xcenter + 1j*(yshift + ycenter))
-		self.z2 = -0.5*self.s - (xshift + xcenter + 1j*(yshift + ycenter))
+		xshift = self.lens.xshift + self.lens._custom_xshift
+		yshift = self.lens.yshift + self.lens._custom_yshift
+		#(xcenter, ycenter) = (self.lens.xcenter_caustic, self.lens.ycenter_caustic)
+
+		# Come back and fix this assignment. Assign it according to geo_cent. If
+		# plot_frame == 'caustic', apply shift.
+		if self.plot_frame == 'caustic':
+			self.z1 = 0.5*self.s - (xshift + 1j*(yshift))
+			self.z2 = -0.5*self.s - (xshift + 1j*(yshift))
+		elif self.plot_frame == 'geo_cent':
+			self.z1 = 0.5*self.s
+			self.z2 = -0.5*self.s
 
 	def get_TL_lensing_body_positions(self):
+
+		xshift = self.lens.xshift + self.lens._custom_xshift
+		yshift = self.lens.yshift + self.lens._custom_yshift
+		#(xcenter, ycenter) = (self.lens.xcenter_caustic, self.lens.ycenter_caustic)
 
 		if self.lens.system == 'SPM':
 			self.displacement23 = self.s2*(math.cos(math.pi - self.phi) +
 									   1.j*math.sin(math.pi - self.phi))
 
-			self.z1 = -0.5*self.s1 + 0j		#This is the most massive body.
-			self.z2 = 0.5*self.s1 + 0j		#This is the 2nd most most massive body.
-			self.z3 = self.z2 + self.displacement23		#This is the smallest body.
+			self.z1 = -0.5*self.s1 + 0j
+			self.z2 = 0.5*self.s1 + 0j
+			self.z3 = self.z2 + self.displacement23
 
 			if self.plot_frame == 'caustic':
-				self.lens.get_size_caustic()
-				(s, q, phi) = self.lens.get_caustic_param()
-				(xshift, yshift) = self.lens.get_shift(s, q, phi)
 				self.z1 -= xshift + 1j*yshift
 				self.z2 -= xshift + 1j*yshift
 				self.z3 -= xshift + 1j*yshift
@@ -216,9 +222,6 @@ class Caustics(object):
 			self.z3 = self.z1 + self.displacement13
 
 			if self.plot_frame == 'caustic':
-				self.lens.get_size_caustic()
-				(s, q, phi) = self.lens.get_caustic_param()
-				(xshift, yshift) = self.lens.get_shift(s, q, phi)
 				self.z1 -= xshift + 1j*yshift
 				self.z2 -= xshift + 1j*yshift
 				self.z3 -= xshift + 1j*yshift

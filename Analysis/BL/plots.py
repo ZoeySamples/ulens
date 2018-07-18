@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: May 22, 2018
-# BLPlots.py
-# Last Updated: Jul 10, 2018
+# Plots.py
+# Last Updated: Jul 18, 2018
 
 import matplotlib.pyplot as plt
 from BinaryLens import BinaryLens as BL
@@ -11,20 +11,20 @@ import numpy as np
 
 
 # Input parameters
-s = 1.5
-mass_ratios = [1e-5]
+s = 0.7
+mass_ratios = [1e-1]
 solvers =  ['SG12']
 origins = ['plan']
 
-plot_frame = 'caustic'
+plot_frame = 'geo_cent'
 
 res = int(60)
 sample_res = 5
-region = 'custom_a'
-region_lim = [0, 2, -1.0, 1.0]
+cutoff = 1.5
+region = 'caustic_a'
+region_lim = [-10, 10, -10, 10]
 refine_region = True
 
-cutoff = 1.5
 SFD = True
 
 param = []

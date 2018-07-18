@@ -73,7 +73,7 @@ def get_coefficients(calc, zeta, z1, z2, m, dm, s, q):
 		coeff0 = (csum([dm, -m])**2*z2**2*zeta)
 
 		"""
-		# Most recent derivation (not as good as old derivation)
+		# 2nd Most recent derivation (not as good as old derivation)
 		coeff5 = ((z2 - zeta_conj)*zeta_conj)
 		coeff4 = ((dm + m)*z2 + zeta_conj*(-2*m - z2*(2*z2 + zeta) + (2*z2 + zeta)*zeta_conj))
 		coeff3 = (-(z2*((dm + m)*z2 + 2*m*zeta)) + zeta_conj*(-2*dm*z2 + (2*m + z2**2)*(z2 + 2*zeta) - z2*(z2 + 2*zeta)*zeta_conj))
@@ -87,7 +87,7 @@ def get_coefficients(calc, zeta, z1, z2, m, dm, s, q):
 		#m2 = 1./ (1. + q)
 		#m1 = q / (1. + q)
 
-
+		# Most recent derivation (not as good as old derivation)
 		coeff5 = (z2 - zeta_conj)*zeta_conj
 		coeff5 = -(zeta_conj*csum([-z2, zeta_conj]))
 

@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: May 22, 2018
 # TLPlots.py
-# Last Updated: Jul 09, 2018
+# Last Updated: Jul 18, 2018
 
 import matplotlib.pyplot as plt
 from TripleLens import TripleLens as TL
@@ -12,21 +12,23 @@ import numpy as np
 
 # Input parameters
 system = 'SPM'
-plot_frame = 'geo_cent'
-s1 = 0.8
-s2 = 0.6
-q1=1e-4
+q1=1e-2
 q2=1e-1
+s1 = 1.0
+s2 = 1.5
+phi = 0
 solvers =  ['SG12']
 origins = ['body3']
-phi = 0
+
+plot_frame = 'caustic'
 
 res = int(120)
 sample_res = 5
-region = 'caustic2b'
-region_lim = (5, 10, 0, 5)
-
 cutoff = 1.5
+region = 'caustic_2a'
+region_lim = (-5, 5, -5, 5)
+refine_region = True
+
 SFD = True
 
 param = []
@@ -37,11 +39,10 @@ def make_plot():
 	for p in plot:
 		for plot_type in plot_types:
 
-			caustic = caus(lens=p)
-
 			if plot_type == 'num_images':
 				p.plot_num_images(errors_only=False, save=False, print_errors=True)
-				caustic.plot_caustic(s=0.2, color='yellow')
+				caustic = caus(lens=p, solver='SG12')
+				caustic.plot_caustic(s=1, color='yellow', lw=0)
 				plt.show()
 
 			if plot_type == 'magn':
@@ -90,7 +91,7 @@ for solver in solvers:
 					'q1': q1, 'res': res, 'origin': origin,
 					'region': region, 'region_lim': region_lim,
 					'solver': solver, 'SFD': SFD, 'system': system,
-					'plot_frame': plot_frame})
+					'plot_frame': plot_frame, 'refine_region': refine_region})
 		plot.append(TL(**param[-1]))
 
 plot_types = []
