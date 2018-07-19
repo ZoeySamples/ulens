@@ -6,12 +6,9 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import matplotlib.colors as colors
-import matplotlib
-import pandas as pd
 import numpy as np
 from BinaryLens import BinaryLens as BL
 from Caustics import Caustics as caus
-import MulensModel as mm
 from pathlib import Path
 
 
@@ -39,7 +36,7 @@ def num_images_demo():
 			cmaplist = [cmap(i) for i in range(cmap.N)]
 			cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
 			bounds = np.linspace(-0.5,5.5,7)
-			norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
+			norm = colors.BoundaryNorm(bounds, cmap.N)
 			ticks = np.linspace(0,5,6)
 
 			# Get the data for the plots.
@@ -181,11 +178,11 @@ def save_png(file_name):
 s = 1.5
 mass_ratios = [1e-14, 1e-15, 1e-16]
 origin = 'plan'
-res = int(250)
+res = int(10)
 solvers =  ['SG12', 'zroots', 'numpy']
 region = 'custom'
 region_lim = [0.6, 1.4, -0.20, 0.20]
-save_fig = True
+save_fig = False
 show_fig = False
 
 refine_region = False
