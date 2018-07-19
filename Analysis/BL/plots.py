@@ -11,18 +11,19 @@ import numpy as np
 
 
 # Input parameters
-s = 0.7
-mass_ratios = [1e-1]
+s = 1.5
+mass_ratios = [1e-13]
+
 solvers =  ['SG12']
 origins = ['plan']
 
-plot_frame = 'geo_cent'
+plot_frame = 'caustic'
 
 res = int(60)
 sample_res = 5
 cutoff = 1.5
 region = 'caustic_a'
-region_lim = [-10, 10, -10, 10]
+region_lim = [-20, 20, -20, 20]
 refine_region = True
 
 SFD = True
@@ -38,7 +39,7 @@ def make_plot():
 			if plot_type == 'num_images':
 				p.plot_num_images(errors_only=False, save=False, print_errors=True)
 				caustic = caus(lens=p, solver='SG12')
-				caustic.plot_caustic(s=1, color='yellow')
+				caustic.plot_caustic(s=1, color='yellow', lw=0)
 				plt.show()
 
 			if plot_type == 'magn':

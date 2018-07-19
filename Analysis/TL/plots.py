@@ -10,30 +10,6 @@ import MulensModel as mm
 import numpy as np
 
 
-# Input parameters
-system = 'SPM'
-q1=1e-2
-q2=1e-1
-s1 = 1.0
-s2 = 1.5
-phi = 0
-solvers =  ['SG12']
-origins = ['body3']
-
-plot_frame = 'caustic'
-
-res = int(120)
-sample_res = 5
-cutoff = 1.5
-region = 'caustic_2a'
-region_lim = (-5, 5, -5, 5)
-refine_region = True
-
-SFD = True
-
-param = []
-plot = []
-
 def make_plot():
 
 	for p in plot:
@@ -84,6 +60,48 @@ def make_plot():
 			if plot_type == 'fits':
 				p.write_to_fits()
 
+# Input parameters
+test = 'test2'
+
+if test == 'test1':
+	q1 = 1e-2
+	q2 = 1e-1
+	s1 = 1.5
+	s2 = 0.9
+	phi = 40
+
+elif test == 'test2':
+	q1 = 1e-2
+	q2 = 1e-1
+	s1 = 1.0
+	s2 = 1.3
+	phi = 0
+
+elif test == 'test3':
+	q1 = 1e-1
+	q2 = 1e-2
+	s1 = 0.7
+	s2 = 1.5
+	phi = 0
+
+system = 'SPM'
+solvers =  ['SG12']
+origins = ['body3']
+
+plot_frame = 'caustic'
+
+res = int(30)
+sample_res = 5
+cutoff = 1.5
+region = 'custom_3a'
+region_lim = (-10, 10, -10, 10)
+region_lim = np.array(region_lim)*3
+refine_region = False
+
+SFD = True
+
+param = []
+plot = []
 
 for solver in solvers:
 	for origin in origins:
