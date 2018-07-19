@@ -231,6 +231,18 @@ class Caustics(object):
 		self.calculate(points=points)
 		plt.scatter(self.x, self.y, **kwargs)
 
+	def plot_lens_bodies(self):
+
+		s = 70
+		plt.scatter(self.z1.real, self.z1.imag, marker='*', s=10*s, color='orange', lw=0)
+		plt.scatter(self.z2.real, self.z2.imag, marker='o', s=4*s, color='green', lw=0)
+		plt.scatter(self.z3.real, self.z3.imag, marker='o', s=s, color='yellow', lw=0)
+
+	def plot_critical_curve(self, points=5000, **kwargs):
+
+		self.calculate(points=points)
+		plt.scatter(self.CriticalCurve.x, self.CriticalCurve.y, **kwargs)
+
 	def calculate(self, points=5000):
 
 		self.x = []

@@ -242,7 +242,7 @@ class TripleLens(object):
 		if (self.system != 'SPM') and (self.system != 'SPP') and (self.system != 'SSP'):
 			raise ValueError('Unknown value for string variable, system.')
 
-		if (self.plot_frame != 'caustic') and (self.plot_fram != 'geo_cent'):
+		if (self.plot_frame != 'caustic') and (self.plot_frame != 'geo_cent'):
 			raise ValueError('Unknown value for string variable, plot_frame.')
 
 	def check_refine_region(self):
@@ -462,6 +462,9 @@ class TripleLens(object):
 		elif '3' in self.region:
 			self._s = (self.z3 - self.z1)
 			self._q = self.m3 / self.m1
+			self._s1 = (self.z3 - self.z2)
+			self._q1 = self.m3 / self.m2
+			self._d1 = np.abs(self._s1)
 			if (self.system == 'SPP') or (self.system == 'SSP'):
 				self._phi = self.phi
 			elif self.system == 'SPM':
@@ -475,36 +478,19 @@ class TripleLens(object):
 
 		self._d = np.abs(self._s)
 
-	"""
-	def get_shift(self, s, q, phi):
-
-		xshift = (0.5*s - 1.0/s)*math.cos(phi)
-		yshift = (0.5*s - 1.0/s)*math.sin(phi)
-		if s < 1.0:
-			self.height_center_twin = (2*np.sqrt(q) / (s*np.sqrt(1.+s**2)) -
-								  0.5*self.height_caustic)
-			if self.region[-1] == 'a':
-				xshift -= self.height_center_twin*math.sin(phi)
-				yshift += self.height_center_twin*math.cos(phi)
-			elif self.region[-1] == 'b':
-				xshift += self.height_center_twin*math.sin(phi)
-				yshift -= self.height_center_twin*math.cos(phi)
-			else:
-				raise ValueError('Specify whether you want to focus on the',
-						'top caustic or bottom caustic by including a or b',
-						'in string variable, region.')
-
-		return (xshift, yshift)
-	"""
-
-	#comeback
 	def get_caustic_param(self, refine_region=True):
 
 		def get_first_shift():
 			# Assign the relative position of the approximate caustic center
 			# in the geometric center frame.
+
 			self.xshift = (0.5*self._s - 1.0/self._s).real
 			self.yshift = (0.5*self._s - 1.0/self._s).imag
+
+		#	if '3' in self.region:
+		#		self.xshift -= (self.m3/self.m1)*((0.5*self._s1 - 1.0/self._s1).real)
+		#		self.yshift -= (self.m3/self.m1)*((0.5*self._s1 - 1.0/self._s1).imag)
+
 			if self._s < 1.0:
 				# If s<1, determine the height of the bifurcated caustics
 				# and shift to its approximated location.
@@ -540,9 +526,14 @@ class TripleLens(object):
 		def make_caustic():
 			"""Gets the caustics for the current approximated parameters."""
 
+			if self._s < 1.0:
+				points = 500
+			else:
+				points = 300
+
 			from Caustics import Caustics as caus
 			caustic = caus(lens=self)
-			caustic.calculate(points=200)
+			caustic.calculate(points=points)
 			return (caustic.x, caustic.y)
 
 		def get_local_caustic(x_caus, y_caus):
@@ -555,50 +546,93 @@ class TripleLens(object):
 			y_local_caustic = []
 			caus = np.array(x_caus) + 1j*np.array(y_caus)
 
+			left = False
+			right = False
+			above = False
+			below = False
+
 			for i in range(len(x_caus)):
 				x_distances.append(self.xcenter_caustic - x_caus[i])
 				y_distances.append(self.ycenter_caustic - y_caus[i])
 				distances.append(np.sqrt(np.abs(x_distances[i]**2) +
 										 np.abs(y_distances[i]**2)))
 
-			idx_min = np.argmin(distances)
-			test_point = [None]*4
-			test_point = [x_caus[idx_min] + 1j*y_caus[idx_min]]*4
 
+				# Check if already in the center of the caustic.
+				if ((x_distances[i] > 0.3*self.width_caustic) and
+							(x_distances[i] < 0.6*self.width_caustic) and
+							(np.abs(y_distances[i]) < 0.5*self.height_caustic)):
+					right = True
 
-			# This is here for documentation. Remove it later.
-			print('Starting size of local caustic is', len(x_local_caustic))
+				if ((x_distances[i] < -0.3*self.width_caustic) and
+							(x_distances[i] > -0.6*self.width_caustic) and
+							(np.abs(y_distances[i]) < 0.5*self.height_caustic)):
+					left = True
 
+				if ((y_distances[i] < -0.3*self.height_caustic) and
+							(y_distances[i] > -0.6*self.height_caustic) and
+							(np.abs(x_distances[i]) < 0.5*self.width_caustic)):
+					below = True
 
+				if ((y_distances[i] > 0.3*self.height_caustic) and
+							(y_distances[i] < 0.6*self.height_caustic) and
+							(np.abs(x_distances[i]) < 0.5*self.width_caustic)):
+					above = True
+
+			if (left==True and right==True and above==True and below==True):
+				# If (xcenter_caustic, ycenter_caustic) is already inside the
+				# caustic, set 4 starting points at the idealized cusps of
+				# the caustic.
+				test_points = [self.xcenter_caustic - 0.5*self.width_caustic +1j*self.ycenter_caustic,
+							  self.xcenter_caustic + 0.5*self.width_caustic +1j*self.ycenter_caustic,
+							  self.xcenter_caustic + 1j*(self.ycenter_caustic + 0.5*self.height_caustic),
+							  self.xcenter_caustic + 1j*(self.ycenter_caustic - 0.5*self.height_caustic)]
+
+				# Add another starting point at the closest point in the set
+				# of caustic points, just in case the other four all do poorly.
+				idx_min = np.argmin(distances)
+				test_points.append(x_caus[idx_min] + 1j*y_caus[idx_min])
+
+			else:
+				# If (xcenter_caustic, ycenter_caustic) is outside the caustic,
+				# start searching at nearest point in the caustic.
+				idx_min = np.argmin(distances)
+				test_points = [x_caus[idx_min] + 1j*y_caus[idx_min]]
+
+			# Find the points that are in the caustic we are interested in.
 			iterate_again = True
 			while iterate_again:
 				num_fails = 0
-				for point in test_point:
+				x_recent_addition = []
+				y_recent_addition = []
+				for point in test_points:
 					points_added = int(0)
 					for i in range(len(x_caus)):
-						if np.abs(caus[i] - point) < 0.1*self.width_caustic:
+						if np.abs(caus[i] - point) < 0.06*self.width_caustic:
 							if ((x_caus[i] not in x_local_caustic) and
 										(y_caus[i] not in y_local_caustic)):
 								x_local_caustic.append(x_caus[i])
 								y_local_caustic.append(y_caus[i])
+								x_recent_addition.append(x_caus[i])
+								y_recent_addition.append(y_caus[i])
 								points_added += 1
 					if points_added == 0:
 						num_fails += 1
-						if num_fails == 4:
+						# If no more points are being found, quit.
+						if num_fails == len(test_points):
 							iterate_again = False
 					else:
-						idx_xmin = np.argmin(x_local_caustic)
-						idx_xmax = np.argmax(x_local_caustic)
-						idx_ymin = np.argmin(y_local_caustic)
-						idx_ymax = np.argmax(y_local_caustic)
-						test_point = [x_local_caustic[idx_xmin] + 1j*y_local_caustic[idx_xmin],
-									  x_local_caustic[idx_xmax] + 1j*y_local_caustic[idx_xmax],
-									  x_local_caustic[idx_ymin] + 1j*y_local_caustic[idx_ymin],
-									  x_local_caustic[idx_ymax] + 1j*y_local_caustic[idx_ymax]]
-
-				# These are here for documentation. Remove them later.
-				print('\nnumber of fails that attempt:', num_fails, 'out of 4 test points.')
-				print('size of local caustic is', len(x_local_caustic))
+						# As long as more points are being found, create
+						# another set of start points that includes the
+						# extremes of those that were just added.
+						idx_xmin = np.argmin(x_recent_addition)
+						idx_xmax = np.argmax(x_recent_addition)
+						idx_ymin = np.argmin(y_recent_addition)
+						idx_ymax = np.argmax(y_recent_addition)
+						test_points = [x_recent_addition[idx_xmin] + 1j*y_recent_addition[idx_xmin],
+									   x_recent_addition[idx_xmax] + 1j*y_recent_addition[idx_xmax],
+									   x_recent_addition[idx_ymin] + 1j*y_recent_addition[idx_ymin],
+									   x_recent_addition[idx_ymax] + 1j*y_recent_addition[idx_ymax]]
 
 			return (x_local_caustic, y_local_caustic)
 
@@ -701,10 +735,14 @@ class TripleLens(object):
 			region_ymax = 0.8*self.height_caustic + self.ycenter_caustic
 
 		elif 'both' in self.region:
-			region_xmin = -0.5*self.s1
-			region_xmax = 0.5*self.s1
-			region_ymin = -0.5*self.s1
-			region_ymax = 0.5*self.s1
+			from Caustics import Caustics as caus
+			caustic = caus(lens=self)
+			(z1, z2, z3) = (caustic.z1, caustic.z2, caustic.z3)
+
+			region_xmin = min(z1.real, z2.real, z3.real) - 0.4*np.abs(self.s1)
+			region_xmax = max(z1.real, z2.real, z3.real) + 0.4*np.abs(self.s1)
+			region_ymin = min(z1.imag, z2.imag, z3.imag) - 0.3*np.abs(self.s1)
+			region_ymax = max(z1.imag, z2.imag, z3.imag) + 0.3*np.abs(self.s1)
 
 		elif 'custom' in self.region:
 			"""
@@ -1123,8 +1161,6 @@ class TripleLens(object):
 		return kwargs
 
 ### The following functions make plots for grid data.
-### Note: All plots are made in the geometric center frame, regardless
-### of which frame the calculations were done in.
 
 	def plot_image_positions(self, **kwargs):
 

@@ -474,8 +474,9 @@ class BinaryLens(object):
 			caustic.calculate(points=100)
 			return (caustic.x, caustic.y)
 
+		"""
 		def get_local_caustic(x_caus, y_caus):
-			"""Attempts to locate the nearest planetary caustic."""
+			""Attempts to locate the nearest planetary caustic.""
 
 			x_local_caustic = []
 			y_local_caustic = []
@@ -488,6 +489,105 @@ class BinaryLens(object):
 					x_local_caustic.append(x_caus[i])
 					y_local_caustic.append(y_caus[i])
 			return (x_local_caustic, y_local_caustic)
+		"""
+
+		def get_local_caustic(x_caus, y_caus):
+			"""Attempts to locate the nearest planetary caustic."""
+
+			x_distances = []
+			y_distances = []
+			distances = []
+			x_local_caustic = []
+			y_local_caustic = []
+			caus = np.array(x_caus) + 1j*np.array(y_caus)
+
+			left = False
+			right = False
+			above = False
+			below = False
+
+			for i in range(len(x_caus)):
+				x_distances.append(self.xcenter_caustic - x_caus[i])
+				y_distances.append(self.ycenter_caustic - y_caus[i])
+				distances.append(np.sqrt(np.abs(x_distances[i]**2) +
+										 np.abs(y_distances[i]**2)))
+
+				# Check if already in the center of the caustic.
+				if ((x_distances[i] > 0.3*self.width_caustic) and
+							(x_distances[i] < 0.6*self.width_caustic) and
+							(np.abs(y_distances[i]) < 0.5*self.height_caustic)):
+					right = True
+
+				if ((x_distances[i] < -0.3*self.width_caustic) and
+							(x_distances[i] > -0.6*self.width_caustic) and
+							(np.abs(y_distances[i]) < 0.5*self.height_caustic)):
+					left = True
+
+				if ((y_distances[i] < -0.3*self.height_caustic) and
+							(y_distances[i] > -0.6*self.height_caustic) and
+							(np.abs(x_distances[i]) < 0.5*self.width_caustic)):
+					below = True
+
+				if ((y_distances[i] > 0.3*self.height_caustic) and
+							(y_distances[i] < 0.6*self.height_caustic) and
+							(np.abs(x_distances[i]) < 0.5*self.width_caustic)):
+					above = True
+
+			if (left==True and right==True and above==True and below==True):
+				# If (xcenter_caustic, ycenter_caustic) is already inside the
+				# caustic, set 4 starting points at the cusps of the caustic.
+				test_points = [self.xcenter_caustic - 0.5*self.width_caustic + 1j*self.ycenter_caustic,
+							  self.xcenter_caustic + 0.5*self.width_caustic + 1j*self.ycenter_caustic,
+							  self.xcenter_caustic + 1j*(self.ycenter_caustic + 0.5*self.height_caustic),
+							  self.xcenter_caustic + 1j*(self.ycenter_caustic - 0.5*self.height_caustic)]
+
+				# Add another starting point at the closest point in the set
+				# of caustic points, just in case the other four all do poorly.
+				idx_min = np.argmin(distances)
+				test_points.append(x_caus[idx_min] + 1j*y_caus[idx_min])
+
+			else:
+				# If (xcenter_caustic, ycenter_caustic) is outside the caustic,
+				# start searching at nearest point in the caustic.
+				idx_min = np.argmin(distances)
+				test_points = [x_caus[idx_min] + 1j*y_caus[idx_min]]
+
+			# Find the points that are in the caustic we are interested in.
+			iterate_again = True
+			while iterate_again:
+				num_fails = 0
+				x_recent_addition = []
+				y_recent_addition = []
+				for point in test_points:
+					points_added = int(0)
+					for i in range(len(x_caus)):
+						if np.abs(caus[i] - point) < 0.5*self.width_caustic:
+							if ((x_caus[i] not in x_local_caustic) and
+										(y_caus[i] not in y_local_caustic)):
+								x_local_caustic.append(x_caus[i])
+								y_local_caustic.append(y_caus[i])
+								x_recent_addition.append(x_caus[i])
+								y_recent_addition.append(y_caus[i])
+								points_added += 1
+					if points_added == 0:
+						num_fails += 1
+						# If no more points are being found, quit.
+						if num_fails == len(test_points):
+							iterate_again = False
+					else:
+						# As long as more points are being found, create
+						# another set of start points that includes the
+						# extremes of those that were just added.
+						idx_xmin = np.argmin(x_recent_addition)
+						idx_xmax = np.argmax(x_recent_addition)
+						idx_ymin = np.argmin(y_recent_addition)
+						idx_ymax = np.argmax(y_recent_addition)
+						test_points = [x_recent_addition[idx_xmin] + 1j*y_recent_addition[idx_xmin],
+									   x_recent_addition[idx_xmax] + 1j*y_recent_addition[idx_xmax],
+									   x_recent_addition[idx_ymin] + 1j*y_recent_addition[idx_ymin],
+									   x_recent_addition[idx_ymax] + 1j*y_recent_addition[idx_ymax]]
+			return (x_local_caustic, y_local_caustic)
+
 
 		def apply_second_shift(x_caus, y_caus):
 			"""If get_local_caustic attempt fails, finds the nearest point
