@@ -259,15 +259,20 @@ class TripleLens(object):
 
 	def get_mass(self):
 
+		#FIXME: Caustics only works when using 'SPM' definition of m3,
+		# even when the system is NOT 'SPM'.
 		denominator = 1. + self.q1 + self.q2*self.q1
 		self.m1 = 1. / denominator
 		self.m2 = self.q1 / denominator
+		#self.m3 = self.q2 / denominator
 		self.m3 = self.q2*self.q1 / denominator
 
 		if self.system == 'SPM':
 			# Convert the separation between the moon and planet into units
-			# of the total system's Einstein radius
+			# of the total system's Einstein radius; and set the mass
+			# of the moon in units of the whole system's mass
 			self.s2_actual = self.s2*(np.sqrt(self.m3 + self.m2))
+			#self.m3 = self.q2*self.q1 / denominator
 		else:
 			self.s2_actual = self.s2
 
@@ -341,11 +346,6 @@ class TripleLens(object):
 				zeta += self._custom_xshift + 1j*self._custom_yshift
 
 		return zeta
-		"""
-			(s, q, phi) = self.get_caustic_param()
-			(xshift, yshift) = self.get_shift(s, q, phi)
-			zeta += xshift + 1j*yshift
-		"""
 
 	def get_coefficients(self, x, y):
 		"""Returns the coefficients for the polynomial equation."""
@@ -491,7 +491,7 @@ class TripleLens(object):
 		#		self.xshift -= (self.m3/self.m1)*((0.5*self._s1 - 1.0/self._s1).real)
 		#		self.yshift -= (self.m3/self.m1)*((0.5*self._s1 - 1.0/self._s1).imag)
 
-			if self._s < 1.0:
+			if self._d < 1.0:
 				# If s<1, determine the height of the bifurcated caustics
 				# and shift to its approximated location.
 				self.height_center_twin = (2*np.sqrt(self._q) / (self._d*np.sqrt(
@@ -526,7 +526,7 @@ class TripleLens(object):
 		def make_caustic():
 			"""Gets the caustics for the current approximated parameters."""
 
-			if self._s < 1.0:
+			if self._d < 1.0:
 				points = 500
 			else:
 				points = 300
@@ -539,9 +539,8 @@ class TripleLens(object):
 		def get_local_caustic(x_caus, y_caus):
 			"""Attempts to locate the nearest planetary caustic."""
 
-			x_distances = []
-			y_distances = []
-			distances = []
+			check_size = 0.06
+
 			x_local_caustic = []
 			y_local_caustic = []
 			caus = np.array(x_caus) + 1j*np.array(y_caus)
@@ -551,42 +550,49 @@ class TripleLens(object):
 			above = False
 			below = False
 
-			for i in range(len(x_caus)):
-				x_distances.append(self.xcenter_caustic - x_caus[i])
-				y_distances.append(self.ycenter_caustic - y_caus[i])
-				distances.append(np.sqrt(np.abs(x_distances[i]**2) +
-										 np.abs(y_distances[i]**2)))
+			width = self.width_caustic
+			height = self.height_caustic
+			xcenter = self.xcenter_caustic
+			ycenter = self.ycenter_caustic
 
+			x_distances = (xcenter - np.array(x_caus))
+			y_distances = (ycenter - np.array(y_caus))
+			distances = (np.sqrt(np.abs(x_distances**2) + np.abs(y_distances**2)))
+			idx_min = np.argmin(distances)
+
+			for i in range(len(x_caus)):
+
+				x = x_distances[i]
+				y = y_distances[i]
 
 				# Check if already in the center of the caustic.
-				if ((x_distances[i] > 0.3*self.width_caustic) and
-							(x_distances[i] < 0.6*self.width_caustic) and
-							(np.abs(y_distances[i]) < 0.5*self.height_caustic)):
+				if ((x > 0.3*width) and (x < 0.6*width) and
+							(np.abs(y) < 0.5*height)):
 					right = True
 
-				if ((x_distances[i] < -0.3*self.width_caustic) and
-							(x_distances[i] > -0.6*self.width_caustic) and
-							(np.abs(y_distances[i]) < 0.5*self.height_caustic)):
+				if ((x < -0.3*width) and (x > -0.6*width) and
+							(np.abs(y) < 0.5*height)):
 					left = True
 
-				if ((y_distances[i] < -0.3*self.height_caustic) and
-							(y_distances[i] > -0.6*self.height_caustic) and
-							(np.abs(x_distances[i]) < 0.5*self.width_caustic)):
+				if ((y < -0.3*height) and (y > -0.6*height) and
+							(np.abs(x) < 0.5*width)):
 					below = True
 
-				if ((y_distances[i] > 0.3*self.height_caustic) and
-							(y_distances[i] < 0.6*self.height_caustic) and
-							(np.abs(x_distances[i]) < 0.5*self.width_caustic)):
+				if ((y > 0.3*height) and (y < 0.6*height) and
+							(np.abs(x) < 0.5*width)):
 					above = True
 
-			if (left==True and right==True and above==True and below==True):
+				if left and right and above and below:
+					break
+
+			if (left and right and above and below):
 				# If (xcenter_caustic, ycenter_caustic) is already inside the
 				# caustic, set 4 starting points at the idealized cusps of
 				# the caustic.
-				test_points = [self.xcenter_caustic - 0.5*self.width_caustic +1j*self.ycenter_caustic,
-							  self.xcenter_caustic + 0.5*self.width_caustic +1j*self.ycenter_caustic,
-							  self.xcenter_caustic + 1j*(self.ycenter_caustic + 0.5*self.height_caustic),
-							  self.xcenter_caustic + 1j*(self.ycenter_caustic - 0.5*self.height_caustic)]
+				test_points = [xcenter - 0.5*width +1j*ycenter,
+							   xcenter + 0.5*width +1j*ycenter,
+							   xcenter + 1j*(ycenter + 0.5*height),
+							   xcenter + 1j*(ycenter - 0.5*height)]
 
 				# Add another starting point at the closest point in the set
 				# of caustic points, just in case the other four all do poorly.
@@ -603,18 +609,18 @@ class TripleLens(object):
 			iterate_again = True
 			while iterate_again:
 				num_fails = 0
-				x_recent_addition = []
-				y_recent_addition = []
+				x_prev = []   #accepted x-coordinates from previous iteration.
+				y_prev = []   #accepted y-coordinates from previous iteration.
 				for point in test_points:
 					points_added = int(0)
 					for i in range(len(x_caus)):
-						if np.abs(caus[i] - point) < 0.06*self.width_caustic:
+						if np.abs(caus[i] - point) < check_size*width:
 							if ((x_caus[i] not in x_local_caustic) and
 										(y_caus[i] not in y_local_caustic)):
 								x_local_caustic.append(x_caus[i])
 								y_local_caustic.append(y_caus[i])
-								x_recent_addition.append(x_caus[i])
-								y_recent_addition.append(y_caus[i])
+								x_prev.append(x_caus[i])
+								y_prev.append(y_caus[i])
 								points_added += 1
 					if points_added == 0:
 						num_fails += 1
@@ -625,14 +631,14 @@ class TripleLens(object):
 						# As long as more points are being found, create
 						# another set of start points that includes the
 						# extremes of those that were just added.
-						idx_xmin = np.argmin(x_recent_addition)
-						idx_xmax = np.argmax(x_recent_addition)
-						idx_ymin = np.argmin(y_recent_addition)
-						idx_ymax = np.argmax(y_recent_addition)
-						test_points = [x_recent_addition[idx_xmin] + 1j*y_recent_addition[idx_xmin],
-									   x_recent_addition[idx_xmax] + 1j*y_recent_addition[idx_xmax],
-									   x_recent_addition[idx_ymin] + 1j*y_recent_addition[idx_ymin],
-									   x_recent_addition[idx_ymax] + 1j*y_recent_addition[idx_ymax]]
+						idx_xmin = np.argmin(x_prev)
+						idx_xmax = np.argmax(x_prev)
+						idx_ymin = np.argmin(y_prev)
+						idx_ymax = np.argmax(y_prev)
+						test_points = [x_prev[idx_xmin] + 1j*y_prev[idx_xmin],
+									   x_prev[idx_xmax] + 1j*y_prev[idx_xmax],
+									   x_prev[idx_ymin] + 1j*y_prev[idx_ymin],
+									   x_prev[idx_ymax] + 1j*y_prev[idx_ymax]]
 
 			return (x_local_caustic, y_local_caustic)
 
@@ -642,14 +648,10 @@ class TripleLens(object):
 			attempt.
 			"""
 
-			x_distances = []
-			y_distances = []
-			distances = []
-			for i in range(len(x_caus)):
-				x_distances.append(self.xcenter_caustic - x_caus[i])
-				y_distances.append(self.ycenter_caustic - y_caus[i])
-				distances.append(np.sqrt(np.abs(x_distances[i]**2) +
-										 np.abs(y_distances[i]**2)))
+			x_distances = (self.xcenter_caustic - np.array(x_caus))
+			y_distances = (self.ycenter_caustic - np.array(y_caus))
+			distances = (np.sqrt(np.abs(x_distances**2) + np.abs(y_distances**2)))
+
 			idx_min = np.argmin(distances)
 			self.xshift -= x_distances[idx_min]
 			self.yshift -= y_distances[idx_min]
@@ -1212,8 +1214,8 @@ class TripleLens(object):
 		self.get_position_arrays()
 		self.get_num_images_array()
 
-#		if print_errors:
-#			self.print_num_images_errors()
+		if print_errors:
+			self.print_num_images_errors()
 
 		if errors_only:
 			(x, y, num_images) = self.get_num_images_errors()
@@ -2023,6 +2025,32 @@ class TripleLens(object):
 			return
 		print('Error: too many files of same name already exist. File not saved')
 
+	def print_num_images_errors(self):
+		"""
+		Prints the number of points that have n images, where n is an integer
+		ranging from 0 to 5.
+		"""
+
+		num = np.zeros(9, dtype = int)
+		for num_im in self.num_images:
+			for i in range(len(num)):
+				if num_im == i:
+					num[i] += 1
+		print('Number of points where the number of images is',
+			'\n0: {:}\n1: {:}\n2: {:}\n3: {:}\n4: {:}\n5: {:}\n6: {:}\n7: {:}\n8: {:}\nTotal: {:}'
+			.format(*num, sum(num)))
+
+		total_errs = sum(num) - num[8] - num[6] - num[4]
+		print('Total num points where sum is not 4, 6, or 8: {} -- {}%'.format(
+				total_errs, 100*total_errs/sum(num)))
+
+	def print_input(self):
+		"""Prints the input parameters for a single test point."""
+
+		print('\nInput:\nx = {:}\ny = {:}\ns1 = {:}\ns2 = {:}\nq1 = {:}\nq2 = {:}\nphi = {}\n'
+			.format(self.x, self.y, self.s1, self.s2, self.q1, self.q2, self.phi*(180/math.pi)))
+		print('Calculated in the {} using {}\n'.format(self.origin_phrase,
+					self.solver_phrase))
 
 	def print_image_position(self, print_input=True):
 		"""
@@ -2036,8 +2064,8 @@ class TripleLens(object):
 				displaying the image positions.
 		"""
 
-#		if print_input:
-#			self.print_input()
+		if print_input:
+			self.print_input()
 		self.get_roots(x=self.x, y=self.y)
 		image_positions = self.get_accepted_solutions(x=self.x, y=self.y)
 		print('Image locations:')

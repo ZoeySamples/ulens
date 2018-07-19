@@ -173,10 +173,14 @@ class Caustics(object):
 			self.q2 = self.lens.q2
 			self.phi = self.lens.phi
 
+			#FIXME: This initialization works for SPM systems, but the
+			# one below, which should be equivalent, does not work.
 			denominator = 1. + self.q1 + self.q2*self.q1
 			self.m1 = 1. / denominator
 			self.m2 = self.q1 / denominator
 			self.m3 = self.q2*self.q1 / denominator
+			#self.m3 = self.q2 / denominator
+			#(self.m1, self.m2, self.m3) = (self.lens.m1, self.lens.m2, self.lens.m3)
 			self.get_TL_lensing_body_positions()
 
 	def get_BL_lensing_body_positions(self):
