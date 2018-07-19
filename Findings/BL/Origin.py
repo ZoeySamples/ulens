@@ -51,22 +51,7 @@ def num_images_demo():
 			cmaplist = [cmap(i) for i in range(cmap.N)]
 			cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
 			bounds = np.linspace(-0.5,5.5,7)
-			norm
-def save_png(file_name):
-
-	for i in range(10):
-		name = file_name[:-4] + '{}'.format(i) + file_name[-4:]
-		if Path(name).is_file():
-			continue
-		plt.savefig(name, dpi=300)
-		print(name, 'has been saved')
-		return
-	print('Error: too many files of same name already exist. File not saved')
-
-
-# Here are the input parameters for making the plots.
-s = 1.5
-q = 4e-8 = colors.BoundaryNorm(bounds, cmap.N)
+			norm = colors.BoundaryNorm(bounds, cmap.N)
 			ticks = np.linspace(0,5,6)
 
 			# Get the data for the plots.
@@ -206,14 +191,15 @@ def save_png(file_name):
 s = 1.5
 mass_ratios = [1e-6, 1e-12]
 origins = ['plan', 'caustic', 'geo_cent', 'star', 'com']
-res = int(10)
+res = int(50)
 solver =  'SG12'
 region = 'caustic'
 region_lim = [-.5, .5, 0.0, 2]
 save_fig = False
-show_fig = True
+show_fig = False
 
-refine_region = False
+refine_region = True
+
 SFD = False
 num_images_demo()
 magnification_demo()

@@ -24,7 +24,8 @@ def make_plot():
 			if plot_type == 'magn':
 				p.plot_magnification(outliers=False, log_colorbar=True, cutoff=cutoff,
 						save=False)
-#				caustic.plot_caustic(s=0.5, color='red')
+				caustic = caus(lens=p, solver='SG12')
+	#			caustic.plot_caustic(s=1, color='red', lw=0)
 				plt.show()
 
 			if plot_type == 'image_pos':
@@ -61,42 +62,24 @@ def make_plot():
 				p.write_to_fits()
 
 # Input parameters
-test = 'test2'
+q1 = 1e-3
+q2 = 1
+s1 = 1.5
+s2 = 1.4
+phi = 45
 
-if test == 'test1':
-	q1 = 1e-2
-	q2 = 1e-1
-	s1 = 1.5
-	s2 = 0.9
-	phi = 40
-
-elif test == 'test2':
-	q1 = 1e-2
-	q2 = 1e-1
-	s1 = 1.0
-	s2 = 1.3
-	phi = 0
-
-elif test == 'test3':
-	q1 = 1e-1
-	q2 = 1e-2
-	s1 = 0.7
-	s2 = 1.5
-	phi = 0
-
-system = 'SPM'
+system = 'SPP'
 solvers =  ['SG12']
 origins = ['body3']
 
 plot_frame = 'caustic'
 
-res = int(30)
+res = int(100)
 sample_res = 5
 cutoff = 1.5
 region = 'custom_3a'
-region_lim = (-10, 10, -10, 10)
-region_lim = np.array(region_lim)*3
-refine_region = False
+region_lim = (-1.1, 1.1, -1.1, 1.1)
+refine_region = True
 
 SFD = True
 
@@ -125,3 +108,43 @@ plot_types.append('num_images')
 
 make_plot()
 print('\n')
+
+caustic = caus(lens=plot[0], solver='SG12')
+caustic.plot_caustic(s=1, color='red', lw=0)
+caustic.plot_lens_bodies()
+plt.show()
+
+######## Here are some interesting sets of parameters
+
+test = ''
+
+if test == 'test1':
+	q1 = 1e-2
+	q2 = 1e-1
+	s1 = 1.5
+	s2 = 0.9
+	phi = 40
+
+elif test == 'test2':
+	q1 = 1e-2
+	q2 = 1e-1
+	s1 = 1.0
+	s2 = 1.3
+	phi = 0
+
+elif test == 'test3':
+	q1 = 1e-1
+	q2 = 1e-2
+	s1 = 0.7
+	s2 = 1.5
+	phi = 0
+
+
+q1 = 1e-7
+q2 = 1e-1
+s1 = 1.5
+s2 = 1.4
+phi = 40 or 90
+region = 'custom_2a'
+region_lim = (-1.1, 1.1, -1.1, 1.1)
+refine_region = True
