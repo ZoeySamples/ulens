@@ -16,9 +16,9 @@ def make_plot():
 		for plot_type in plot_types:
 
 			if plot_type == 'num_images':
-				p.plot_num_images(errors_only=False, save=False, print_errors=True)
+				p.plot_num_images(errors_only=False, save=False, print_errors=False, s=3)
 				caustic = caus(lens=p, solver='SG12')
-				caustic.plot_caustic(s=1, color='yellow', lw=0)
+				caustic.plot_caustic(points=10000, s=1, color='red', lw=0)
 				plt.show()
 
 			if plot_type == 'magn':
@@ -28,12 +28,10 @@ def make_plot():
 	#			caustic.plot_caustic(s=1, color='red', lw=0)
 				plt.show()
 
-			if plot_type == 'image_pos':
-				p.plot_image_positions()
-				caustic = caus(lens=plot[0])
-				caustic.calculate()
-				(x, y) = (caustic.critical_curve.x, caustic.critical_curve.y)
-				plt.scatter(x, y, s=1, color='red')
+			if plot_type == 'lens_bodies':
+				caustic = caus(lens=plot[0], solver='SG12')
+				caustic.plot_lens_bodies()
+				caustic.plot_caustic(s=1, color='red', lw=0)
 				plt.show()
 
 			if plot_type == 'num_images_coeff':
@@ -62,22 +60,22 @@ def make_plot():
 				p.write_to_fits()
 
 # Input parameters
-q1 = 1e-3
-q2 = 1
-s1 = 1.5
-s2 = 1.4
-phi = 45
-
+q1s = [1e-2, 1e-3, 1e-4]
+q2 = 1e-3
+sep1 = [0.91]
+s2 = 1.0
+phi = 180
 system = 'SPP'
-solvers =  ['SG12']
-origins = ['body3']
+
+solver =  'SG12'
+origin = 'body3'
 
 plot_frame = 'caustic'
 
-res = int(100)
+res = int(2)
 sample_res = 5
 cutoff = 1.5
-region = 'custom_3a'
+region = 'caustic_2a'
 region_lim = (-1.1, 1.1, -1.1, 1.1)
 refine_region = True
 
@@ -86,8 +84,8 @@ SFD = True
 param = []
 plot = []
 
-for solver in solvers:
-	for origin in origins:
+for s1 in sep1:
+	for q1 in q1s:
 		param.append({'s2': s2, 's1': s1, 'phi': phi, 'q2': q2,
 					'q1': q1, 'res': res, 'origin': origin,
 					'region': region, 'region_lim': region_lim,
@@ -96,9 +94,9 @@ for solver in solvers:
 		plot.append(TL(**param[-1]))
 
 plot_types = []
-plot_types.append('num_images')
+#plot_types.append('num_images')
 #plot_types.append('magn')
-#plot_types.append('image_pos')
+#plot_types.append('lens_bodies')
 #plot_types.append('num_iamges_coeff')
 #plot_types.append('magn_coeff')
 #plot_types.append('coeff')
@@ -108,11 +106,6 @@ plot_types.append('num_images')
 
 make_plot()
 print('\n')
-
-caustic = caus(lens=plot[0], solver='SG12')
-caustic.plot_caustic(s=1, color='red', lw=0)
-caustic.plot_lens_bodies()
-plt.show()
 
 ######## Here are some interesting sets of parameters
 
@@ -141,10 +134,21 @@ elif test == 'test3':
 
 
 q1 = 1e-7
-q2 = 1e-1
+q2 = 2e-1
 s1 = 1.5
 s2 = 1.4
-phi = 40 or 90
+phi = 90
+system = 'SPM'
 region = 'custom_2a'
 region_lim = (-1.1, 1.1, -1.1, 1.1)
 refine_region = True
+
+
+q1 = 1e-1
+q2 = 1e-3
+s1 = 0.768
+s2 = 1.0
+phi = 180
+system = 'SPP'
+refine_region = True
+
