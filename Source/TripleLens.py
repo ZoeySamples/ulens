@@ -264,17 +264,26 @@ class TripleLens(object):
 		denominator = 1. + self.q1 + self.q2*self.q1
 		self.m1 = 1. / denominator
 		self.m2 = self.q1 / denominator
-		#self.m3 = self.q2 / denominator
-		self.m3 = self.q2*self.q1 / denominator
+		self.m3 = self.q2 / denominator
+		#self.m3 = self.q2*self.q1 / denominator
 
 		if self.system == 'SPM':
 			# Convert the separation between the moon and planet into units
 			# of the total system's Einstein radius; and set the mass
 			# of the moon in units of the whole system's mass
+			denominator = 1. + self.q1 + self.q2*self.q1
+			self.m1 = 1. / denominator
+			self.m2 = self.q1 / denominator
+			self.m3 = self.q2*self.q1 / denominator
 			self.s2_actual = self.s2*(np.sqrt(self.m3 + self.m2))
-			#self.m3 = self.q2*self.q1 / denominator
-		else:
+		elif self.system == 'SPP' or self.system == 'SSP':
+			denominator = 1. + self.q1 + self.q2
+			self.m1 = 1. / denominator
+			self.m2 = self.q1 / denominator
+			self.m3 = self.q2 / denominator
 			self.s2_actual = self.s2
+		else:
+			raise ValueError('System {} not recognized'.format(self.system))
 
 	def get_lensing_body_positions(self):
 
@@ -426,17 +435,83 @@ class TripleLens(object):
 		"""
 
 		self.find_caustic()
+		self.get_caustic_regime()
 		(d, q) = (self._d, self._q)
 
-		if np.abs(d) >= 1.0:
-			width = 4.*np.sqrt(q)*(1. + 1./(2.*(d**2))) / (d**2)
-			height = 4.*np.sqrt(q)*(1. - 1./(2.*(d**2))) / (d**2)
-		else:
+		if self.caustic_type == 'close':
 			width = (3*np.sqrt(3) / 4.)*np.sqrt(q)*d**3
 			height = np.sqrt(q)*d**3
+		else:
+			width = 4.*np.sqrt(q)*(1. + 1./(2.*(d**2))) / (d**2)
+			height = 4.*np.sqrt(q)*(1. - 1./(2.*(d**2))) / (d**2)
 
 		self.width_caustic = max(width*math.cos(self._phi), height*math.sin(self._phi))
 		self.height_caustic = max(height*math.cos(self._phi), width*math.sin(self._phi))
+
+	def get_caustic_regime(self):
+
+		def refine_d(d_close):
+			# Solve the expression of the close-intermediate caustic regime
+			# threshold as described in Cassan 2008.
+			term1 = ((1. + self._q)**2 / (27*self._q))
+			term2 = (np.abs(1. - d_close**4)**3)
+			d_refine = (term1*term2)**(1/8)
+			return d_refine
+
+		def get_d_close(d_close):
+			# Approach the actual value of d_close using a recursive relation.
+			iteration = 0
+			iter_again = True
+			d_close_tolerance = 0.001
+			adjustment = 0.1*(self._q**(1/5))
+			while iter_again:
+				iteration += 1
+				d_refine = refine_d(d_close)
+				delta = d_close - d_refine
+
+				# If the recursive relation is diverging, use first approximation.
+				if iteration > 2:
+					if np.abs(delta) > np.abs(delta_last):
+						print('Unable to obtain the threshold distance for the',
+								'\nclose-intermediate regime, where the caustic',
+								'bifurcates.')
+						iter_again = False
+				delta_last = delta
+
+				if np.abs(delta) > d_close_tolerance:
+					# Adjust the value for d_close accordingly.
+					d_close -= adjustment*delta
+				else:
+					# If estimate for d_close is accepted, exit loop.
+					iter_again = False
+
+				# If refining has taken too long, exit loop.
+				if iteration > 500:
+					iter_again = False
+
+			return d_close
+
+		# Use linear best fit approximation for distance, d_close, where
+		# caustic bifurcates.
+		d_close = 0.71 + 0.056*(-np.log10(self._q))
+		if self._q < 1e-5:
+			d_close = 0.99
+
+		# If our separation is close to the close-intermediate regime
+		# threshold, find a more precise value for this d_close.
+		if self._d < 1.0 and self._q > 1e-5:
+			d_close = get_d_close(d_close)
+
+		d_wide = np.sqrt((1. + self._q**(1/3.))**3/(1. + self._q))
+		
+		if self._d < d_close:
+			self.caustic_type = 'close'
+		elif self._d < d_wide:
+			self.caustic_type = 'intermediate'
+		else:
+			self.caustic_type = 'wide'
+
+		print('Entering the {} regime for the caustic.'.format(self.caustic_type))
 
 	def assign_center_caustic(self):
 
@@ -457,14 +532,13 @@ class TripleLens(object):
 
 		if '2' in self.region:
 			self._s = (self.z2 - self.z1)
+			self._d = np.abs(self._s)
 			self._q = self.m2 / self.m1
 			self._phi = 0
 		elif '3' in self.region:
 			self._s = (self.z3 - self.z1)
+			self._d = np.abs(self._s)
 			self._q = self.m3 / self.m1
-			self._s1 = (self.z3 - self.z2)
-			self._q1 = self.m3 / self.m2
-			self._d1 = np.abs(self._s1)
 			if (self.system == 'SPP') or (self.system == 'SSP'):
 				self._phi = self.phi
 			elif self.system == 'SPM':
@@ -476,8 +550,6 @@ class TripleLens(object):
 			raise ValueError('Specify which caustic you want to plot by\n',
 					'including a 2 or a 3 on the string variable, region.')
 
-		self._d = np.abs(self._s)
-
 	def get_caustic_param(self, refine_region=True):
 
 		def get_first_shift():
@@ -487,13 +559,9 @@ class TripleLens(object):
 			self.xshift = (0.5*self._s - 1.0/self._s).real
 			self.yshift = (0.5*self._s - 1.0/self._s).imag
 
-		#	if '3' in self.region:
-		#		self.xshift -= (self.m3/self.m1)*((0.5*self._s1 - 1.0/self._s1).real)
-		#		self.yshift -= (self.m3/self.m1)*((0.5*self._s1 - 1.0/self._s1).imag)
-
-			if self._d < 1.0:
-				# If s<1, determine the height of the bifurcated caustics
-				# and shift to its approximated location.
+			if self.caustic_type == 'close':
+				# If the caustics have bifurcated, shift to the
+				# approximated location.
 				self.height_center_twin = (2*np.sqrt(self._q) / (self._d*np.sqrt(
 										1.+self._d**2)) - 0.5*self.height_caustic)
 				if self.region[-1] == 'b':
@@ -526,10 +594,10 @@ class TripleLens(object):
 		def make_caustic():
 			"""Gets the caustics for the current approximated parameters."""
 
-			if self._d < 1.0:
-				points = 500
+			if self.caustic_type == 'wide':
+				points = 400
 			else:
-				points = 300
+				points = 800
 
 			from Caustics import Caustics as caus
 			caustic = caus(lens=self)
@@ -539,7 +607,12 @@ class TripleLens(object):
 		def get_local_caustic(x_caus, y_caus):
 			"""Attempts to locate the nearest planetary caustic."""
 
-			check_size = 0.06
+			if self.caustic_type == 'wide':
+				check_size = 0.06
+			if self.caustic_type == 'intermediate':
+				check_size = 0.15
+			if self.caustic_type == 'close':
+				check_size = 0.07
 
 			x_local_caustic = []
 			y_local_caustic = []
@@ -1209,8 +1282,15 @@ class TripleLens(object):
 		"""
 
 		# Get data for plotting
+		cmap = plt.cm.Blues
+		cmaplist = [cmap(i) for i in range(cmap.N)]
+		cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
+		bounds = np.linspace(-0.5,10.5,12)
+		norm = colors.BoundaryNorm(bounds, cmap.N)
+		ticks = np.linspace(0,10,11)
+		kwargs['cmap'] = cmap
+		kwargs['norm'] = norm
 		kwargs = self.check_kwargs(**kwargs)
-		kwargs['cmap'] = 'coolwarm'
 		self.get_position_arrays()
 		self.get_num_images_array()
 
@@ -1226,7 +1306,7 @@ class TripleLens(object):
 			file_name = '../Tables/NumIm_{}_{}.png'.format(
 					self.origin_file, self.solver_file)
 
-		plt.scatter(x, y, c=num_images, **kwargs)
+		sc = plt.scatter(x, y, c=num_images, vmin=0, vmax=10, **kwargs)
 		(xmin, xmax) = (min(self.x_array), max(self.x_array))
 		(ymin, ymax) = (min(self.y_array), max(self.y_array))
 		dx = xmax - xmin
@@ -1234,8 +1314,8 @@ class TripleLens(object):
 		plt.ylim(ymin, ymax)
 
 		if default_settings:
-			im_plot = plt.colorbar()
-			im_plot.set_label('Num Images')
+			num_color = plt.colorbar(sc, cmap=kwargs['cmap'], ticks=ticks, orientation='vertical')
+			num_color.set_label('Num Images')
 			plt.xlabel('X-position of Source', fontsize=12)
 			plt.ylabel('Y-position of Source', fontsize=12)
 			plt.gcf().set_size_inches(9, 6)
@@ -2031,17 +2111,18 @@ class TripleLens(object):
 		ranging from 0 to 5.
 		"""
 
-		num = np.zeros(9, dtype = int)
+		num = np.zeros(11, dtype = int)
 		for num_im in self.num_images:
 			for i in range(len(num)):
 				if num_im == i:
 					num[i] += 1
 		print('Number of points where the number of images is',
-			'\n0: {:}\n1: {:}\n2: {:}\n3: {:}\n4: {:}\n5: {:}\n6: {:}\n7: {:}\n8: {:}\nTotal: {:}'
+			'\n0: {:}\n1: {:}\n2: {:}\n3: {:}\n4: {:}\n5: {:}' \
+			'\n6: {:}\n7: {:}\n8: {:}\n9: {:}\n10: {:}\nTotal: {:}'
 			.format(*num, sum(num)))
 
-		total_errs = sum(num) - num[8] - num[6] - num[4]
-		print('Total num points where sum is not 4, 6, or 8: {} -- {}%'.format(
+		total_errs = sum(num) - num[10] - num[8] - num[6] - num[4]
+		print('Total num points where sum is not 4, 6, 8, or 10: {} -- {}%'.format(
 				total_errs, 100*total_errs/sum(num)))
 
 	def print_input(self):
