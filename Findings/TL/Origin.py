@@ -6,6 +6,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import matplotlib.colors as colors
+from matplotlib.colors import LinearSegmentedColormap as LinSegCmap
 import matplotlib.gridspec as gridspec
 from itertools import product
 import numpy as np
@@ -41,15 +42,46 @@ def num_images_demo():
 					'plot_frame': plot_frame, 'refine_region': refine_region})
 			plot[m][n] = TL(**param[m][n])
 
+			"""
+			# Old color map -- all blue
 			cmap = plt.cm.Blues
 			cmaplist = [cmap(i) for i in range(cmap.N)]
 			cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
 			bounds = np.linspace(-0.5,10.5,12)
 			norm = colors.BoundaryNorm(bounds, cmap.N)
 			ticks = np.linspace(0,10,11)
+			"""
+
+			# Use our two base colormaps
+			orng = plt.cm.Oranges
+			blues = plt.cm.Blues
+
+			# Get the list values from each colormap
+			ornglist = [orng(i) for i in range(orng.N)] # This list contains 256 colors.
+			blueslist = [blues(i) for i in range(blues.N)] # This list contains 256 colors.
+
+			# Select the regions of the colormaps we want, and slice them together.
+			start = 0
+			jump = 24
+			clist = np.linspace(start, start+10*jump, 11)	# Slicing points for merged list.
+			clist = [int(val) for val in clist]		# Convert the list into integers.
+
+			# Create the new list with segments of the Oranges and Blues colormaps.
+			colorlist = (ornglist[clist[0]:clist[4]] + blueslist[clist[1]:clist[2]] +
+						 ornglist[clist[4]:clist[5]] + blueslist[clist[3]:clist[4]] +
+						 ornglist[clist[6]:clist[7]] + blueslist[clist[5]:clist[6]] +
+						 ornglist[clist[8]:clist[9]] + blueslist[clist[7]:clist[8]])
+
+			# Create new colormap.
+			cmap_images = LinSegCmap.from_list('Custom cmap', colorlist, 256)
+
+			# Discretize the colormap.
+			bounds = np.linspace(-0.5,10.5,12)	# This is the discretized boundary.
+			norm = colors.BoundaryNorm(bounds, cmap_images.N) # This is the scale.
+			ticks = np.linspace(0,10,11)	# These are the tickmark locations.
 
 			kwargs = plot[m][n].check_kwargs()
-			kwargs['cmap'] = cmap
+			kwargs['cmap'] = cmap_images
 			kwargs['norm'] = norm
 			kwargs['s'] = 1
 			kwargs['lw'] = 0
@@ -62,6 +94,8 @@ def num_images_demo():
 
 			# Create and adjust the plots appropriately.
 			ax = plt.subplot(inner[n])
+
+			# Set the limits of the colormap values in the scatter plot to 0 and 10.
 			sc = ax.scatter(x, y, c=num_images, vmin=0, vmax=10, **kwargs)
 		#	caustic = caus(lens=plot[m][n], solver='SG12')
 		#	caustic.plot_caustic(s=1, color='yellow', points=5000, lw=0)
@@ -69,9 +103,11 @@ def num_images_demo():
 			fig.add_subplot(ax)
 
 	# Add an axis for the color bar.
-	cbar = fig.add_axes([0.08, 0.895, 0.60, 0.04])
-	num_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks, orientation='horizontal')
-	num_color.set_label('Number of Images', fontsize=15, labelpad=-66)
+	cbar = fig.add_axes([0.08, 0.895, 0.50, 0.04])
+	num_color = plt.colorbar(sc, cax=cbar, cmap=cmap_images, ticks=ticks,
+							orientation='horizontal')
+
+	num_color.set_label('Number of Images', fontsize=15, labelpad=-70)
 	cbar.axes.tick_params(labelsize=12)
 	get_plot_text(plot, fig)
 
@@ -136,10 +172,10 @@ def magnification_demo():
 			fig.add_subplot(ax)
 
 	# Add an axis for the color bar.
-	cbar = fig.add_axes([0.08, 0.89, 0.60, 0.04])
+	cbar = fig.add_axes([0.08, 0.89, 0.50, 0.04])
 	magn_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks,
 							  orientation='horizontal')
-	magn_color.set_label('Magnification', fontsize=15, labelpad=-66)
+	magn_color.set_label('Magnification', fontsize=15, labelpad=-70)
 	cbar.axes.tick_params(labelsize=12)
 	get_plot_text(plot, fig)
 
@@ -218,18 +254,18 @@ angles = [90, 135, 180]
 system = 'SPM'
 
 origins = ['geo_cent', 'body2', 'body3']
-res = int(250)
+res = int(20)
 solver =  'SG12'
 region = 'caustic_2'
 region_lim = [-.5, .5, 0.0, 2]
-save_fig = True
-show_fig = False
+save_fig = False
+show_fig = True
 
 refine_region = False
 plot_frame = 'caustic'
 
 SFD = True
 num_images_demo()
-magnification_demo()
+#magnification_demo()
 
 
