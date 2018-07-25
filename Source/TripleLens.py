@@ -511,8 +511,6 @@ class TripleLens(object):
 		else:
 			self.caustic_type = 'wide'
 
-		print('Entering the {} regime for the caustic.'.format(self.caustic_type))
-
 	def assign_center_caustic(self):
 
 		if self.plot_frame == 'geo_cent':
