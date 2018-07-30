@@ -356,10 +356,12 @@ class TripleLens(object):
 
 		return zeta
 
-	def get_coefficients(self, x, y):
+	def get_coefficients(self, x, y, caustic_frame=False):
 		"""Returns the coefficients for the polynomial equation."""
 
 		zeta = self.get_source_position(x=x, y=y)
+		if caustic_frame:
+			zeta = x + y*1j
 		if self.SFD:
 			calc = self.origin
 		else:
@@ -371,10 +373,10 @@ class TripleLens(object):
 
 		return coeff
 
-	def get_roots(self, x, y):
+	def get_roots(self, x, y, caustic_frame=False):
 		"""Return solutions of polynomial."""
 
-		coefficients = self.get_coefficients(x=x, y=y)
+		coefficients = self.get_coefficients(x=x, y=y, caustic_frame=caustic_frame)
 
 		# Return the roots of the polynomial via the given root finder
 		if self.solver == 'SG12':
@@ -2190,20 +2192,74 @@ class TripleLens(object):
 		Return an error if an input string parameter is not recognized.
 		"""
 
-		if self.origin == 'geo_cent':
-			self.origin_file = 'gcent'
-			self.origin_title = 'Geometric Center'
-			self.origin_phrase = 'geometric center frame'
-		elif self.origin == 'body2':
-			self.origin_file = 'b2'
-			self.origin_title = 'Body2'
-			self.origin_phrase = 'body2 frame'
-		elif self.origin == 'body3':
-			self.origin_file = 'b3'
-			self.origin_title = 'Body3'
-			self.origin_phrase = 'body3 frame'
-		else:
-			raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
+		if self.system == 'SPM':
+			self.sys_string = 'Star-Planet-Moon System'
+
+			if '2' in self.region:
+				self.caustic_phrase = 'Planetary Caustic'
+			elif '3' in self.region:
+				self.caustic_phrase = 'Moon Caustic'
+
+			if self.origin == 'geo_cent':
+				self.origin_file = 'gcent'
+				self.origin_title = 'Geometric Center'
+				self.origin_phrase = 'geometric center frame'
+			elif self.origin == 'body2':
+				self.origin_file = 'plan'
+				self.origin_title = 'Planet'
+				self.origin_phrase = 'planet frame'
+			elif self.origin == 'body3':
+				self.origin_file = 'moon'
+				self.origin_title = 'Moon'
+				self.origin_phrase = 'moon frame'
+			else:
+				raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
+
+		elif self.system == 'SPP':
+			self.sys_string = 'Star & 2 Planet System'
+
+			if '2' in self.region:
+				self.caustic_phrase = 'PLanet 1 Caustic'
+			elif '3' in self.region:
+				self.caustic_phrase = 'Planet 2 Caustic'
+
+			if self.origin == 'geo_cent':
+				self.origin_file = 'gcent'
+				self.origin_title = 'Geometric Center'
+				self.origin_phrase = 'geometric center frame'
+			elif self.origin == 'body2':
+				self.origin_file = 'plan1'
+				self.origin_title = 'Planet 1'
+				self.origin_phrase = 'planet1 frame'
+			elif self.origin == 'body3':
+				self.origin_file = 'plan2'
+				self.origin_title = 'Planet 2'
+				self.origin_phrase = 'planet2 frame'
+			else:
+				raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
+
+		elif self.system == 'SSP':
+			self.sys_string = 'Binary Star & Planet System'
+
+			if '2' in self.region:
+				self.caustic_phrase = 'Star 2 Caustic'
+			elif '3' in self.region:
+				self.caustic_phrase = 'Planetary Caustic'
+
+			if self.origin == 'geo_cent':
+				self.origin_file = 'gcent'
+				self.origin_title = 'Geometric Center'
+				self.origin_phrase = 'geometric center frame'
+			elif self.origin == 'body2':
+				self.origin_file = 'star2'
+				self.origin_title = 'Star 2'
+				self.origin_phrase = 'star2 frame'
+			elif self.origin == 'body3':
+				self.origin_file = 'plan'
+				self.origin_title = 'Planet'
+				self.origin_phrase = 'planet frame'
+			else:
+				raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
 
 		if self.solver == 'numpy':
 			self.solver_file = 'np'
