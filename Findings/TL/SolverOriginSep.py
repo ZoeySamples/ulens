@@ -17,16 +17,16 @@ from pathlib import Path
 
 def num_images_demo():
 
-	num_outer_plots = len(ps_mass_ratios)*len(mp_mass_ratios)
+	num_outer_plots = len(sep1)*len(sep2)
 	num_inner_plots = len(origins)*len(solvers)
 	fig = plt.figure(figsize=(10, 8))
-	outer = gridspec.GridSpec(len(ps_mass_ratios), len(mp_mass_ratios),
+	outer = gridspec.GridSpec(len(sep1), len(sep2),
 							  wspace=0.25, hspace=0.38)
 	param = [[None]*num_inner_plots for j in range(num_outer_plots)]
 	plot = [[None]*num_inner_plots for j in range(num_outer_plots)]
 
-	for (i, q2), (j, q1) in product(enumerate(mp_mass_ratios), enumerate(ps_mass_ratios)):
-		outer_idx = j + i*len(mp_mass_ratios)
+	for (i, s2), (j, s1) in product(enumerate(sep2), enumerate(sep1)):
+		outer_idx = j + i*len(sep2)
 		inner = gridspec.GridSpecFromSubplotSpec(len(origins), len(solvers),
 					subplot_spec=outer[outer_idx], wspace=0.1, hspace=0.25)
 
@@ -109,7 +109,7 @@ def num_images_demo():
 
 	# Save the plot as a .png file.
 	if save_fig:
-		file_name = '../../Tables/TL/num_slvr_q_{}_.png'.format(system)
+		file_name = '../../Tables/TL/num_slvr_s_{}_.png'.format(system)
 		save_png(file_name)
 
 	if show_fig:
@@ -117,16 +117,16 @@ def num_images_demo():
 
 def magnification_demo():
 
-	num_outer_plots = len(ps_mass_ratios)*len(mp_mass_ratios)
+	num_outer_plots = len(sep1)*len(sep2)
 	num_inner_plots = len(origins)*len(solvers)
 	fig = plt.figure(figsize=(10, 8))
-	outer = gridspec.GridSpec(len(ps_mass_ratios), len(mp_mass_ratios),
+	outer = gridspec.GridSpec(len(sep1), len(sep2),
 							  wspace=0.25, hspace=0.38)
 	param = [[None]*num_inner_plots for j in range(num_outer_plots)]
 	plot = [[None]*num_inner_plots for j in range(num_outer_plots)]
 
-	for (i, q2), (j, q1) in product(enumerate(mp_mass_ratios), enumerate(ps_mass_ratios)):
-		outer_idx = j + i*len(mp_mass_ratios)
+	for (i, s2), (j, s1) in product(enumerate(sep2), enumerate(sep1)):
+		outer_idx = j + i*len(sep2)
 		inner = gridspec.GridSpecFromSubplotSpec(len(origins), len(solvers),
 					subplot_spec=outer[outer_idx], wspace=0.1, hspace=0.25)
 
@@ -177,113 +177,32 @@ def magnification_demo():
 
 	# Save the plot as a .png file.
 	if save_fig:
-		file_name = '../../Tables/TL/mag_slvr_q_{}_.png'.format(system)
+		file_name = '../../Tables/TL/mag_slvr_s_{}_.png'.format(system)
 		save_png(file_name)
 
 	if show_fig:
 		plt.show()
-
-def plot_images():
-
-	num_outer_plots = len(ps_mass_ratios)*len(mp_mass_ratios)
-	num_inner_plots = len(origins)*len(solvers)
-	fig = plt.figure(figsize=(10, 8))
-	outer = gridspec.GridSpec(len(ps_mass_ratios), len(mp_mass_ratios),
-							  wspace=0.25, hspace=0.38)
-	param = [[None]*num_inner_plots for j in range(num_outer_plots)]
-	plot = [[None]*num_inner_plots for j in range(num_outer_plots)]
-
-	for (i, q2), (j, q1) in product(enumerate(mp_mass_ratios), enumerate(ps_mass_ratios)):
-		outer_idx = j + i*len(mp_mass_ratios)
-		inner = gridspec.GridSpecFromSubplotSpec(len(origins), len(solvers),
-					subplot_spec=outer[outer_idx], wspace=0.1, hspace=0.25)
-
-		for (k, origin), (l, solver) in product(enumerate(origins), enumerate(solvers)):
-			inner_idx = l + k*len(solvers)
-			(m, n) = (outer_idx, inner_idx)
-
-			# Initialize each triple lens system with the TripleLens class.
-			param[m][n] = ({'s2': s2, 's1': s1, 'phi': phi, 'q2': q2,
-					'q1': q1, 'res': res, 'origin': origin,
-					'region': region, 'region_lim': region_lim,
-					'solver': solver, 'SFD': SFD, 'system': system,
-					'plot_frame': plot_frame, 'refine_region': refine_region})
-			plot[m][n] = TL(**param[m][n])
-
-			roots = plot[m][n].get_roots(x=0., y=0.)
-			accepted_images = plot[m][n].get_accepted_solutions(x=0., y=0.)
-			rejected_images = []
-
-			for root in roots:
-				if root in accepted_images:
-					continue
-				else:
-					rejected_images.append(root)
-
-			accepted_images = np.array(accepted_images)
-			rejected_images = np.array(rejected_images)
-
-			caustic = caus(lens=plot[m][n], solver='SG12')
-			z1 = caustic.z1
-			z2 = caustic.z2
-			z3 = caustic.z3
-
-			ax = plt.subplot(inner[n])
-			fig.add_subplot(ax)
-
-			s = 15
-		#	sc = ax.scatter(z1.real, z1.imag, marker='*', s=10*s, color='blue', lw=0)
-		#	sc = ax.scatter(z2.real, z2.imag, marker='o', s=4*s, color='blue', lw=0)
-		#	sc = ax.scatter(z3.real, z3.imag, marker='o', s=s, color='blue', lw=0)
-
-			sc = ax.scatter(accepted_images.real, accepted_images.imag,
-						s=s, color='black', lw=0)
-
-			sc = ax.scatter(rejected_images.real, rejected_images.imag,
-						s=s, color='red', lw=0)
-
-		#	caustic.plot_caustic(s=1, color='orange', points=5000, lw=0)
-
-			plt.xlim(-5, 5)
-			plt.ylim(-5, 5)
-
-			ax.axes.get_xaxis().set_visible(False)
-			ax.axes.get_yaxis().set_visible(False)
-
-		#	ax.axes.text(4.5, 4.5, 'num accepted: {}'.format(len(accepted_images)), ha='center',
-		#			va='center', fontsize=8)
-
-	get_plot_text(plot, fig)
-
-	if save_fig:
-		file_name = '../../Tables/TL/soln_slvr_q_{}_.png'.format(system)
-		save_png(file_name)
-
-	if show_fig:
-		plt.show()
-
 
 def get_plot_text(plot, fig):
 
-	for (i, q) in enumerate(mp_mass_ratios):
-		fig.text(0.97, 0.76 - .33/len(mp_mass_ratios) - .76*i/len(mp_mass_ratios),
-				'q2={:.0e}'.format(q), stretch='ultra-expanded', ha='center',
+	for (i, s) in enumerate(sep2):
+		fig.text(0.97, 0.76 - .33/len(sep2) - .76*i/len(sep2),
+				's2={}'.format(s), stretch='ultra-expanded', ha='center',
 				va='center', fontsize=18, rotation=90)
 
-	for (i, q) in enumerate(ps_mass_ratios):
-		fig.text(.53/len(ps_mass_ratios) + .90*i/len(ps_mass_ratios), 0.83,
-				'q1={:.0e}'.format(q), stretch='ultra-expanded', ha='center',
+	for (i, s) in enumerate(sep1):
+		fig.text(.53/len(sep1) + .90*i/len(sep1), 0.83,
+				's1={}'.format(s), stretch='ultra-expanded', ha='center',
 				va='center', fontsize=18)
 
-	fig.text(0.66, 0.94, 's1={}, s2={}, phi={}'.format(s1, s2, phi), fontsize=16)
+	fig.text(0.66, 0.94, 'q1={}, q2={}, phi={}'.format(q1, q2, phi), fontsize=16)
 	fig.text(0.66, 0.91, '{}'.format(plot[0][0].sys_string), fontsize=16)
 	fig.text(0.66, 0.88, '{}'.format(plot[0][0].caustic_phrase), fontsize=16)
 	plt.subplots_adjust(top=0.75, bottom=0.06, left=0.08, right=0.90)
-	plt.gcf().set_size_inches(1.8*len(solvers)*len(ps_mass_ratios)+1.5,
-							  1.8*len(origins)*len(mp_mass_ratios)+1.5)
+	plt.gcf().set_size_inches(1.8*len(solvers)*len(sep1)+1.5,
+							  1.8*len(origins)*len(sep2)+1.5)
 
 def get_inner_plot_parameters(plot, ax, k, l):
-
 
 	(xmin, xmax) = (min(plot.x_array), max(plot.x_array))
 	(ymin, ymax) = (min(plot.y_array), max(plot.y_array))
@@ -330,40 +249,47 @@ def save_png(file_name):
 
 
 # Here are the input parameters for making the plots.
-s1 = 1.5
-s2 = 1.0
-ps_mass_ratios = [1e-5, 1e-6]
-mp_mass_ratios = [1e-2, 1e-3]
+sep1 = [0.8, 3.0]
+sep2 = [0.6, 0.9]
+q1 = 1e-5
+q2 = 1e-2
 phi = 135
 system = 'SPM'
 
 origins = ['geo_cent', 'body2', 'body3']
-res = int(2)
+res = int(200)
 solvers =  ['numpy', 'zroots', 'SG12']
-region = 'caustic_2'
 region_lim = [-.5, .5, 0.0, 2]
-save_fig = False
-show_fig = True
+save_fig = True
+show_fig = False
 
 refine_region = True
 plot_frame = 'caustic'
-
 SFD = True
-#num_images_demo()
-#magnification_demo()
+
+region = 'caustic_2'
+num_images_demo()
+magnification_demo()
+
+region = 'caustic_3'
+num_images_demo()
+magnification_demo()
 
 
-ps_mass_ratios = [1e-2, 1e-4]
-mp_mass_ratios = [1e-2, 1e-4]
+sep1 = [0.8, 3.0]
+sep2 = [0.8, 3.0]
 system = 'SPP'
 
-#num_images_demo()
-#magnification_demo()
-plot_images()
+num_images_demo()
+magnification_demo()
 
+region = 'caustic_2'
+num_images_demo()
+magnification_demo()
 
-
-
+region = 'caustic_3'
+num_images_demo()
+magnification_demo()
 
 
 
