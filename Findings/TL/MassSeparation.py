@@ -184,7 +184,7 @@ def save_png(file_name):
 separations = [0.6, 0.9, 1.1, 2.0, 5.0]
 mass_ratios = [1e-1, 1e-3, 1e-7, 1e-12]
 origin = 'plan'
-res = int(10)
+res = int(20)
 solver =  'SG12'
 regions = ['caustic_a', 'custom_a']
 region_lim = [-2, 2.8, -5.08, 2.2]

@@ -25,7 +25,7 @@ def num_images_demo():
 	param = [[None]*num_inner_plots for j in range(num_outer_plots)]
 	plot = [[None]*num_inner_plots for j in range(num_outer_plots)]
 
-	for (i, q1), (j, q2) in product(enumerate(ps_mass_ratios), enumerate(mp_mass_ratios)):
+	for (i, q2), (j, q1) in product(enumerate(mp_mass_ratios), enumerate(ps_mass_ratios)):
 		outer_idx = j + i*len(mp_mass_ratios)
 		inner = gridspec.GridSpecFromSubplotSpec(len(angles), len(origins),
 					subplot_spec=outer[outer_idx], wspace=0.1, hspace=0.25)
@@ -113,7 +113,7 @@ def num_images_demo():
 
 	# Save the plot as a .png file.
 	if save_fig:
-		file_name = '../../Tables/TL_images_origin_.png'
+		file_name = '../../Tables/TL/num_orgn_{}_.png'.format(system)
 		save_png(file_name)
 
 	if show_fig:
@@ -129,7 +129,7 @@ def magnification_demo():
 	param = [[None]*num_inner_plots for j in range(num_outer_plots)]
 	plot = [[None]*num_inner_plots for j in range(num_outer_plots)]
 
-	for (i, q1), (j, q2) in product(enumerate(ps_mass_ratios), enumerate(mp_mass_ratios)):
+	for (i, q2), (j, q1) in product(enumerate(mp_mass_ratios), enumerate(ps_mass_ratios)):
 		outer_idx = j + i*len(mp_mass_ratios)
 		inner = gridspec.GridSpecFromSubplotSpec(len(angles), len(origins),
 					subplot_spec=outer[outer_idx], wspace=0.1, hspace=0.25)
@@ -181,7 +181,7 @@ def magnification_demo():
 
 	# Save the plot as a .png file.
 	if save_fig:
-		file_name = '../../Tables/TL_magn_origin_.png'
+		file_name = '../../Tables/TL/mag_orgn_{}_.png'.format(system)
 		save_png(file_name)
 
 	if show_fig:
@@ -189,18 +189,20 @@ def magnification_demo():
 
 def get_plot_text(plot, fig):
 
-	for (i, q) in enumerate(ps_mass_ratios):
-		fig.text(0.97, 0.76 - .33/len(ps_mass_ratios) - .76*i/len(ps_mass_ratios),
-				'q1={:.0e}'.format(q), stretch='ultra-expanded', ha='center',
+	for (i, q) in enumerate(mp_mass_ratios):
+		fig.text(0.97, 0.76 - .33/len(mp_mass_ratios) - .76*i/len(mp_mass_ratios),
+				'q2={:.0e}'.format(q), stretch='ultra-expanded', ha='center',
 				va='center', fontsize=18, rotation=90)
 
-	for (i, q) in enumerate(mp_mass_ratios):
-		fig.text(.55/len(ps_mass_ratios) + .91*i/len(ps_mass_ratios), 0.83,
-				'q2={:.0e}'.format(q), stretch='ultra-expanded', ha='center',
+	for (i, q) in enumerate(ps_mass_ratios):
+		fig.text(.53/len(ps_mass_ratios) + .90*i/len(ps_mass_ratios), 0.83,
+				'q1={:.0e}'.format(q), stretch='ultra-expanded', ha='center',
 				va='center', fontsize=18)
 
-	fig.text(0.74, 0.905, 's1={}, s2={}\n{} Solver'.format(s1, s2, plot[0][0].solver_title),
+	fig.text(0.66, 0.95, 's1={}, s2={}\n{} Solver'.format(s1, s2, plot[0][0].solver_title),
 				fontsize=16)
+	fig.text(0.66, 0.91, '{}'.format(plot[0][0].sys_string), fontsize=16)
+	fig.text(0.66, 0.88, '{}'.format(plot[0][0].caustic_phrase), fontsize=16)
 	plt.subplots_adjust(top=0.75, bottom=0.06, left=0.08, right=0.92)
 	plt.gcf().set_size_inches(1.8*len(origins)*len(mp_mass_ratios)+1.5,
 							  1.3*len(angles)*len(ps_mass_ratios)+1.5)
@@ -233,6 +235,7 @@ def get_plot_parameters(plot, ax, k, l):
 		ax.axes.text(1.2*xmax, 0.0, 'phi={}'.format(angles[k]), ha='center', va='center',
 				fontsize=14, rotation=90)
 
+
 def save_png(file_name):
 
 	for i in range(10):
@@ -254,18 +257,18 @@ angles = [90, 135, 180]
 system = 'SPM'
 
 origins = ['geo_cent', 'body2', 'body3']
-res = int(20)
+res = int(200)
 solver =  'SG12'
 region = 'caustic_2'
 region_lim = [-.5, .5, 0.0, 2]
-save_fig = False
-show_fig = True
+save_fig = True
+show_fig = False
 
 refine_region = False
 plot_frame = 'caustic'
 
 SFD = True
 num_images_demo()
-#magnification_demo()
+magnification_demo()
 
 
