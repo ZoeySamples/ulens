@@ -21,7 +21,7 @@ def num_images_demo():
 	num_inner_plots = len(origins)*len(angles)
 	fig = plt.figure(figsize=(10, 8))
 	outer = gridspec.GridSpec(len(ps_mass_ratios), len(mp_mass_ratios),
-							  wspace=0.20, hspace=0.35)
+							  wspace=0.30, hspace=0.35)
 	param = [[None]*num_inner_plots for j in range(num_outer_plots)]
 	plot = [[None]*num_inner_plots for j in range(num_outer_plots)]
 
@@ -30,7 +30,7 @@ def num_images_demo():
 		inner = gridspec.GridSpecFromSubplotSpec(len(angles), len(origins),
 					subplot_spec=outer[outer_idx], wspace=0.1, hspace=0.25)
 
-		for (k, phi), (l, origin) in product(enumerate(angles), enumerate(origins)):
+		for (k, origin), (l, phi) in product(enumerate(origins), enumerate(angles)):
 			inner_idx = l + k*len(origins)
 			(m, n) = (outer_idx, inner_idx)
 
@@ -103,7 +103,7 @@ def num_images_demo():
 			fig.add_subplot(ax)
 
 	# Add an axis for the color bar.
-	cbar = fig.add_axes([0.08, 0.895, 0.50, 0.04])
+	cbar = fig.add_axes([0.08, 0.89, 0.50, 0.04])
 	num_color = plt.colorbar(sc, cax=cbar, cmap=cmap_images, ticks=ticks,
 							orientation='horizontal')
 
@@ -125,7 +125,7 @@ def magnification_demo():
 	num_inner_plots = len(origins)*len(angles)
 	fig = plt.figure(figsize=(10, 8))
 	outer = gridspec.GridSpec(len(ps_mass_ratios), len(mp_mass_ratios),
-							  wspace=0.20, hspace=0.35)
+							  wspace=0.30, hspace=0.35)
 	param = [[None]*num_inner_plots for j in range(num_outer_plots)]
 	plot = [[None]*num_inner_plots for j in range(num_outer_plots)]
 
@@ -134,7 +134,7 @@ def magnification_demo():
 		inner = gridspec.GridSpecFromSubplotSpec(len(angles), len(origins),
 					subplot_spec=outer[outer_idx], wspace=0.1, hspace=0.25)
 
-		for (k, phi), (l, origin) in product(enumerate(angles), enumerate(origins)):
+		for (k, origin), (l, phi) in product(enumerate(origins), enumerate(angles)):
 			inner_idx = l + k*len(origins)
 			(m, n) = (outer_idx, inner_idx)
 
@@ -147,6 +147,7 @@ def magnification_demo():
 			plot[m][n] = TL(**param[m][n])
 
 			cmap = plt.cm.YlOrRd
+
 			cmaplist = [cmap(i) for i in range(cmap.N)]
 			cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
 			ticks = np.array([1,10,100])
@@ -195,15 +196,16 @@ def get_plot_text(plot, fig):
 				va='center', fontsize=18, rotation=90)
 
 	for (i, q) in enumerate(ps_mass_ratios):
-		fig.text(.53/len(ps_mass_ratios) + .90*i/len(ps_mass_ratios), 0.83,
+		fig.text(.53/len(ps_mass_ratios) + .90*i/len(ps_mass_ratios), 0.81,
 				'q1={:.0e}'.format(q), stretch='ultra-expanded', ha='center',
 				va='center', fontsize=18)
 
-	fig.text(0.66, 0.95, 's1={}, s2={}\n{} Solver'.format(s1, s2, plot[0][0].solver_title),
+	fig.text(0.66, 0.96, 's1={}, s2={}'.format(s1, s2), fontsize=16)
+	fig.text(0.66, 0.93, '{} Solver'.format(plot[0][0].solver_title),
 				fontsize=16)
-	fig.text(0.66, 0.91, '{}'.format(plot[0][0].sys_string), fontsize=16)
-	fig.text(0.66, 0.88, '{}'.format(plot[0][0].caustic_phrase), fontsize=16)
-	plt.subplots_adjust(top=0.75, bottom=0.06, left=0.08, right=0.92)
+	fig.text(0.66, 0.90, '{}'.format(plot[0][0].sys_string), fontsize=16)
+	fig.text(0.66, 0.87, '{}'.format(plot[0][0].caustic_phrase), fontsize=16)
+	plt.subplots_adjust(top=0.75, bottom=0.06, left=0.08, right=0.88)
 	plt.gcf().set_size_inches(1.8*len(origins)*len(mp_mass_ratios)+1.5,
 							  1.3*len(angles)*len(ps_mass_ratios)+1.5)
 
@@ -227,13 +229,18 @@ def get_plot_parameters(plot, ax, k, l):
 	plt.setp(labels, stretch='extra-condensed')
 
 	if (k == 0):
-		ax.axes.set_title('{}\nFrame'.format(plot.origin_title), fontsize=16)
+		ax.axes.set_title('phi={}'.format(angles[l]), fontsize=16)
 	if (l != 0) or (k != len(angles)-1):
 		ax.axes.get_yaxis().set_visible(False)
 		ax.axes.get_xaxis().set_visible(False)
 	if (l == len(origins)-1):
-		ax.axes.text(1.2*xmax, 0.0, 'phi={}'.format(angles[k]), ha='center', va='center',
-				fontsize=14, rotation=90)
+		title = plot.origin_title
+		xratio = 1.36
+		if title == 'Geometric Center':
+			title = 'Geometric\nCenter'
+			xratio = 1.60
+		ax.axes.text(xratio*xmax, 0.0, '{}\nFrame'.format(title), ha='center',
+				va='center', fontsize=14, rotation=90)
 
 
 def save_png(file_name):
@@ -250,14 +257,14 @@ def save_png(file_name):
 
 # Here are the input parameters for making the plots.
 s1 = 1.5
-s2 = 1.0
+s2 = 0.8
 ps_mass_ratios = [1e-3, 1e-6]
 mp_mass_ratios = [1e-2, 1e-3]
 angles = [90, 135, 180]
 system = 'SPM'
 
 origins = ['geo_cent', 'body2', 'body3']
-res = int(200)
+res = int(250)
 solver =  'SG12'
 region = 'caustic_2'
 region_lim = [-.5, .5, 0.0, 2]

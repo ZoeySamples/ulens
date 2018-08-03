@@ -100,10 +100,10 @@ def num_images_demo():
 			fig.add_subplot(ax)
 
 	# Add an axis for the color bar.
-	cbar = fig.add_axes([0.08, 0.895, 0.50, 0.04])
+	cbar = fig.add_axes([0.08, 0.89, 0.50, 0.04])
 	num_color = plt.colorbar(sc, cax=cbar, cmap=cmap_images, ticks=ticks,
 							 orientation='horizontal')
-	num_color.set_label('Number of Images', fontsize=15, labelpad=-66)
+	num_color.set_label('Number of Images', fontsize=15, labelpad=-70)
 	cbar.axes.tick_params(labelsize=12)
 	get_plot_text(plot, fig)
 
@@ -171,7 +171,7 @@ def magnification_demo():
 	cbar = fig.add_axes([0.08, 0.89, 0.50, 0.04])
 	magn_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks,
 							  orientation='horizontal')
-	magn_color.set_label('Magnification', fontsize=15, labelpad=-66)
+	magn_color.set_label('Magnification', fontsize=15, labelpad=-70)
 	cbar.axes.tick_params(labelsize=12)
 	get_plot_text(plot, fig)
 
@@ -278,10 +278,9 @@ magnification_demo()
 
 sep1 = [0.8, 3.0]
 sep2 = [0.8, 3.0]
+q1 = 1e-5
+q2 = 1e-5
 system = 'SPP'
-
-num_images_demo()
-magnification_demo()
 
 region = 'caustic_2'
 num_images_demo()

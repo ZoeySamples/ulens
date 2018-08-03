@@ -6,6 +6,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import matplotlib.colors as colors
+from matplotlib.colors import LinearSegmentedColormap as LinSegCmap
 import numpy as np
 from BinaryLens import BinaryLens as BL
 from Caustics import Caustics as caus
@@ -32,19 +33,38 @@ def num_images_demo():
 					'refine_region': refine_region, 'solver': solver})
 			plot[i][j] = BL(**param[i][j])
 
-			cmap = plt.cm.Blues
-			cmaplist = [cmap(i) for i in range(cmap.N)]
-			cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
-			bounds = np.linspace(-0.5,5.5,7)
-			norm = colors.BoundaryNorm(bounds, cmap.N)
-			ticks = np.linspace(0,5,6)
+			# Use our two base colormaps
+			orng = plt.cm.Oranges
+			blues = plt.cm.Blues
 
-			# Get the data for the plots.
+			# Get the list values from each colormap
+			ornglist = [orng(i) for i in range(orng.N)] # This list contains 256 colors.
+			blueslist = [blues(i) for i in range(blues.N)] # This list contains 256 colors.
+
+			# Select the regions of the colormaps we want, and slice them together.
+			start = 0
+			jump = 24
+			clist = np.linspace(start, start+8*jump, 6)	# Slicing points for merged list.
+			clist = [int(val) for val in clist]		# Convert the list into integers.
+
+			# Create the new list with segments of the Oranges and Blues colormaps.
+			colorlist = (ornglist[clist[0]:clist[3]] + blueslist[clist[2]:clist[3]] +
+						 ornglist[clist[4]:clist[5]] + blueslist[clist[4]:clist[5]])
+
+			# Create new colormap.
+			cmap_images = LinSegCmap.from_list('Custom cmap', colorlist, 256)
+
+			# Discretize the colormap.
+			bounds = np.linspace(-0.5, 5.5, 7)	# This is the discretized boundary.
+			norm = colors.BoundaryNorm(bounds, cmap_images.N) # This is the scale.
+			ticks = np.linspace(0,5,6)	# These are the tickmark locations.
+
 			kwargs = plot[i][j].check_kwargs()
-			kwargs['cmap'] = cmap
+			kwargs['cmap'] = cmap_images
 			kwargs['norm'] = norm
 			kwargs['s'] = 1
 			kwargs['lw'] = 0
+
 			plot[i][j].get_position_arrays()
 			plot[i][j].get_num_images_array()
 			if errors_only:
@@ -136,7 +156,7 @@ def get_plot_text(plot, fig):
 				'q={:.0e}'.format(q), ha='center', va='center', fontsize=16)
 	fig.text(0.78, 0.89, '{} Frame\ns={}'.format(plot[0][0].origin_title, s),
 				fontsize=16)
-	plt.subplots_adjust(wspace=0.30, hspace=0.22, top=0.80, bottom=0.06,
+	plt.subplots_adjust(wspace=0.35, hspace=0.25, top=0.80, bottom=0.06,
 				left=0.12, right=0.87)
 	plt.gcf().set_size_inches(3.0*len(solvers)+1.0, 2.0*len(mass_ratios)+1.0)
 
@@ -178,11 +198,11 @@ def save_png(file_name):
 s = 1.5
 mass_ratios = [1e-14, 1e-15, 1e-16]
 origin = 'plan'
-res = int(10)
+res = int(250)
 solvers =  ['SG12', 'zroots', 'numpy']
 region = 'custom'
 region_lim = [0.6, 1.4, -0.20, 0.20]
-save_fig = False
+save_fig = True
 show_fig = False
 
 refine_region = False

@@ -100,10 +100,10 @@ def num_images_demo():
 			fig.add_subplot(ax)
 
 	# Add an axis for the color bar.
-	cbar = fig.add_axes([0.08, 0.895, 0.50, 0.04])
+	cbar = fig.add_axes([0.08, 0.89, 0.50, 0.04])
 	num_color = plt.colorbar(sc, cax=cbar, cmap=cmap_images, ticks=ticks,
 							 orientation='horizontal')
-	num_color.set_label('Number of Images', fontsize=15, labelpad=-66)
+	num_color.set_label('Number of Images', fontsize=15, labelpad=-70)
 	cbar.axes.tick_params(labelsize=12)
 	get_plot_text(plot, fig)
 
@@ -142,10 +142,12 @@ def magnification_demo():
 					'plot_frame': plot_frame, 'refine_region': refine_region})
 			plot[m][n] = TL(**param[m][n])
 
-			cmap = plt.cm.YlOrRd
+		#	cmap = plt.cm.YlOrRd
+			cmap = plt.cm.gray
 			cmaplist = [cmap(i) for i in range(cmap.N)]
+			cmaplist = cmaplist[20:]
 			cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
-			ticks = np.array([1,10,100])
+			ticks = np.array([1,10])
 
 			kwargs = plot[m][n].check_kwargs()
 			kwargs['cmap'] = cmap
@@ -161,7 +163,7 @@ def magnification_demo():
 
 			# Create and adjust the plots appropriately.
 			ax = plt.subplot(inner[n])
-			sc = ax.scatter(x, y, c=magnification, vmin=1, vmax=100, **kwargs)
+			sc = ax.scatter(x, y, c=magnification, vmin=1, vmax=10, **kwargs)
 	#		caustic = caus(lens=plot[m][n], solver='SG12')
 	#		caustic.plot_caustic(s=1, color='yellow', points=5000, lw=0)
 			get_inner_plot_parameters(plot=plot[m][n], ax=ax, k=k, l=l)
@@ -171,7 +173,7 @@ def magnification_demo():
 	cbar = fig.add_axes([0.08, 0.89, 0.50, 0.04])
 	magn_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks,
 							  orientation='horizontal')
-	magn_color.set_label('Magnification', fontsize=15, labelpad=-66)
+	magn_color.set_label('Magnification', fontsize=15, labelpad=-70)
 	cbar.axes.tick_params(labelsize=12)
 	get_plot_text(plot, fig)
 
@@ -279,8 +281,8 @@ def get_plot_text(plot, fig):
 	fig.text(0.66, 0.91, '{}'.format(plot[0][0].sys_string), fontsize=16)
 	fig.text(0.66, 0.88, '{}'.format(plot[0][0].caustic_phrase), fontsize=16)
 	plt.subplots_adjust(top=0.75, bottom=0.06, left=0.08, right=0.90)
-	plt.gcf().set_size_inches(1.8*len(solvers)*len(ps_mass_ratios)+1.5,
-							  1.8*len(origins)*len(mp_mass_ratios)+1.5)
+	plt.gcf().set_size_inches(1.8*len(solvers)*len(ps_mass_ratios)+3.5,
+							  1.8*len(origins)*len(mp_mass_ratios)+3.5)
 
 def get_inner_plot_parameters(plot, ax, k, l):
 
@@ -310,10 +312,10 @@ def get_inner_plot_parameters(plot, ax, k, l):
 		ax.axes.get_xaxis().set_visible(False)
 	if (l == len(solvers)-1):
 		title = plot.origin_title
-		xratio = 1.36
+		xratio = 1.20
 		if title == 'Geometric Center':
 			title = 'Geometric\nCenter'
-			xratio = 1.50
+			xratio = 1.35
 		ax.axes.text(xratio*xmax, 0.0, '{}\nFrame'.format(title), ha='center',
 				va='center', fontsize=14, rotation=90)
 
@@ -331,18 +333,20 @@ def save_png(file_name):
 
 # Here are the input parameters for making the plots.
 s1 = 1.5
-s2 = 1.0
-ps_mass_ratios = [1e-5, 1e-6]
-mp_mass_ratios = [1e-2, 1e-3]
+s2 = 0.8
+ps_mass_ratios = [1e-6]
+mp_mass_ratios = [1e-2]
 phi = 135
 system = 'SPM'
 
 origins = ['geo_cent', 'body2', 'body3']
-res = int(2)
-solvers =  ['numpy', 'zroots', 'SG12']
+res = int(200)
+solvers =  ['SG12', 'zroots', 'numpy']
 region = 'caustic_2'
 region_lim = [-.5, .5, 0.0, 2]
-save_fig = False
+refine_region = True
+plot_frame = 'caustic'
+save_fig = True
 show_fig = True
 
 refine_region = True
@@ -350,20 +354,17 @@ plot_frame = 'caustic'
 
 SFD = True
 #num_images_demo()
-#magnification_demo()
+magnification_demo()
 
-
-ps_mass_ratios = [1e-2, 1e-4]
-mp_mass_ratios = [1e-2, 1e-4]
+s1 = 1.5
+s2 = 1.5
+ps_mass_ratios = [1e-3, 1e-6]
+mp_mass_ratios = [1e-3, 1e-6]
 system = 'SPP'
 
 #num_images_demo()
 #magnification_demo()
-plot_images()
-
-
-
-
+#plot_images()
 
 
 
