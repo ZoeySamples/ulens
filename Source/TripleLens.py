@@ -2219,7 +2219,7 @@ class TripleLens(object):
 			self.sys_string = 'Star & 2 Planet System'
 
 			if '2' in self.region:
-				self.caustic_phrase = 'PLanet 1 Caustic'
+				self.caustic_phrase = 'Planet 1 Caustic'
 			elif '3' in self.region:
 				self.caustic_phrase = 'Planet 2 Caustic'
 
