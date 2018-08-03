@@ -70,7 +70,11 @@ def get_triple_lens_plot(save_fig=False, show_fig=True, arrow_on=False, caustic_
 
 	plt.scatter(z1.real, z1.imag, s=2000, color='red', marker='*')
 	plt.scatter(z2.real, z2.imag, s=1000, color='blue')
-	plt.scatter(z3.real, z3.imag, s=400, color='purple')
+	if system == 'SPM':
+		plt.scatter(z3.real, z3.imag, s=400, color='purple')
+	else:
+		plt.scatter(z3.real, z3.imag, s=(q2/q1)*1000, color='blue')
+	
 
 	if arrow_on:
 		ax = plt.axes()
@@ -105,11 +109,21 @@ def get_triple_lens_plot(save_fig=False, show_fig=True, arrow_on=False, caustic_
 def got_plot_adjustments(title):
 
 	plt.xlim(-1.2, 1.2)
-	plt.ylim(-0.4, 0.4)
+	"""
+	if system == 'SPP':
+		plt.ylim(-0.4, 0.8)
+		plt.yticks(np.arange(-0.4, 0.81, 0.2))
+	else:
+		plt.ylim(-0.4, 0.4)
+		plt.yticks(np.arange(-0.4, 0.41, 0.1))
+	"""
+	plt.ylim(-0.4, 1.2)
+	plt.yticks(np.arange(-0.4, 1.21, 0.4))
+	plt.xlim(-2.5, 1.0)
+	plt.xticks(np.arange(-2.5, 1.21, 0.5))
+
 	plt.xlabel('X-Position', fontsize=20, labelpad=10)
 	plt.ylabel('Y-Position', fontsize=20, rotation=90)
-	plt.xticks(np.arange(-1.0, 1.1, 0.5))
-	plt.yticks(np.arange(-0.4, 0.41, 0.1))
 	plt.tick_params(axis='x', labelsize=18)
 	plt.tick_params(axis='y', labelsize=18)
 	plt.title('{}'.format(title), fontsize=32, y=1.04)
@@ -131,24 +145,27 @@ s = 1.5
 q = 1e-2
 solver = 'SG12'
 origin = 'plan'
+system = None
 
 plot_frame = 'caustic'
 refine_region = True
 SFD = True
 
-save_fig = True
+save_fig = False
 show_fig = False
 
+"""
 get_binary_lens_plot(save_fig, show_fig, arrow_on=False, caustic_on=False)
 get_binary_lens_plot(save_fig, show_fig, arrow_on=False, caustic_on=True)
 get_binary_lens_plot(save_fig, show_fig, arrow_on=True, caustic_on=False)
 get_binary_lens_plot(save_fig, show_fig, arrow_on=True, caustic_on=True)
+"""
 
-# Input parameters for triple lens
+# Input parameters for triple lens SPM
 s1 = 1.5
-s2 = 2.0
+s2 = 1.2
 q1 = 1e-2
-q2 = 4e-2
+q2 = 2e-2
 phi = 155
 solver = 'SG12'
 origin = 'body2'
@@ -158,12 +175,52 @@ plot_frame = 'caustic'
 SFD = True
 
 save_fig = True
+show_fig = True
+
+#get_triple_lens_plot(save_fig, show_fig, arrow_on=False, caustic_on=False)
+#get_triple_lens_plot(save_fig, show_fig, arrow_on=False, caustic_on=True)
+#get_triple_lens_plot(save_fig, show_fig, arrow_on=True, caustic_on=False)
+#get_triple_lens_plot(save_fig, show_fig, arrow_on=True, caustic_on=True)
+
+# Input parameters for triple lens SPP
+s1 = 1.5
+s2 = 1.8
+q1 = 1e-2
+q2 = 6e-3
+phi = 20
+solver = 'SG12'
+origin = 'body2'
+system = 'SPP'
+
+plot_frame = 'caustic'
+SFD = True
+
+save_fig = False
 show_fig = False
 
-get_triple_lens_plot(save_fig, show_fig, arrow_on=False, caustic_on=False)
+#get_triple_lens_plot(save_fig, show_fig, arrow_on=False, caustic_on=False)
+#get_triple_lens_plot(save_fig, show_fig, arrow_on=False, caustic_on=True)
+#get_triple_lens_plot(save_fig, show_fig, arrow_on=True, caustic_on=False)
+#get_triple_lens_plot(save_fig, show_fig, arrow_on=True, caustic_on=True)
+
+s1 = 1.5
+s2 = 1.5
+q1 = 1e-3
+q2 = 1e-3
+phi = 135
+solver = 'SG12'
+origin = 'body2'
+system = 'SPP'
+
+plot_frame = 'caustic'
+SFD = True
+
+save_fig = True
+show_fig = False
+
 get_triple_lens_plot(save_fig, show_fig, arrow_on=False, caustic_on=True)
-get_triple_lens_plot(save_fig, show_fig, arrow_on=True, caustic_on=False)
-get_triple_lens_plot(save_fig, show_fig, arrow_on=True, caustic_on=True)
+
+
 
 
 

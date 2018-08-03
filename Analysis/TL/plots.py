@@ -60,19 +60,19 @@ def make_plot():
 				p.write_to_fits()
 
 # Input parameters
-q1s = [1e-2, 1e-3, 1e-4]
-q2 = 1e-3
-sep1 = [0.91]
-s2 = 1.0
-phi = 180
+q1s = [1e-5]
+q2 = 1e-5
+sep1 = [1.5]
+s2 = 1.5
+phi = 135
 system = 'SPP'
 
 solver =  'SG12'
-origin = 'body3'
+origin = 'body2'
 
 plot_frame = 'caustic'
 
-res = int(2)
+res = int(150)
 sample_res = 5
 cutoff = 1.5
 region = 'caustic_2a'
@@ -94,7 +94,7 @@ for s1 in sep1:
 		plot.append(TL(**param[-1]))
 
 plot_types = []
-#plot_types.append('num_images')
+plot_types.append('num_images')
 #plot_types.append('magn')
 #plot_types.append('lens_bodies')
 #plot_types.append('num_iamges_coeff')

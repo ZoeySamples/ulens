@@ -11,20 +11,20 @@ import numpy as np
 
 
 # Input parameters
-s = 1.5
-mass_ratios = [2e-8]
+s = 0.9
+mass_ratios = [1e-1]
 
 solvers =  ['SG12']
-origins = ['caustic']
+origins = ['plan']
 
 plot_frame = 'caustic'
 
-res = int(150)
+res = int(50)
 sample_res = 5
 cutoff = 1.5
 region = 'caustic_a'
 region_lim = [-20, 20, -20, 20]
-refine_region = False
+refine_region = True
 
 SFD = True
 
