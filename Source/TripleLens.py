@@ -356,12 +356,10 @@ class TripleLens(object):
 
 		return zeta
 
-	def get_coefficients(self, x, y, caustic_frame=False):
+	def get_coefficients(self, x, y):
 		"""Returns the coefficients for the polynomial equation."""
 
 		zeta = self.get_source_position(x=x, y=y)
-		if caustic_frame:
-			zeta = x + y*1j
 		if self.SFD:
 			calc = self.origin
 		else:
@@ -373,10 +371,10 @@ class TripleLens(object):
 
 		return coeff
 
-	def get_roots(self, x, y, caustic_frame=False):
+	def get_roots(self, x, y):
 		"""Return solutions of polynomial."""
 
-		coefficients = self.get_coefficients(x=x, y=y, caustic_frame=caustic_frame)
+		coefficients = self.get_coefficients(x=x, y=y)
 
 		# Return the roots of the polynomial via the given root finder
 		if self.solver == 'SG12':
@@ -588,7 +586,7 @@ class TripleLens(object):
 			self.width_caustic = (xmax_caustic - xmin_caustic)
 			self.height_caustic = (ymax_caustic - ymin_caustic)
 			self.xshift -= (self.xcenter_caustic - xmin_caustic - 0.5*self.width_caustic)
-			self.yshift -= (self.ycenter_caustic - ymin_caustic - 0.5*self.height_caustic)
+			self.yshift -= (self.ycentget_sourer_caustic - ymin_caustic - 0.5*self.height_caustic)
 			self.assign_center_caustic()
 
 		def make_caustic():
