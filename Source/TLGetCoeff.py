@@ -1,6 +1,6 @@
 import numpy as np
 
-def get_coefficients(calc, zeta, m3, m2, m1, z3, z2, z1):
+def get_coefficients(calc, zeta, m4, m3, m2, m1, z4, z3, z2, z1):
 
 	z1_conj = np.conj(z1)
 	z2_conj = np.conj(z2)
@@ -413,6 +413,84 @@ def get_coefficients(calc, zeta, m3, m2, m1, z3, z2, z1):
 
 		coeff0 = ((m1*z3*z2 +  (m2*z3 + (m3 - zeta_conj*z3)*z2)*z1 )*((m1*z3*z2 +  (m2*z3 +  (m3 - zeta_conj*z3)*z2)*z1)*(((-(m3*zeta) + m3*z3 +  zeta*zeta_conj*z3)*z2 +  m2*z3*(-zeta + z2))*z1 +  m1*z3*z2*(-zeta + z1)) +  z3*z2*z1*(-(m1*zeta*z3*z2) +  ((-(m3*zeta) + m3*z3 +  zeta*zeta_conj*z3)*z2 +  m2*z3*(-zeta + z2))*z1)*z1_conj) +  z3*z2*z1*z2_conj*((m1*z3*z2 +  (m2*z3 +  (m3 - zeta_conj*z3)*z2)*z1)*((-(m2*zeta*z3) +  (-(m3*zeta) + m3*z3 +  zeta*zeta_conj*z3)*z2)*z1 +  m1*z3*z2*(-zeta + z1)) +  z3*z2*z1*(zeta*zeta_conj*z3*z2*z1 +  m3*(-zeta + z3)*z2*z1 -  zeta*z3*(m1*z2 + m2*z1))*z1_conj) +  z3*z2*z1*z3_conj*((m1*z3*z2 +  (m2*z3 +  (m3 - zeta_conj*z3)*z2)*z1)*((zeta*(-m3 + zeta_conj*z3)*z2 +  m2*z3*(-zeta + z2))*z1 +
 				m1*z3*z2*(-zeta + z1)) +  z3*z2*z1*(zeta*zeta_conj*z3*z2*z1 +  m2*z3*(-zeta + z2)*z1 -  zeta*z2*(m1*z3 + m3*z1))*z1_conj +  z3*z2*z1*z2_conj*(-(zeta*(m2*z3 + m3*z2 -  zeta_conj*z3*z2)*z1) +  m1*z3*z2*(-zeta + z1) -  zeta*z3*z2*z1*z1_conj)))
+
+	elif calc == 'Rhie2002':
+
+		cc1 = z1
+		cc2 = z2
+		cc3 = z3
+		cc4 = z4
+
+		aa = -(z1+z2+z3) 
+		bb = z1*z2 + z1*z3 + z2*z3 
+		cc = -z1*z2*z3
+		dd = m1*z2*z3 + m2*z1*z3 + m3*z1*z2
+
+		hh39 = 1. + 0j
+		hh38 = 3.*aa
+		hh37 = 3.*bb + 3.*aa*aa 
+		hh36 = 3.*cc + 6.*aa*bb + aa*aa*aa
+		hh35 = 6.*aa*cc + 3.*bb*bb + 3.*aa*aa*bb
+		hh34 = 6.*bb*cc + 3.*aa*aa*cc + 3.*aa*bb*bb
+		hh33 = 3.*cc*cc + 6.*aa*bb*cc + bb*bb*bb
+		hh32 = 3.*aa*cc*cc + 3.*bb*bb*cc
+		hh31 = 3.*bb*cc*cc
+		hh30 = cc*cc*cc
+
+		hh28 = 1. + 0j
+		hh27 = 3.*aa
+		hh26 = dd + 2.*bb + 3.*aa*aa
+		hh25 = 2.*aa*dd + 4.*aa*bb + aa*aa*aa + 2.*cc
+		hh24 = 2.*dd*bb + dd*aa*aa + 4.*aa*cc + 2.*aa*aa*bb + bb*bb
+		hh23 = 2.*dd*cc + 2.*dd*aa*bb + 2.*aa*aa*cc + aa*bb*bb + 2.*bb*cc
+		hh22 = 2.*cc*aa*dd + dd*bb*bb + 2.*aa*bb*cc + cc*cc
+		hh21 = 2.*bb*cc*dd + aa*cc*cc
+		hh20 = cc*cc*dd
+		hh17 = 1. + 0j
+		hh16 = 3.*aa
+		hh15 = 2.*dd + 3.*aa*aa + bb
+		hh14 = 4.*aa*dd + aa*aa*aa + 2.*aa*bb + cc
+		hh13 = dd*dd + 2.*aa*aa*dd + 2.*bb*dd + bb*aa*aa + 2.*aa*cc
+		hh12 = aa*dd*dd + 2.*aa*bb*dd + 2.*cc*dd + cc*aa*aa
+		hh11 = bb*dd*dd + 2.*aa*cc*dd
+		hh10 = cc*dd*dd
+
+		hh06 = 1. + 0j
+		hh05 = 3.*aa
+		hh04 = 3.*dd + 3.*aa*aa
+		hh03 = 6.*aa*dd + aa*aa*aa
+		hh02 = 3.*dd*dd + 3.*aa*aa*dd
+		hh01 = 3.*aa*dd*dd
+		hh00 = dd*dd*dd
+
+		ww  = zeta
+		ww1 = zeta - z1
+		ww2 = zeta - z2
+		ww3 = zeta - z3
+
+		wwbar = np.conj(ww)
+		ww1bar = np.conj(ww1)
+		ww2bar = np.conj(ww2)
+		ww3bar = np.conj(ww3)
+
+		wwaa = ww1bar+ww2bar+ww3bar
+		wwbb = ww1bar*ww2bar + ww2bar*ww3bar + ww1bar*ww3bar
+		wwcc = ww1bar*ww2bar*ww3bar
+		wwdd = eps1*ww2bar*ww3bar + eps2*ww1bar*ww3bar + eps3*ww1bar*ww2bar
+
+		cff = np.array[10]
+
+		coeff10 = hh39*wwcc
+		coeff9  = hh38*wwcc + hh28*wwbb - (ww*wwcc+wwdd)*hh39
+		coeff8  = hh37*wwcc + hh27*wwbb + hh17*wwaa - (ww*wwcc + wwdd)*hh38 - (ww*wwbb + wwaa - wwbar)*hh28
+		coeff7  = hh36*wwcc + hh26*wwbb + hh16*wwaa + hh06 - (ww*wwcc + wwdd)*hh37 - (ww*wwbb + wwaa-wwbar)*hh27 - (ww*wwaa + 1.)*hh17 
+		coeff6  = hh35*wwcc + hh25*wwbb + hh15*wwaa + hh05 - (ww*wwcc + wwdd)*hh36 - (ww*wwbb + wwaa-wwbar)*hh26 - (ww*wwaa + 1.)*hh16  - ww*hh06 
+		coeff5  = hh34*wwcc + hh24*wwbb + hh14*wwaa + hh04 - (ww*wwcc + wwdd)*hh35 - (ww*wwbb + wwaa-wwbar)*hh25 - (ww*wwaa + 1.)*hh15  - ww*hh05
+		coeff4  = hh33*wwcc + hh23*wwbb + hh13*wwaa + hh03 - (ww*wwcc + wwdd)*hh34 - (ww*wwbb + wwaa-wwbar)*hh24 - (ww*wwaa + 1.)*hh14  - ww*hh04
+		coeff3  = hh32*wwcc + hh22*wwbb + hh12*wwaa + hh02 - (ww*wwcc + wwdd)*hh33 - (ww*wwbb + wwaa-wwbar)*hh23 - (ww*wwaa + 1.)*hh13  - ww*hh03
+		coeff2  = hh31*wwcc + hh21*wwbb + hh11*wwaa + hh01 - (ww*wwcc + wwdd)*hh32 - (ww*wwbb + wwaa-wwbar)*hh22 - (ww*wwaa + 1.)*hh12  - ww*hh02
+		coeff1  = hh30*wwcc + hh20*wwbb + hh10*wwaa + hh00 - (ww*wwcc + wwdd)*hh31 - (ww*wwbb + wwaa-wwbar)*hh21 - (ww*wwaa + 1.)*hh11  - ww*hh01
+		coeff0  = -(ww*wwcc + wwdd)*hh30 - (ww*wwbb + wwaa-wwbar)*hh20 - (ww*wwaa + 1.)*hh10  - ww*hh00
 
 	else:
 		raise ValueError('Not able to retreive coefficients derived for {} frame'.

@@ -196,7 +196,7 @@ class TripleLens(object):
 
 
 	def __init__(self, q2, q1, s2, s1, phi, origin, solver, system, x=None,
-				 y=None, plot_frame='caustic', refine_region=True, 
+				 y=None, plot_frame='caustic', refine_region=True,
 				 region='caustic2a', region_lim=None, res=None, SFD=True):
 
 		self._got_refined_param = False
@@ -224,6 +224,7 @@ class TripleLens(object):
 		self.SFD = SFD
 		self._custom_xshift = 0. #Keep track of this while debugging
 		self._custom_yshift = 0. #Keep track of this while debugging
+		self.check_system()
 		self.get_mass()
 		self.get_lensing_body_positions()
 		self.get_caustic_param(refine_region=False)
@@ -257,15 +258,25 @@ class TripleLens(object):
 				print('Turning off "refine_region." q is too small.')
 				self.refine_region = False
 
-	def get_mass(self):
+	def check_system():
+		if self.system == 'SPM':
+			return
+		elif (self.system == 'SPP' or self.system == 'SSP'):
+			return
+		elif self.system == 'Rhie2002':
+			if self.refine_region:
+				print('Turning off "refine_region." Using {} is not supported'.
+					   format(self.system))
+			self.refine_region = False
+			if self.origin != self.system:
+				print('Changing origin to {}.'.format(self.system))
+			self.origin = self.system
+			self.SFD = False
+			return
+		else:
+			raise ValueError('System {} not recognized'.format(self.system))
 
-		#FIXME: Caustics only works when using 'SPM' definition of m3,
-		# even when the system is NOT 'SPM'.
-		denominator = 1. + self.q1 + self.q2*self.q1
-		self.m1 = 1. / denominator
-		self.m2 = self.q1 / denominator
-		self.m3 = self.q2 / denominator
-		#self.m3 = self.q2*self.q1 / denominator
+	def get_mass(self):
 
 		if self.system == 'SPM':
 			# Convert the separation between the moon and planet into units
@@ -275,21 +286,27 @@ class TripleLens(object):
 			self.m1 = 1. / denominator
 			self.m2 = self.q1 / denominator
 			self.m3 = self.q2*self.q1 / denominator
+			self.m4 = None
 			self.s2_actual = self.s2*(np.sqrt(self.m3 + self.m2))
 		elif self.system == 'SPP' or self.system == 'SSP':
 			denominator = 1. + self.q1 + self.q2
 			self.m1 = 1. / denominator
 			self.m2 = self.q1 / denominator
 			self.m3 = self.q2 / denominator
-			self.s2_actual = self.s2
-		else:
-			raise ValueError('System {} not recognized'.format(self.system))
+			self.m4 = None
+		elif self.system == 'Rhie2002':
+			denominator = 1. + self.q1 + self.q2
+			self.m1 = 1. / denominator
+			self.m2 = self.q1 / denominator
+			self.m3 = self.q2 / denominator
+			self.m4 = self.m2 + self.m3
 
 	def get_lensing_body_positions(self):
 
 		if self.system == 'SPM':
 			self.displacement23 = self.s2_actual*(math.cos(math.pi - self.phi) +
 											  1.j*math.sin(math.pi - self.phi))
+			self.z4 = None
 
 			if self.origin == 'geo_cent':
 				self.z1 = -0.5*self.s1 + 0j
@@ -311,8 +328,9 @@ class TripleLens(object):
 				raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
 
 		elif (self.system == 'SPP') or (self.system == 'SSP'):
-			self.displacement13 = self.s2_actual*(math.cos(self.phi) +
-											  1.j*math.sin(self.phi))
+			self.displacement13 = self.s2*(math.cos(self.phi) +
+									   1.j*math.sin(self.phi))
+			self.z4 = None
 
 			if self.origin == 'geo_cent':
 				self.z1 = -0.5*self.s1 + 0j
@@ -333,7 +351,16 @@ class TripleLens(object):
 			else:
 				raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
 
+		elif self.system == 'Rhie2002':
+			self.z1 = -self.m4*self.s1
+			self.z4 = self.m1*self.s1
+			self.z2 = self.z4 + self.s2*(self.m3/self.m4)*(
+					  math.cos(self.phi)+1j*math.sin(self.phi))
+			self.z3 = self.z4 - self.s2*(self.m2/self.m4)*(
+					  math.cos(self.phi)+1j*math.sin(self.phi))
+
 	def get_source_position(self, x, y): #Keep track of this while debugging
+
 
 		if self.origin == 'geo_cent':
 			zeta = x + y*1.j
@@ -344,6 +371,10 @@ class TripleLens(object):
 				zeta = (x - self.s1/2.) + y*1.j - self.displacement23
 			elif (self.system == 'SPP') or (self.system == 'SSP'):
 				zeta = (x + self.s1/2.) + y*1.j - self.displacement13
+		elif self.origin == 'Rhie2002':
+			#FIXME: Do the math for this derivation.
+			zeta = x + y*1.j
+
 		else:
 			raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
 
@@ -365,9 +396,12 @@ class TripleLens(object):
 		else:
 			calc = 'general'
 
-		coeff = getc.get_coefficients(calc=calc, zeta=zeta, m3=self.m3,
-				m2=self.m2, m1=self.m1, z3=self.z3,
-				z2=self.z2, z1=self.z1)
+		if self.system == 'Rhie2002':
+			calc = self.system
+
+		coeff = getc.get_coefficients(calc=calc, zeta=zeta,
+				m4=self.m4, m3=self.m3,	m2=self.m2, m1=self.m1,
+				z4=self.z4, z3=self.z3, z2=self.z2, z1=self.z1)
 
 		return coeff
 
