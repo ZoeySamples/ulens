@@ -230,6 +230,26 @@ class Caustics(object):
 				self.z2 -= xshift + 1j*yshift
 				self.z3 -= xshift + 1j*yshift
 
+		elif (self.lens.system == 'Rhie2002'):
+			#FIXME: Caustics are around 1 xshift to the right
+
+			m23 = self.lens.m23
+			zcm23 = self.m1*self.s1
+			self.z1 = -m23*self.s1
+			self.z2 = zcm23 + self.s2*(self.m3/m23)*(
+					  math.cos(self.phi)+1j*math.sin(self.phi))
+			self.z3 = zcm23 - self.s2*(self.m2/m23)*(
+					  math.cos(self.phi)+1j*math.sin(self.phi))
+
+			self.z1 -= self.z1 + self.s1/2
+			self.z2 -= self.z1 + self.s1/2
+			self.z3 -= self.z1 + self.s1/2
+
+			if self.plot_frame == 'caustic':
+				self.z1 -= xshift + 1j*yshift
+				self.z2 -= xshift + 1j*yshift
+				self.z3 -= xshift + 1j*yshift
+
 	def plot_caustic(self, points=5000, **kwargs):
 
 		self.calculate(points=points)

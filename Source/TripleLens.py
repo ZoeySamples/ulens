@@ -86,12 +86,13 @@ class TripleLens(object):
 				If system is 'SSP': The mass ratio of the planet to star1.
 
 			s1 (float):
-				If system is 'SPM': The separation of the planet to the star
-						in units of the whole system's Einstein radius.
-				If system is 'SPP': The separation of planet1 to the star
-						in units of the whole system's Einstein radius.
-				If system is 'SSP': The separation of star1 to star2
-						in units of the whole system's Einstein radius.
+				If system is 'SPM': The separation of the planet to the star.
+				If system is 'SPP': The separation of planet1 to the star.
+				If system is 'SSP': The separation of star1 to star2.
+				If system is 'Rhie2002': The separation of primary body
+						to center of mass of the other two bodies.
+
+				*All in units of the whole system's Einstein radius
 
 				*A positive separation means body2 is in the positive
 				 x-direction from body1. A negative separation means body2
@@ -119,6 +120,9 @@ class TripleLens(object):
 						in other words, the angle the planet makes with the
 						horizontal axis passing through star1 and star2,
 						centered on star1.
+				If system is 'Rhie2002': The angle formed by the primary-
+						center-of-mass axis and body2-body3 axis.
+						Consult Rhie 2002 for full description.
 
 				*phi is given in degrees in all cases, and converted to
 				 radians in this source code.
@@ -206,7 +210,10 @@ class TripleLens(object):
 		self.q1 = q1
 		self.s2 = s2
 		self.s1 = s1
-		self.phi = phi*(math.pi / 180.)
+		if system == 'Rhie2002':
+			self.phi = phi
+		else:
+			self.phi = phi*(math.pi / 180.)
 		self.system = system
 		self.plot_frame = plot_frame
 		self.check_attributes()
@@ -240,7 +247,8 @@ class TripleLens(object):
 		if self.s2 < 0.:
 			raise ValueError('s2 cannot be negative.')
 
-		if (self.system != 'SPM') and (self.system != 'SPP') and (self.system != 'SSP'):
+		if (self.system != 'SPM') and (self.system != 'SPP') and (
+			self.system != 'SSP') and (self.system != 'Rhie2002'):
 			raise ValueError('Unknown value for string variable, system.')
 
 		if (self.plot_frame != 'caustic') and (self.plot_frame != 'geo_cent'):
@@ -258,7 +266,7 @@ class TripleLens(object):
 				print('Turning off "refine_region." q is too small.')
 				self.refine_region = False
 
-	def check_system():
+	def check_system(self):
 		if self.system == 'SPM':
 			return
 		elif (self.system == 'SPP' or self.system == 'SSP'):
@@ -276,6 +284,18 @@ class TripleLens(object):
 		else:
 			raise ValueError('System {} not recognized'.format(self.system))
 
+	@property
+	def m23(self):
+		"""Returns the value for m23, the sum of m2 and m3."""
+		self._m23 = self.m2 + self.m3
+		return self._m23
+
+	@property
+	def z23cm(self):
+		"""Returns the value for zcm23, the sum of m2 and m3."""
+		self._z23cm = self.m1*self.s1
+		return self._z23cm
+
 	def get_mass(self):
 
 		if self.system == 'SPM':
@@ -286,82 +306,87 @@ class TripleLens(object):
 			self.m1 = 1. / denominator
 			self.m2 = self.q1 / denominator
 			self.m3 = self.q2*self.q1 / denominator
-			self.m4 = None
 			self.s2_actual = self.s2*(np.sqrt(self.m3 + self.m2))
 		elif self.system == 'SPP' or self.system == 'SSP':
 			denominator = 1. + self.q1 + self.q2
 			self.m1 = 1. / denominator
 			self.m2 = self.q1 / denominator
 			self.m3 = self.q2 / denominator
-			self.m4 = None
+			self.s2_actual = self.s2
 		elif self.system == 'Rhie2002':
 			denominator = 1. + self.q1 + self.q2
 			self.m1 = 1. / denominator
 			self.m2 = self.q1 / denominator
 			self.m3 = self.q2 / denominator
-			self.m4 = self.m2 + self.m3
+			self.s2_actual = self.s2
 
 	def get_lensing_body_positions(self):
 
 		if self.system == 'SPM':
 			self.displacement23 = self.s2_actual*(math.cos(math.pi - self.phi) +
 											  1.j*math.sin(math.pi - self.phi))
-			self.z4 = None
 
 			if self.origin == 'geo_cent':
 				self.z1 = -0.5*self.s1 + 0j
 				self.z2 = 0.5*self.s1 + 0j
 				self.z3 = self.z2 + self.displacement23
+				self.z_geocent = 0j
 			elif self.origin == 'body2':
 				self.z1 = -self.s1 + 0j
 				self.z2 = 0j
 				self.z3 = self.displacement23
+				self.z_geocent = (self.z1 + self.z2) / 2.
 			elif self.origin == 'body3':
 				self.z1 = -self.s1 - self.displacement23
 				self.z2 = -self.displacement23
 				self.z3 = 0j
+				self.z_geocent = (self.z1 + self.z2) / 2.
 			elif self.origin == 'caustic':
 				self.z1 = -self.s1 + 1./self.s1
 				self.z2 = 1./self.s1
 				self.z3 = self.z2 + self.displacement23
+				self.z_geocent = (self.z1 + self.z2) / 2.
 			else:
 				raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
 
 		elif (self.system == 'SPP') or (self.system == 'SSP'):
 			self.displacement13 = self.s2*(math.cos(self.phi) +
 									   1.j*math.sin(self.phi))
-			self.z4 = None
 
 			if self.origin == 'geo_cent':
 				self.z1 = -0.5*self.s1 + 0j
 				self.z2 = 0.5*self.s1 + 0j
 				self.z3 = self.z1 + self.displacement13
+				self.z_geocent = 0j
 			elif self.origin == 'body2':
 				self.z1 = -self.s1 + 0j
 				self.z2 = 0j
 				self.z3 = self.z1 + self.displacement13
+				self.z_geocent = (self.z1 + self.z2) / 2.
 			elif self.origin == 'body3':
 				self.z1 = -self.displacement13
 				self.z2 = self.z1 + self.s1
 				self.z3 = 0j
+				self.z_geocent = (self.z1 + self.z2) / 2.
 			elif self.origin == 'caustic':
 				self.z1 = -self.s1 + 1./self.s1
 				self.z2 = 1./self.s1
 				self.z3 = self.z1 + self.displacement13
+				self.z_geocent = (self.z1 + self.z2) / 2.
 			else:
 				raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
 
 		elif self.system == 'Rhie2002':
-			self.z1 = -self.m4*self.s1
-			self.z4 = self.m1*self.s1
-			self.z2 = self.z4 + self.s2*(self.m3/self.m4)*(
+			self.z1 = -self.m23*self.s1
+			self.z2 = self.z23cm + self.s2*(self.m3/self.m23)*(
 					  math.cos(self.phi)+1j*math.sin(self.phi))
-			self.z3 = self.z4 - self.s2*(self.m2/self.m4)*(
+			self.z3 = self.z23cm - self.s2*(self.m2/self.m23)*(
 					  math.cos(self.phi)+1j*math.sin(self.phi))
+			self.z_geocent = self.z1 + self.s1/2.
 
-	def get_source_position(self, x, y): #Keep track of this while debugging
+	def get_source_position(self, x, y):
 
-
+		# Set the origin of the zeta values to be the geometric center.
 		if self.origin == 'geo_cent':
 			zeta = x + y*1.j
 		elif self.origin == 'body2':
@@ -372,14 +397,17 @@ class TripleLens(object):
 			elif (self.system == 'SPP') or (self.system == 'SSP'):
 				zeta = (x + self.s1/2.) + y*1.j - self.displacement13
 		elif self.origin == 'Rhie2002':
-			#FIXME: Do the math for this derivation.
-			zeta = x + y*1.j
+			#FIXME: check if this is right...This seems to be right
+			zeta = (x + self.s1/2) + y*1.j + self.z1# + 0.075  - 0.079j
 
 		else:
 			raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
 
+		# If plotting in caustic frame, shift the origin of the zeta
+		# values to be the caustic center.
 		if self.plot_frame == 'caustic':
 			if self._got_refined_param == False and self.refine_region==True:
+				print('I am here')
 				self.get_caustic_param(refine_region=True)
 			zeta += self.xshift + 1j*self.yshift
 			if 'custom' in self.region:
@@ -400,8 +428,8 @@ class TripleLens(object):
 			calc = self.system
 
 		coeff = getc.get_coefficients(calc=calc, zeta=zeta,
-				m4=self.m4, m3=self.m3,	m2=self.m2, m1=self.m1,
-				z4=self.z4, z3=self.z3, z2=self.z2, z1=self.z1)
+				m4=self.m23, m3=self.m3, m2=self.m2, m1=self.m1,
+				z4=self.z23cm, z3=self.z3, z2=self.z2, z1=self.z1)
 
 		return coeff
 
@@ -562,22 +590,37 @@ class TripleLens(object):
 
 	def find_caustic(self):
 
-		if '2' in self.region:
+		if (self.system == 'Rhie2002'):
+			#FIXME: check if this is right
+			d12 = np.abs(self.z2 - self.z1)
+			d13 = np.abs(self.z3 - self.z1)
+			d23 = np.abs(self.z3 - self.z2)
+			self._phi = math.acos((d12**2 - d23**2 + d13**2) / (2*d12*d13))
+			self._s = (self.z2 - self.z1)
+			self._d = np.abs(self._s)
+			self._q = self.m2 / self.m1
+			d_caus_ratio = (self._d - 1./self._d)/self._d
+			self.z_caus = self.z1 + d_caus_ratio*(self.z2-self.z1)
+		elif '2' in self.region:
 			self._s = (self.z2 - self.z1)
 			self._d = np.abs(self._s)
 			self._q = self.m2 / self.m1
 			self._phi = 0
+			d_caus_ratio = (self._d - .1/self._d)/self._d
+			self.z_caus = self.z1 + d_caus_ratio*(self.z2-self.z1)
 		elif '3' in self.region:
 			self._s = (self.z3 - self.z1)
 			self._d = np.abs(self._s)
 			self._q = self.m3 / self.m1
 			if (self.system == 'SPP') or (self.system == 'SSP'):
 				self._phi = self.phi
-			elif self.system == 'SPM':
+			elif (self.system == 'SPM') or (self.system == 'Rhie2002'):
 				d12 = np.abs(self.z2 - self.z1)
 				d13 = np.abs(self.z3 - self.z1)
 				d23 = np.abs(self.z3 - self.z2)
 				self._phi = math.acos((d12**2 - d23**2 + d13**2) / (2*d12*d13))
+			d_caus_ratio = (self._d - .1/self._d)/self._d
+			self.z_caus = self.z1 + d_caus_ratio*(self.z3-self.z1)
 		else:
 			raise ValueError('Specify which caustic you want to plot by\n',
 					'including a 2 or a 3 on the string variable, region.')
@@ -588,8 +631,9 @@ class TripleLens(object):
 			# Assign the relative position of the approximate caustic center
 			# in the geometric center frame.
 
-			self.xshift = (0.5*self._s - 1.0/self._s).real
-			self.yshift = (0.5*self._s - 1.0/self._s).imag
+			#FIXME: check if this is right for rhie2002
+			self.xshift = (self.z_caus - self.z_geocent).real
+			self.yshift = (self.z_caus - self.z_geocent).imag
 
 			if self.caustic_type == 'close':
 				# If the caustics have bifurcated, shift to the
@@ -610,8 +654,7 @@ class TripleLens(object):
 			(x_caus, y_caus) = make_caustic()
 			apply_second_shift(x_caus, y_caus)
 			(x_caus, y_caus) = make_caustic()
-			(x_local_caustic, y_local_caustic) = get_local_caustic(
-											 	 x_caus, y_caus)
+			(x_local_caustic, y_local_caustic) = get_local_caustic(x_caus, y_caus)
 
 			xmin_caustic = min(x_local_caustic)
 			xmax_caustic = max(x_local_caustic)
@@ -620,7 +663,7 @@ class TripleLens(object):
 			self.width_caustic = (xmax_caustic - xmin_caustic)
 			self.height_caustic = (ymax_caustic - ymin_caustic)
 			self.xshift -= (self.xcenter_caustic - xmin_caustic - 0.5*self.width_caustic)
-			self.yshift -= (self.ycentget_sourer_caustic - ymin_caustic - 0.5*self.height_caustic)
+			self.yshift -= (self.ycenter_caustic - ymin_caustic - 0.5*self.height_caustic)
 			self.assign_center_caustic()
 
 		def make_caustic():
@@ -752,6 +795,8 @@ class TripleLens(object):
 			on the caustic and uses it as new starting point for second
 			attempt.
 			"""
+
+			print('Refining...')
 
 			x_distances = (self.xcenter_caustic - np.array(x_caus))
 			y_distances = (self.ycenter_caustic - np.array(y_caus))
@@ -2292,6 +2337,11 @@ class TripleLens(object):
 				self.origin_phrase = 'planet frame'
 			else:
 				raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
+
+		elif self.system == 'Rhie2002':
+			self.origin_file = 'rhie'
+			self.origin_title = 'Rhie2002'
+			self.origin_phrase = 'Rhie (2002) frame'
 
 		if self.solver == 'numpy':
 			self.solver_file = 'np'

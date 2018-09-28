@@ -1,6 +1,7 @@
 import numpy as np
 
-def get_coefficients(calc, zeta, m4, m3, m2, m1, z4, z3, z2, z1):
+def get_coefficients(calc, zeta, m3, m2, m1, z3, z2, z1, m4=None, z4=None):
+
 
 	z1_conj = np.conj(z1)
 	z2_conj = np.conj(z2)
@@ -476,9 +477,7 @@ def get_coefficients(calc, zeta, m4, m3, m2, m1, z4, z3, z2, z1):
 		wwaa = ww1bar+ww2bar+ww3bar
 		wwbb = ww1bar*ww2bar + ww2bar*ww3bar + ww1bar*ww3bar
 		wwcc = ww1bar*ww2bar*ww3bar
-		wwdd = eps1*ww2bar*ww3bar + eps2*ww1bar*ww3bar + eps3*ww1bar*ww2bar
-
-		cff = np.array[10]
+		wwdd = m1*ww2bar*ww3bar + m2*ww1bar*ww3bar + m3*ww1bar*ww2bar
 
 		coeff10 = hh39*wwcc
 		coeff9  = hh38*wwcc + hh28*wwbb - (ww*wwcc+wwdd)*hh39
