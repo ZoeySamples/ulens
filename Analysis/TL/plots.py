@@ -60,25 +60,24 @@ def make_plot():
 				p.write_to_fits()
 
 # Input parameters
-q1s = [1e-5]
-q2 = 1e-5
-sep1 = [1.5]
-s2 = 1.5
-phi = 135
-system = 'SPP'
+
+q1s = [0.182580613773819]
+q2 = 5.771314214367329E-004*100
+sep1 = [2.08319873661748]
+s2 = 0.907858239420497 
+phi = -0.808129441734630
+system = 'Rhie2002'
+#system = 'SPM'
 
 solver =  'SG12'
-origin = 'body2'
-
-plot_frame = 'caustic'
+origin = 'Rhie2002'
+#origin = 'body3'
+plot_frame = 'geo_cent'
 
 res = int(150)
-sample_res = 5
-cutoff = 1.5
-region = 'caustic_2a'
-region_lim = (-1.1, 1.1, -1.1, 1.1)
-refine_region = True
-
+region = 'custom_2a'
+region_lim = (-15, 15, -8, 8)
+refine_region = False
 SFD = True
 
 param = []
@@ -138,8 +137,8 @@ q2 = 2e-1
 s1 = 1.5
 s2 = 1.4
 phi = 90
-system = 'SPM'
-region = 'custom_2a'
+system = 'Rhie2002'
+region = 'caustic_2a'
 region_lim = (-1.1, 1.1, -1.1, 1.1)
 refine_region = True
 
