@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: Jul 03, 2018
 # Caustics.py
-# Last Updated: Jul 09, 2018
+# Last Updated: Oct 23, 2018
 
 import sys
 from pathlib import Path
@@ -145,6 +145,22 @@ class Caustics(object):
 
 		**See the BinaryLens and TripleLens source codes for more detailed
 		  explanations of these variables.
+
+
+	***Developer Notes***
+	- Calculations in this script are always done in the geometric center
+	  frame since that is how the polynomial was derived.
+	- Caustics are plotted in either the geometric center frame or the
+	  caustic frame; this is a user-controlled parameter.
+
+	- Contrast to /BinaryLens.py and /TripleLens.py:
+		- These scripts do calculations in the frame determined by the
+		  parameter, origin.
+		- These scritps plot in either the geometric center or caustic frames.
+
+	*The various frames are determined objectively for each system, so it
+	 is important to follow that convention in every /Source/ script.
+
 	"""
 
 
@@ -175,7 +191,7 @@ class Caustics(object):
 
 			#FIXME: This initialization works for SPM systems, but the
 			# one below, which should be equivalent, does not work.
-			denominator = 1. + self.q1 + self.q2*self.q1
+			#denominator = 1. + self.q1 + self.q2*self.q1
 			#self.m1 = 1. / denominator
 			#self.m2 = self.q1 / denominator
 			#self.m3 = self.q2*self.q1 / denominator
@@ -189,7 +205,7 @@ class Caustics(object):
 		yshift = self.lens.yshift + self.lens._custom_yshift
 		#(xcenter, ycenter) = (self.lens.xcenter_caustic, self.lens.ycenter_caustic)
 
-		# Come back and fix this assignment. Assign it according to geo_cent. If
+		# FIXME: Assign z1 and z2 according to geo_cent. If
 		# plot_frame == 'caustic', apply shift.
 		if self.plot_frame == 'caustic':
 			self.z1 = 0.5*self.s - (xshift + 1j*(yshift))
@@ -231,7 +247,6 @@ class Caustics(object):
 				self.z3 -= xshift + 1j*yshift
 
 		elif (self.lens.system == 'Rhie2002'):
-			#FIXME: Caustics are around 1 xshift to the right
 
 			m23 = self.lens.m23
 			zcm23 = self.m1*self.s1
@@ -241,9 +256,10 @@ class Caustics(object):
 			self.z3 = zcm23 - self.s2*(self.m2/m23)*(
 					  math.cos(self.phi)+1j*math.sin(self.phi))
 
-			self.z1 -= self.z1 + self.s1/2
-			self.z2 -= self.z1 + self.s1/2
-			self.z3 -= self.z1 + self.s1/2
+			geocent_shift = self.z1 + self.s1 / 2.
+			self.z1 -= geocent_shift
+			self.z2 -= geocent_shift
+			self.z3 -= geocent_shift
 
 			if self.plot_frame == 'caustic':
 				self.z1 -= xshift + 1j*yshift

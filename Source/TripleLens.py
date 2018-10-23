@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: June 08, 2018
 # TripleLens.py
-# Last Updated: Jul 18, 2018
+# Last Updated: Oct 23, 2018
 
 import sys
 import os
@@ -196,6 +196,19 @@ class TripleLens(object):
 				The position of the least massive body (the moon in SPM
 				system, planet2 in SPP system, or the planet in SSP system)
 				in units of the total system's Einstein radius.
+
+
+	***Developer Notes***
+	- Calculations in this script are always done in the frame determined
+	  by the parameter, origin.
+	- Caustics are plotted in either the geometric center frame or the
+	  caustic frame; this is a user-controlled parameter.
+
+	- Contrast to /Caustics.py:
+		- This script does calculations in the geometric center frame only
+
+	*The various frames are determined objectively for each system, so it
+	 is important to follow that convention in every /Source/ script.
 	"""
 
 
@@ -382,7 +395,10 @@ class TripleLens(object):
 					  math.cos(self.phi)+1j*math.sin(self.phi))
 			self.z3 = self.z23cm - self.s2*(self.m2/self.m23)*(
 					  math.cos(self.phi)+1j*math.sin(self.phi))
-			self.z_geocent = self.z1 + self.s1/2.
+			self.z_geocent = self.z1 + self.s1/2. #Not sure if correct
+
+			print('z1: {}\nz2: {}\nz3: {}'.format(self.z1, self.z2, self.z3))
+
 
 	def get_source_position(self, x, y):
 
@@ -397,8 +413,7 @@ class TripleLens(object):
 			elif (self.system == 'SPP') or (self.system == 'SSP'):
 				zeta = (x + self.s1/2.) + y*1.j - self.displacement13
 		elif self.origin == 'Rhie2002':
-			#FIXME: check if this is right...This seems to be right
-			zeta = (x + self.s1/2) + y*1.j + self.z1# + 0.075  - 0.079j
+			zeta = (x + self.s1/2.) + y*1.j + self.z1
 
 		else:
 			raise ValueError('Unknown coordinate system: {:}'.format(self.origin))
@@ -669,11 +684,7 @@ class TripleLens(object):
 		def make_caustic():
 			"""Gets the caustics for the current approximated parameters."""
 
-			if self.caustic_type == 'wide':
-				points = 400
-			else:
-				points = 800
-
+			points = 1200
 			from Caustics import Caustics as caus
 			caustic = caus(lens=self)
 			caustic.calculate(points=points)

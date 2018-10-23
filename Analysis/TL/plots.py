@@ -1,7 +1,7 @@
 # Zoey Samples
 # Created: May 22, 2018
 # TLPlots.py
-# Last Updated: Jul 18, 2018
+# Last Updated: Oct 23, 2018
 
 import matplotlib.pyplot as plt
 from TripleLens import TripleLens as TL
@@ -62,7 +62,7 @@ def make_plot():
 # Input parameters
 
 q1s = [0.182580613773819]
-q2 = 5.771314214367329E-004*100
+q2 = 5.771314214367329E-004
 sep1 = [2.08319873661748]
 s2 = 0.907858239420497 
 phi = -0.808129441734630
@@ -72,12 +72,14 @@ system = 'Rhie2002'
 solver =  'SG12'
 origin = 'Rhie2002'
 #origin = 'body3'
-plot_frame = 'geo_cent'
+plot_frame = 'caustic'
 
-res = int(150)
-region = 'custom_2a'
+res = int(160)
+#region = 'custom_2a'
+#region = 'caustic_2a'
+region = 'both2a'
 region_lim = (-15, 15, -8, 8)
-refine_region = False
+refine_region = True
 SFD = True
 
 param = []
