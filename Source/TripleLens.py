@@ -124,8 +124,9 @@ class TripleLens(object):
 						center-of-mass axis and body2-body3 axis.
 						Consult Rhie 2002 for full description.
 
-				*phi is given in degrees in all cases, and converted to
-				 radians in this source code.
+				*phi is given in degrees for SPM, SPP, and SSP, and is
+				 converted to radians in calculations. phi is given in
+				 radians for Rhie2002, and is kept in radians for calculations.
 
 			origin (string):
 				The coordinate frame in which calculations are carried out.
@@ -396,8 +397,6 @@ class TripleLens(object):
 			self.z3 = self.z23cm - self.s2*(self.m2/self.m23)*(
 					  math.cos(self.phi)+1j*math.sin(self.phi))
 			self.z_geocent = self.z1 + self.s1/2. #Not sure if correct
-
-			print('z1: {}\nz2: {}\nz3: {}'.format(self.z1, self.z2, self.z3))
 
 
 	def get_source_position(self, x, y):
@@ -1312,7 +1311,7 @@ class TripleLens(object):
 		"""
 
 		if 's' not in kwargs:
-			kwargs['s'] = (400. / self.res)**2
+			kwargs['s'] = (200. / self.res)**2
 		if 'cmap' not in kwargs:
 			kwargs['cmap'] = 'plasma'
 		if 'linewidths' not in kwargs and 'lw' not in kwargs:
@@ -1455,6 +1454,15 @@ class TripleLens(object):
 				Keyword arguments for pyplot module.
 		"""
 
+		fig, ax = plt.subplots(1, 1)
+
+		cmap = plt.cm.gray
+		cmaplist = [cmap(i) for i in range(cmap.N)]
+		cmaplist = cmaplist[20:]
+		cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
+		ticks = np.array([1,10])
+		kwargs['cmap'] = cmap
+
 		# Get data for plotting
 		kwargs = self.check_kwargs(log_colorbar, **kwargs)
 		self.get_position_arrays()
@@ -1468,34 +1476,41 @@ class TripleLens(object):
 		else:
 			(x, y, magn) = (self.x_array, self.y_array, self.magn_array)
 
-		plt.scatter(x, y, c=magn, **kwargs)
+		ax = plt.subplot(1, 1, 1)
+		sc = plt.scatter(x, y, c=magn, vmin=1, vmax=10, **kwargs)
+
 		(xmin, xmax) = (min(self.x_array), max(self.x_array))
 		(ymin, ymax) = (min(self.y_array), max(self.y_array))
 		dx = xmax - xmin
 		plt.xlim(xmin, xmax)
 		plt.ylim(ymin, ymax)
 		plt.xticks(np.arange(xmin, xmin + 1.2*dx, dx / 4))
-		mag_plot = plt.colorbar()
-		mag_plot.set_label('Magnification')
-		plt.xlabel('X-position of Source', fontsize=12)
-		plt.ylabel('Y-position of Source', fontsize=12)
+
+		cbar = fig.add_axes([0.88, 0.25, 0.03, 0.55])
+		magn_color = plt.colorbar(sc, cax=cbar, cmap=kwargs['cmap'], ticks=ticks,
+								  orientation='vertical')
+		magn_color.set_label('Magnification', fontsize=15, labelpad=-20)
+		cbar.axes.tick_params(labelsize=12)
+
+		ax.set_xlabel('X-position of Source', fontsize=14)
+		ax.set_ylabel('Y-position of Source', fontsize=14)
 		plt.gcf().set_size_inches(9, 6)
+
+		plt.subplots_adjust(top=0.94, bottom=0.10, left=0.10, right=0.85)
 
 		if outliers:
 			if cutoff == None:
 				cutoff = int(min(magn))
-			plt.suptitle('High Magnification', x=0.435)
 			title = ('Frame: {}; Solver: {}; Region: {}\n'.format(
 					self.origin_title, self.solver_title, self.region) + 
 					'M>{:.0f}'.format(cutoff))
-			plt.title(title, fontsize=11)
+			fig.text(0.10, 0.92, title, fontsize=13)
 			file_name = ('../Tables/HighMagn_{}_{}.png'.format(
 					self.solver_file, self.origin_file))
 		else:
-			plt.suptitle('Magnification', x=0.435)
 			title = ('Frame: {}; Solver: {}; Region: {}\n'.format(
 					self.origin_title, self.solver_title, self.region))
-			plt.title(title, fontsize=11)
+			fig.text(0.10, 0.92, title, fontsize=13)
 			file_name = ('../Tables/Magn_{}_{}.png'.format(self.solver_file,
 					self.origin_file))
 
