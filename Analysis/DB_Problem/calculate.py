@@ -136,7 +136,7 @@ def plot_magnification(plots, magn_params, show_caustic):
 			caustic.plot_caustic(points=10000, s=1, color='red', lw=0)
 		plt.show()
 
-### Plotting parameters
+## Plotting parameters
 
 # Calculation Parameters for Rhie (2002) TL object(s) (do not change)
 origin = 'Rhie2002'
@@ -172,7 +172,7 @@ for (i, sect) in enumerate(section):
 		raise KeyError('{} section not found in config file'.format(sect))
 	source_dict[i], TL_param[i] = get_dictionaries(sect=sect)
 
-### Create pairs of plot objects for each set of parameters.
+## Create pairs of plot objects for each set of parameters.
 
 plot_Rhie_1 = get_Rhie_object(**TL_param[0])
 plot_SSP_1 = get_new_object(plot_Rhie_1, **TL_param[0])
@@ -184,7 +184,7 @@ plot_Rhie_3 = get_Rhie_object(**TL_param[2])
 plot_SSP_3 = get_new_object(plot_Rhie_3, **TL_param[2])
 
 
-### Show plots for each pair of plot objects
+## Show plots for each pair of plot objects
 
 # Plot types
 trajectory = True
