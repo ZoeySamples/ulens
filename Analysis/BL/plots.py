@@ -11,8 +11,8 @@ import numpy as np
 
 
 # Input parameters
-s = 0.9
-mass_ratios = [1e-1]
+s = 0.1
+mass_ratios = [1e-10]
 
 solvers =  ['SG12']
 origins = ['plan']
@@ -23,7 +23,7 @@ res = int(50)
 sample_res = 5
 cutoff = 1.5
 region = 'caustic_a'
-region_lim = [-20, 20, -20, 20]
+region_lim = [-400, 20, -20, 20]
 refine_region = True
 
 SFD = True

@@ -22,10 +22,12 @@ def make_plot():
 				plt.show()
 
 			if plot_type == 'magn':
-				p.plot_magnification(outliers=False, log_colorbar=True, cutoff=cutoff,
+
+				#FIXME: Caustic does not show up properly on magnification plots
+				p.plot_magnification(outliers=False, log_colorbar=True, cutoff=None,
 						save=False)
 				caustic = caus(lens=p, solver='SG12')
-	#			caustic.plot_caustic(s=1, color='red', lw=0)
+		#		caustic.plot_caustic(s=1, color='red', lw=0)
 				plt.show()
 
 			if plot_type == 'lens_bodies':
@@ -96,7 +98,7 @@ for s1 in sep1:
 
 plot_types = []
 plot_types.append('num_images')
-#plot_types.append('magn')
+plot_types.append('magn')
 #plot_types.append('lens_bodies')
 #plot_types.append('num_iamges_coeff')
 #plot_types.append('magn_coeff')
