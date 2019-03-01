@@ -144,12 +144,12 @@ system = 'Rhie2002'
 solver =  'SG12'
 
 # Graphical parameters
-res = int(100)
-region = 'caustic_2a'
+res = int(250)
+region = 'both_2a'
 region_lim = (-8, 8, -8, 8)
 plot_frame = 'caustic'
 
-# Convert-to Parameters (in ulens/TripleLens.py parameter space)
+# Conversion Parameters (in ulens/TripleLens.py parameter space)
 origin_new = 'body2'
 system_new = 'SSP'
 
@@ -158,7 +158,7 @@ t_stop = 7510.
 
 # Open the config file
 if len(sys.argv) != 2:
-    raise ValueError('Need to include cfg file')
+    raise ValueError('Missing cfg file')
 config_file = sys.argv[1]
 config = configparser.ConfigParser()
 config.optionxform = str
@@ -188,7 +188,7 @@ plot_SSP_3 = get_new_object(plot_Rhie_3, **TL_param[2])
 
 # Plot types
 trajectory = True
-light_curve = False
+light_curve = True
 num_images = False
 magn = False
 
@@ -199,7 +199,7 @@ plot3 = True
 
 # Plot parameteres
 save = False
-size = 5
+size = 3
 
 
 if trajectory:
