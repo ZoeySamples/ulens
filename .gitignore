@@ -13,4 +13,7 @@ zroots.c
 VBBinaryLensingLibrary.cpp
 
 Backups/
-Tables/
+
+parameters.cfg
+parameters.txt
+config_examples.txt
