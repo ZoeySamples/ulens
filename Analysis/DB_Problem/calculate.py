@@ -103,8 +103,11 @@ def get_new_object(plot, phi, s1, s2, q1, q2):
 	s1_new = np.abs(plot.z2 - plot.z1)
 	s2_new = np.abs(plot.z3 - plot.z1)
 	s3_temp = np.abs(plot.z2 - plot.z3)
-	phi_new = -(180./math.pi)*math.acos((s1_new**2 + s2_new**2 - s3_temp**2) / 
-									   (2.*s1_new*s2_new))
+	phi_new = ((180./math.pi)*math.acos((s1_new**2 + s2_new**2 - s3_temp**2) / 
+									   (2.*s1_new*s2_new)))
+	if plot.phi > 0:
+		phi_new *= -1.	# Fixes accidental reflections over the x-axis since
+						# law of cosines removes direction
 	refine_region = True
 	SFD = True
 
@@ -133,13 +136,15 @@ def plot_trajectory(plot, param_str, v_e, t0, u0, theta1cm, t_start, t_stop):
 	caustic = caus(lens=plot, solver='SG12')
 	caustic.plot_caustic(points=10000, s=1, color='red', lw=0)
 	plt.scatter(x_traj, y_traj, color='blue', s=1, lw=0)
+	plt.xlim(min(x_traj), max(x_traj))
+	plt.ylim(min(y_traj), max(y_traj))
 	plt.title('{} Trajectory with Caustics'.format(param_str))
 	plt.xlabel('Position - Real')
 	plt.ylabel('Position - Imaginary')
 	plt.show()
 
 def plot_light_curve(plot, param_str, v_e, t0, u0, theta1cm, t_start, t_stop,
-					 t_pts=10000):
+					 t_pts=20000):
 
 	"""
 	Plots a model for the light curve, determined by the TripleLens
@@ -265,9 +270,22 @@ magn = False
 lens_position = False
 
 ## Make plot for given Triple Lens solution
-plot1 = True
-plot2 = True
-plot3 = True
+plot1 = False
+plot2 = False
+plot3 = False
+custom_plot = True
+
+if custom_plot:
+	if 'custom' not in config:
+		raise KeyError('custom section not found in config file. Turn off','\n',
+					   'variable, custom_plot.')
+	custom_source_dict, custom_TL_param = get_dictionaries(sect='custom')
+	plot_Rhie_4 = get_Rhie_object(**custom_TL_param)
+	plot_SSP_4 = get_new_object(plot_Rhie_4, **custom_TL_param)
+	start_ratio = 0.2
+	stop_ratio = 0.15
+	t_start_custom = custom_source_dict['t0'] - start_ratio/custom_source_dict['v_e']
+	t_stop_custom = custom_source_dict['t0'] + stop_ratio/custom_source_dict['v_e']
 
 ## Plot parameteres
 save = False
@@ -285,6 +303,10 @@ if trajectory:
 	if plot3:
 		plot_trajectory(plot=plot_Rhie_3, **source_dict[2], t_start=t_start, t_stop=t_stop)
 
+	if custom_plot:
+		plot_trajectory(plot=plot_Rhie_4, **custom_source_dict, t_start=t_start_custom,
+		t_stop=t_stop_custom)
+
 if light_curve:
 
 	if plot1:
@@ -293,8 +315,12 @@ if light_curve:
 	if plot2:
 		plot_light_curve(plot_Rhie_2, **source_dict[1], t_start=t_start, t_stop=t_stop)
 
-	if plot2:
+	if plot3:
 		plot_light_curve(plot_Rhie_3, **source_dict[2], t_start=t_start, t_stop=t_stop)
+
+	if custom_plot:
+		plot_light_curve(plot_Rhie_4, **custom_source_dict, t_start=t_start_custom,
+		t_stop=t_stop_custom)
 
 if num_images:
 
@@ -311,6 +337,10 @@ if num_images:
 
 	if plot3:
 		plots = [plot_Rhie_3, plot_SSP_3]
+		plot_num_images(plots, num_images_params)
+
+	if custom_plot:
+		plots = [plot_Rhie_4, plot_SSP_4]
 		plot_num_images(plots, num_images_params)
 
 if magn:
@@ -331,7 +361,11 @@ if magn:
 		plots = [plot_Rhie_3, plot_SSP_3]
 		plot_magnification(plots, magn_params, **magn_kwargs)
 
-if plot_lens_bodies:
+	if custom_plot:
+		plots = [plot_Rhie_4, plot_SSP_4]
+		plot_magnification(plots, magn_params, **magn_kwargs)
+
+if lens_position:
 
 	if plot1:
 		plots = [plot_Rhie_1, plot_SSP_1]
@@ -344,6 +378,12 @@ if plot_lens_bodies:
 	if plot3:
 		plots = [plot_Rhie_3, plot_SSP_3]
 		plot_lens_bodies(plots)
+
+	if custom_plot:
+		plots = [plot_Rhie_4, plot_SSP_4]
+		plot_lens_bodies(plots)
+
+
 
 
 
